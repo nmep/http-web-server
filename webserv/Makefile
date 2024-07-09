@@ -1,31 +1,37 @@
 # FILE
 NAME = webserv
 
-SRC = $(shell find ./ -type f -name "*.cpp")
-INC = ./include/
-OBJ = $(SRC:.cpp=.o)
+SRC = class/Server.cpp src/main.cpp
+OBJ = $(addprefix obj/, $(SRC:.cpp=.o))
+OBJ_DIR = $(addprefix ./obj/, $(notdir $(shell find ./ -type d -not -path ./conf -not -path ./include -not -path ./obj)))
 
 # COMPILATION
-
 CC = c++
-FLAGS = -Wall -Wextra -Werror -std=c++98 -I./include
+CXXFLAGS = -Wall -Wextra -Werror -std=c++98 -I./include
 
-# RULE
-
-%.o: %.cpp
-	$(CC) $(FLAGS) -c $< -o $@
-
+# RULES
+./obj/%.o: %.cpp | create_dir
+	$(CC) $(CXXFLAGS) $< -c -o $@
 
 $(NAME): $(OBJ)
-	$(CC) $(FLAGS) $(OBJ) -o $@
+	$(CC) $(CXXFLAGS) $(OBJ) -o $@
+
+all: $(NAME)
 
 clean:
-	rm -f $(OBJ)
+	rm -rf $(OBJ) $(OBJ_DIR) ./obj
 
-fclean:
-	rm -f $(OBJ) $(NAME)
+fclean: clean
+	rm -f $(NAME)
+
+re: fclean all
+
+create_dir:
+	$(shell mkdir -p $(OBJ_DIR))
 
 test:
-	@echo $(SRC)
-	@echo $(OBJ)
-	@echo $(INC)
+	@echo src $(SRC)
+	@echo obj $(OBJ)
+	@echo objDir $(OBJ_DIR)
+
+.PHONY: all clean fclean re
