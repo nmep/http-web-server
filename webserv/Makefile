@@ -7,7 +7,7 @@ OBJ_DIR = $(addprefix ./obj/, $(notdir $(shell find ./ -type d -not -path ./conf
 
 # COMPILATION
 CC = c++
-CXXFLAGS = -Wall -Wextra -Werror -std=c++98 -I./include
+CXXFLAGS = -Wall -Wextra -Werror -std=c++98 -I./include -g3
 
 # RULES
 ./obj/%.o: %.cpp | create_dir

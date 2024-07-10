@@ -1,11 +1,21 @@
 # ifndef SERVER_HPP
 	# define SERVER_HPP
 
-	#include <stdint.h>
-	#include <iostream>
-	#include <map>
-	#include <sys/socket.h>
-	#include <netinet/in.h>
+	#include <sys/socket.h> // socket + network function
+	#include <netinet/in.h> // netwok
+
+	#include <iostream> // std
+	#include <sstream> // type for file input
+	#include <exception> // exception
+	#include <stdint.h> // uint16_t
+	#include <string> // getline
+	#include <fstream> // inputfile
+
+	#include <map> // map
+	#include <vector> // vector
+
+	#include <unistd.h> // access
+	#include <stdio.h> // perror
 
 class Server
 {
@@ -17,6 +27,7 @@ class Server
 		std::string			_serverName;
 		std::string			_hostName;
 		struct sockaddr_in	_addr;
+		bool				_autoIndex;
 
 		std::map<const std::string, std::string> _location;
 
@@ -32,6 +43,7 @@ class Server
 		const std::string	GetServerName() const;
 		const std::string	GetHostName() const;
 		struct sockaddr_in	GetAddr() const;
+		bool				GetAutoIndex() const;
 
 		void				SetPort(uint16_t & val);
 		void				SetSocket(int & val);
@@ -39,6 +51,7 @@ class Server
 		void				SetServerName(std::string & val);
 		void				SetHostName(std::string & val);
 		void				SetAddr(struct sockaddr_in & addr);
+		void				SetAutoIndex(int val);
 
 		void				ft_parse_config_file(const std::string & confFile);
 };
