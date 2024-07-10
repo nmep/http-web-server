@@ -53,7 +53,7 @@ class Server
 		void				SetAddr(struct sockaddr_in & addr);
 		void				SetAutoIndex(int val);
 
-		void				ft_parse_config_file(const std::string & confFile);
+		bool				ft_parse_config_file(const std::string & confFile);
 };
 
 // surcharge d'op <<

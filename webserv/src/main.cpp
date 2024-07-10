@@ -12,15 +12,8 @@ int	main(int ac, char **av)
 		// faire le serveur web avec le fichier de config
 		Server	serv;
 		const std::string file(av[1]);
-		try
-		{
-			serv.ft_parse_config_file(file);
-		}
-		catch (std::exception& e)
-		{
-			std::cerr << e.what() << '\n';
-			return 2;
-		}
+		if (!serv.ft_parse_config_file(file))
+			std::cerr << "Error config file" << std::endl;
 		// parser le fichier et recuperer ses infos
 		// lancer le serveur
 	}

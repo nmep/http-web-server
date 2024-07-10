@@ -69,8 +69,17 @@ void	Server::SetAutoIndex(int val) {
 
 /* --------------------------- PARSING -------------------------------------- */
 
-static int	ft_access_file(const std::string & confFile) {
+static int	access_file(const std::string & confFile) {
 	return access(confFile.c_str(), F_OK | R_OK);
+}
+
+static bool isOnlyWithSpace(std::string const & line)
+{
+	for (size_t i = 0; i < line.length(); i++) {
+		if ((line[i] < 9 || line[i] > 13) && line[i] != 32)
+			return false;
+	}
+	return true;
 }
 
 static std::vector<std::string>	split(std::string & line) {
@@ -85,19 +94,62 @@ static std::vector<std::string>	split(std::string & line) {
 		else
 			end = line.find(32, start);
 		if (end > start)
-		{
 			v.push_back(line.substr(start, end - start));
-			std::cout << "v = [" << v.back() << "]" << std::endl;
-		}
 		start = end + 1;
 	}
 	return v;
 }
 
-static void	ReadFile(const std::string & confFileFD) {
+static void	handleServerParsing(std::vector<std::string> lineSplit) {
+	(void)lineSplit;
+	std::cout << "ServerPars" << std::endl;
+}
+
+static void	handleListenParsing(std::vector<std::string> lineSplit) {
+	(void)lineSplit;
+	std::cout << "ListenPars" << std::endl;
+}
+
+static void	handleServerNameParsing(std::vector<std::string> lineSplit) {
+	(void)lineSplit;
+	std::cout << "ServerNamePars" << std::endl;
+}
+
+static void	handleErrorPageParsing(std::vector<std::string> lineSplit) {
+	(void)lineSplit;
+	std::cout << "ErrorPageParse" << std::endl;
+}
+
+static void	handleClientMaxBodySizeParsing(std::vector<std::string> lineSplit) {
+	(void)lineSplit;
+	std::cout << "ClientMaxBodySizePars" << std::endl;
+}
+
+static void	handleLocationParsing(std::vector<std::string> lineSplit) {
+	(void)lineSplit;
+	std::cout << "LocationPars" << std::endl;
+}
+
+static bool AssignToken(std::vector<std::string> lineSplit, int countLine) {
+	const std::string token[] = {"server", "listen", "server_name", "error_page"\
+							, "client_max_body_size", "location"};
+	void	(*FuncPtr[]) (std::vector<std::string>) = {&handleServerParsing, &handleListenParsing, &handleServerNameParsing\
+		, &handleErrorPageParsing, &handleClientMaxBodySizeParsing, &handleLocationParsing};
+
+	for (size_t i = 0; i < 6; i++) {
+		if (*(lineSplit.begin()) == token[i])
+			return FuncPtr[i](lineSplit), false;
+	}
+	std::cerr << "Invalid token [" << *(lineSplit.begin()) << "]" << " at line " << countLine << std::endl;
+	return false;
+}
+
+static bool	ReadFile(const std::string & confFileFD) {
 	std::string line;
 	std::ifstream file(confFileFD.c_str());
-	// int	line_count = 0;
+	std::vector<std::string> lineSplit;
+
+	int	line_count = 1;
 	// server
 		/* conte les braqui ouvrante et fermante */
 	// listen
@@ -110,22 +162,27 @@ static void	ReadFile(const std::string & confFileFD) {
 		// split
 	// location
 
-
-	/* faire un boucle de read  */
+	// faire une premiere boucle qui vas tout lire est verifier la syntaxe
+	/* faire une deuxieme boucle et tout lire si la syntaxe est correct */
 	while (getline(file, line))
 	{
+		if (line.empty() || isOnlyWithSpace(line))
+			continue ;
 		/* recuperer le premier mot de la ligne et le faire comp avec les mots
 			cles et en fonctions de mots cles appliquer tels ou tel fonctions*/
-		split(line);
-
+		lineSplit = split(line);
+		if (!AssignToken(lineSplit, line_count))
+			return false;
+		line_count++;
 	}
+	return true;
 }
 
-
-void	Server::ft_parse_config_file(const std::string & confFile) {
+bool	Server::ft_parse_config_file(const std::string & confFile) {
 	// ouvrir le fichier
-	if (ft_access_file(confFile) < 0)
-		throw std::invalid_argument("Config file error: access");
+	if (access_file(confFile) < 0)
+		return false;
 	// lire le fichier
 	ReadFile(confFile);
+	return true;
 }
