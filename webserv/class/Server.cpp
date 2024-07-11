@@ -131,16 +131,30 @@ static void	handleLocationParsing(std::vector<std::string> lineSplit) {
 }
 
 static bool AssignToken(std::vector<std::string> lineSplit, int countLine) {
-	const std::string token[] = {"server", "listen", "server_name", "error_page"\
+	const std::string fTokens[] = {"server", "listen", "server_name", "error_page"\
 							, "client_max_body_size", "location"};
+	const std::string cTokens[] = {"server", "listen", "server_name", "error_page", "client_max_body_size", "location", "}"};
 	void	(*FuncPtr[]) (std::vector<std::string>) = {&handleServerParsing, &handleListenParsing, &handleServerNameParsing\
 		, &handleErrorPageParsing, &handleClientMaxBodySizeParsing, &handleLocationParsing};
 
+	if (*(lineSplit.begin()) == "}")
+		return true;
+	for (size_t i = 0; i <= cTokens->size(); i++) {
+		std::cerr << "size " << cTokens->length() << " i = " << i << " ctoken = " << cTokens[i] << std::endl;
+		if (*(lineSplit.begin()) == cTokens[i])
+			break;
+
+		if (i == cTokens->size()) {
+			std::cerr << "Invalid syntaxe: " << *(lineSplit.begin()) << " at line " << countLine << std::endl;
+			return false;
+		}
+	}
+
 	for (size_t i = 0; i < 6; i++) {
-		if (*(lineSplit.begin()) == token[i])
+		if (*(lineSplit.begin()) == fTokens[i])
 			return FuncPtr[i](lineSplit), true;
 	}
-	std::cerr << "Invalid token [" << *(lineSplit.begin()) << "]" << " at line " << countLine << std::endl;
+	std::cerr << "Invalid syntax: " << *(lineSplit.begin()) << " at line " << countLine << std::endl;
 	return false;
 }
 
@@ -155,8 +169,11 @@ static bool AssignToken(std::vector<std::string> lineSplit, int countLine) {
 // }
 
 bool	StrIsContext(std::string const & str) {
-	const std::string context[] = {"server", "location"};
-	for (size_t i = 0; i < str.size(); i++) {
+	const std::string context[] = {"server", "location", "}"};
+
+	std::cout << "str = " << str << "cont size = " << context->size() << std::endl;
+	for (size_t i = 0; context[i] != "\0" ; i++) {
+		std::cout << "boucle " << std::endl;
 		if (str == context[i])
 			return true;
 	}
@@ -171,9 +188,9 @@ static int	SyntaxParse(std::vector<std::string> & v, int countLine, int *OCB, in
 	std::vector<std::string>::iterator ite = v.end();
 	if (StrIsContext(*(v.begin())))
 	{
-		if (*(ite - 1) != "{")
+		if (*(ite - 1) != "{" && *(ite - 1) != "}")
 		{
-			std::cerr << "Error syntaxe: " << *(ite - 1) << " at line " << countLine \
+			std::cerr << "Error syntax: " << *(ite - 1) << " at line " << countLine \
 				<< " curly brace is missing" << std::endl;
 				return false;
 		}
@@ -182,7 +199,7 @@ static int	SyntaxParse(std::vector<std::string> & v, int countLine, int *OCB, in
 	{
 		if (!StrSyntaxeCheck(*(ite - 1)))
 		{
-			std::cerr << "Error syntaxe: " << *(ite - 1) << " at line " << countLine \
+			std::cerr << "Error syntax: " << *(ite - 1) << " at line " << countLine \
 				<< " ';' is missing at the end of line" << std::endl;
 			return false;
 		}
@@ -190,14 +207,14 @@ static int	SyntaxParse(std::vector<std::string> & v, int countLine, int *OCB, in
 	for (std::vector<std::string>::iterator it = v.begin(); it < v.end(); it++) {
 		if (*(it) == "{}")
 		{
-			std::cerr << "Error syntaxe: " << *(it) << " at line " << countLine << std::endl;
+			std::cerr << "???" << std::endl;
+			std::cerr << "Error syntax: " << *(it) << " at line " << countLine << std::endl;
 			return false;
 		}
 		else if (*(it) == "{")
 			(*OCB)++;
 		else if (*(it) == "}")
 			(*CCB)++;
-		
 	}
 	return true;
 }
@@ -220,18 +237,26 @@ static bool	ReadFile(const std::string & confFileFD) {
 		/* recuperer le premier mot de la ligne et le faire comp avec les mots
 			cles et en fonctions de mots cles appliquer tels ou tel fonctions*/
 		lineSplit = split(line);
+		// check si la ligne est en dehors du scope des accolade, si oui mettre faux
+		if ((OCurlyBrace == CCurlyBrace && OCurlyBrace > 0) && *(lineSplit.begin()) != "server") {
+			std::cerr << "Error syntax: element -> " << line << "isn't in the scope at the line " << line << std::endl;   
+		}
+		// check si le premier mot est correct
+		std::cerr << "syntax" << std::endl;
 		if (!SyntaxParse(lineSplit, countLine, &OCurlyBrace, &CCurlyBrace))
 			return false;
+		std::cerr << "assign" << std::endl;
 		if (!AssignToken(lineSplit, countLine))
 			return false;
 		countLine++;
 	}
+
 	std::cout << OCurlyBrace << ' ' << CCurlyBrace << std::endl;
 	if (OCurlyBrace != CCurlyBrace) {
 		if (OCurlyBrace < CCurlyBrace)
-			std::cerr << CCurlyBrace - OCurlyBrace << " Open curly brace is missing" << std::endl;
+			std::cerr << "Error syntax: " << CCurlyBrace - OCurlyBrace << " Open curly brace is missing" << std::endl;
 		else
-			std::cerr << OCurlyBrace - CCurlyBrace << " Close curly brace is missing" << std::endl;
+			std::cerr << "Error syntax: " << OCurlyBrace - CCurlyBrace << " Close curly brace is missing" << std::endl;
 		return false;
 	}
 	return true;
