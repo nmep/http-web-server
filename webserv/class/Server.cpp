@@ -138,42 +138,101 @@ static bool AssignToken(std::vector<std::string> lineSplit, int countLine) {
 
 	for (size_t i = 0; i < 6; i++) {
 		if (*(lineSplit.begin()) == token[i])
-			return FuncPtr[i](lineSplit), false;
+			return FuncPtr[i](lineSplit), true;
 	}
 	std::cerr << "Invalid token [" << *(lineSplit.begin()) << "]" << " at line " << countLine << std::endl;
 	return false;
 }
 
+// static void	printVector(std::vector<std::string> & v) {
+// 	// std::vector<std::string>::iterator it = v.begin();
+// 	std::vector<std::string>::iterator ite = v.end();
+
+// 	std::cout << "last = " << *(--ite) << std::endl;
+// 	// for (std::vector<std::string>::iterator it = v.begin(); it < v.end(); it++) {
+// 	// 	std::cout << "v[] = " << *(it) << std::endl;
+// 	// }
+// }
+
+bool	StrIsContext(std::string const & str) {
+	const std::string context[] = {"server", "location"};
+	for (size_t i = 0; i < str.size(); i++) {
+		if (str == context[i])
+			return true;
+	}
+	return false;
+}
+
+bool	StrSyntaxeCheck(std::string const & str) {
+	return str[str.size() - 1] == ';' ? true : false;
+}
+
+static int	SyntaxParse(std::vector<std::string> & v, int countLine, int *OCB, int *CCB) {
+	std::vector<std::string>::iterator ite = v.end();
+	if (StrIsContext(*(v.begin())))
+	{
+		if (*(ite - 1) != "{")
+		{
+			std::cerr << "Error syntaxe: " << *(ite - 1) << " at line " << countLine \
+				<< " curly brace is missing" << std::endl;
+				return false;
+		}
+	}
+	else
+	{
+		if (!StrSyntaxeCheck(*(ite - 1)))
+		{
+			std::cerr << "Error syntaxe: " << *(ite - 1) << " at line " << countLine \
+				<< " ';' is missing at the end of line" << std::endl;
+			return false;
+		}
+	}
+	for (std::vector<std::string>::iterator it = v.begin(); it < v.end(); it++) {
+		if (*(it) == "{}")
+		{
+			std::cerr << "Error syntaxe: " << *(it) << " at line " << countLine << std::endl;
+			return false;
+		}
+		else if (*(it) == "{")
+			(*OCB)++;
+		else if (*(it) == "}")
+			(*CCB)++;
+		
+	}
+	return true;
+}
+
 static bool	ReadFile(const std::string & confFileFD) {
 	std::string line;
+
 	std::ifstream file(confFileFD.c_str());
 	std::vector<std::string> lineSplit;
 
-	int	line_count = 1;
-	// server
-		/* conte les braqui ouvrante et fermante */
-	// listen
-		// split et recuperer la valeur du port
-	// server_name
-		// split aussi
-	// error_page
-		// split aussi
-	// client_max_body_size
-		// split
-	// location
+	int OCurlyBrace = 0;
+	int CCurlyBrace = 0;
+	int	countLine = 1;
 
-	// faire une premiere boucle qui vas tout lire est verifier la syntaxe
-	/* faire une deuxieme boucle et tout lire si la syntaxe est correct */
 	while (getline(file, line))
 	{
+		std::cout << "line = " << line << std::endl;
 		if (line.empty() || isOnlyWithSpace(line))
 			continue ;
 		/* recuperer le premier mot de la ligne et le faire comp avec les mots
 			cles et en fonctions de mots cles appliquer tels ou tel fonctions*/
 		lineSplit = split(line);
-		if (!AssignToken(lineSplit, line_count))
+		if (!SyntaxParse(lineSplit, countLine, &OCurlyBrace, &CCurlyBrace))
 			return false;
-		line_count++;
+		if (!AssignToken(lineSplit, countLine))
+			return false;
+		countLine++;
+	}
+	std::cout << OCurlyBrace << ' ' << CCurlyBrace << std::endl;
+	if (OCurlyBrace != CCurlyBrace) {
+		if (OCurlyBrace < CCurlyBrace)
+			std::cerr << CCurlyBrace - OCurlyBrace << " Open curly brace is missing" << std::endl;
+		else
+			std::cerr << OCurlyBrace - CCurlyBrace << " Close curly brace is missing" << std::endl;
+		return false;
 	}
 	return true;
 }
@@ -183,6 +242,7 @@ bool	Server::ft_parse_config_file(const std::string & confFile) {
 	if (access_file(confFile) < 0)
 		return false;
 	// lire le fichier
-	ReadFile(confFile);
+	if (!ReadFile(confFile))
+		return false;
 	return true;
 }
