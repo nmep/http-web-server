@@ -48,13 +48,13 @@ class Server
 		struct sockaddr_in	GetAddr() const;
 		bool				GetAutoIndex() const;
 
-		void				SetPort(uint16_t & val);
-		void				SetSocket(int & val);
-		void				SetServerCount(int & val);
-		void				SetServerName(std::string & val);
-		void				SetHostName(std::string & val);
-		void				SetAddr(struct sockaddr_in & addr);
-		void				SetAutoIndex(int val);
+		static void				SetPort(uint16_t & val);
+		static void				SetSocket(int & val);
+		static void				SetServerCount(int & val);
+		static void				SetServerName(std::string & val);
+		static void				SetHostName(std::string & val);
+		static void				SetAddr(struct sockaddr_in & addr);
+		static void				SetAutoIndex(int val);
 
 		bool	ft_parse_config_file(const std::string & confFile);
 };

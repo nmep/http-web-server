@@ -1,11 +1,12 @@
 #include "Server.hpp"
 
-uint16_t			Server::_port = 0;
-int					Server::_socket = 0;
-int					Server::_server_count = 0;
+uint16_t					Server::_port = 0;
+int							Server::_socket = 0;
+int							Server::_server_count = 0;
 std::string			Server::_serverName = "default";
+std::string			Server::_hostName = "default";
 struct sockaddr_in	Server::_addr;
-bool				Server::_autoIndex = false;
+bool						Server::_autoIndex = false;
 Server::Server() {}
 
 Server::~Server() {}
@@ -144,27 +145,36 @@ bool	handleListenParsing(std::vector<std::string> lineSplit, int countLine) {
 		std::cerr << "Invalid syntax " << *(lineSplit.begin() + 1) << " at line " << countLine << std::endl;
 		return false;
 	}
+	Server::SetPort(port);
 	return true;
 }
 
 bool	handleServerNameParsing(std::vector<std::string> lineSplit, int countLine) {
 	(void)lineSplit;
+	(void)countLine;
 	std::cout << "ServerNamePars" << std::endl;
+	return true;
 }
 
 bool	handleErrorPageParsing(std::vector<std::string> lineSplit, int countLine) {
 	(void)lineSplit;
+	(void)countLine;
 	std::cout << "ErrorPageParse" << std::endl;
+	return true;
 }
 
 bool	handleClientMaxBodySizeParsing(std::vector<std::string> lineSplit, int countLine) {
 	(void)lineSplit;
+	(void)countLine;
 	std::cout << "ClientMaxBodySizePars" << std::endl;
+	return true;
 }
 
 bool	handleLocationParsing(std::vector<std::string> lineSplit, int countLine) {
 	(void)lineSplit;
+	(void)countLine;
 	std::cout << "LocationPars" << std::endl;
+	return true;
 }
 
 bool AssignToken(std::vector<std::string> lineSplit, int countLine) {

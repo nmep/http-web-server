@@ -1,7 +1,7 @@
 # FILE
 NAME = webserv
 
-SRC = class/Server.cpp src/main.cpp src/tools/Convertion.cpp
+SRC = class/Server.cpp src/main.cpp
 OBJ = $(addprefix obj/, $(SRC:.cpp=.o))
 OBJ_DIR = $(addprefix ./obj/, $(notdir $(shell find ./ -type d -not -path ./conf -not -path ./include -not -path ./obj)))
 
