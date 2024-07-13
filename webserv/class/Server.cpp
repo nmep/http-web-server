@@ -137,14 +137,25 @@ bool	handleListenParsing(std::vector<std::string> lineSplit, int countLine) {
 		std::cerr << "Invalid syntax: at line " << countLine << "should be listen	Port < 65535" << std::endl;
 		return false;
 	}
-	if (!strIsNum(*(lineSplit.begin() + 1))) {
-		std::cerr << "Invalid syntax: Listen Port" << *(lineSplit.begin() + 1) << "at line " << countLine << std::endl;
+	// get the port without colom
+	std::string portWithoutColom = (lineSplit.begin() + 1)->erase((lineSplit.begin() + 1)->size() - 1);
+
+	// case where there is no value in config file after listen only a ';'
+	if (portWithoutColom == "") {
+		std::cerr << "Invalid syntax: Port value is invalid at line " << countLine << std::endl;
 		return false;
 	}
+
+	if (!strIsNum((*(lineSplit.begin() + 1)))) {
+		std::cerr << "Invalid syntax: Listen Port " << *(lineSplit.begin() + 1) << "at line " << countLine << std::endl;
+		return false;
+	}
+
 	if (!ft_atoi_port(&port, *(lineSplit.begin() + 1))) {
 		std::cerr << "Invalid syntax " << *(lineSplit.begin() + 1) << " at line " << countLine << std::endl;
 		return false;
 	}
+
 	Server::SetPort(port);
 	return true;
 }
@@ -187,9 +198,15 @@ bool AssignToken(std::vector<std::string> lineSplit, int countLine) {
 
 	if (*(lineSplit.begin()) == "}")
 		return true;
+
+	for (size_t i = 0; i < 5; i++) {
+		if (*(lineSplit.begin()) == fTokens[i])
+			return FuncPtr[i](lineSplit, countLine);
+	}
+
 	for (size_t i = 0; i <= cTokens->size(); i++) {
 		if (*(lineSplit.begin()) == cTokens[i])
-			break;
+			return true; // break 
 
 		if (i == cTokens->size()) {
 			std::cerr << "Invalid syntax: Invalid token [" << *(lineSplit.begin()) << "] at line " << countLine << std::endl;
@@ -197,10 +214,6 @@ bool AssignToken(std::vector<std::string> lineSplit, int countLine) {
 		}
 	}
 
-	for (size_t i = 0; i < 6; i++) {
-		if (*(lineSplit.begin()) == fTokens[i])
-			return FuncPtr[i](lineSplit, countLine);
-	}
 	std::cerr << "Invalid syntax: " << *(lineSplit.begin()) << " at line " << countLine << std::endl;
 	return false;
 }

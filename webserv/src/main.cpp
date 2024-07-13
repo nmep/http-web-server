@@ -14,6 +14,7 @@ int	main(int ac, char **av)
 		const std::string file(av[1]);
 		if (!serv.ft_parse_config_file(file))
 			std::cerr << "Error config file" << std::endl;
+		std::cout << "port = " << serv.GetPort() << std::endl;
 		// parser le fichier et recuperer ses infos
 		// lancer le serveur
 	}
