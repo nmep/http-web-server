@@ -17,17 +17,20 @@
 	#include <unistd.h> // access
 	#include <stdio.h> // perror
 
+	#include <limits.h>
+
+	#define PORT_MAX 65535
+
 class Server
 {
 	private:
-		
-		uint16_t			_port;
-		int					_socket;
-		int 				_server_count;
-		std::string			_serverName;
-		std::string			_hostName;
-		struct sockaddr_in	_addr;
-		bool				_autoIndex;
+		static uint16_t			_port;
+		static int					_socket;
+		static int 				_server_count;
+		static std::string			_serverName;
+		static std::string			_hostName;
+		static struct sockaddr_in	_addr;
+		static bool				_autoIndex;
 
 		std::map<const std::string, std::string> _location;
 
@@ -53,9 +56,8 @@ class Server
 		void				SetAddr(struct sockaddr_in & addr);
 		void				SetAutoIndex(int val);
 
-		bool				ft_parse_config_file(const std::string & confFile);
+		bool	ft_parse_config_file(const std::string & confFile);
 };
-
 // surcharge d'op <<
 
 # endif

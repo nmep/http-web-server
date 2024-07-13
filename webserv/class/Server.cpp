@@ -1,7 +1,12 @@
 #include "Server.hpp"
 
-Server::Server() : _port(0), _socket(0), _server_count(0), \
-	_serverName("default"), _hostName("default") {}
+uint16_t			Server::_port = 0;
+int					Server::_socket = 0;
+int					Server::_server_count = 0;
+std::string			Server::_serverName = "default";
+struct sockaddr_in	Server::_addr;
+bool				Server::_autoIndex = false;
+Server::Server() {}
 
 Server::~Server() {}
 
@@ -38,33 +43,33 @@ bool Server::GetAutoIndex() const {
 /* ----------------------------------------------------------------- */
 
 void	Server::SetPort(uint16_t & val) {
-	this->_port = val;
+	Server::_port = val;
 }
 
 void	Server::SetSocket(int & val) {
-	this->_socket = val;
+	Server::_socket = val;
 }
 
 void	Server::SetServerCount(int & val) {
-	this->_server_count = val;
+	Server::_server_count = val;
 }
 
 void	Server::SetServerName(std::string & val) {
-	this->_serverName = val;
+	Server::_serverName = val;
 }
 
 void Server::SetHostName(std::string & val) {
-	this->_serverName = val;
+	Server::_hostName = val;
 }
 
 void	Server::SetAddr(struct sockaddr_in & val) {
-	this->_addr.sin_family = val.sin_family;
-	this->_addr.sin_addr.s_addr = val.sin_addr.s_addr;
-	this->_addr.sin_port = val.sin_port;
+	Server::_addr.sin_family = val.sin_family;
+	Server::_addr.sin_addr.s_addr = val.sin_addr.s_addr;
+	Server::_addr.sin_port = val.sin_port;
 }
 
 void	Server::SetAutoIndex(int val) {
-	this->_autoIndex = val;
+	Server::_autoIndex = val;
 }
 
 /* --------------------------- PARSING -------------------------------------- */
@@ -100,41 +105,74 @@ static std::vector<std::string>	split(std::string & line) {
 	return v;
 }
 
-static void	handleServerParsing(std::vector<std::string> lineSplit) {
-	(void)lineSplit;
-	std::cout << "ServerPars" << std::endl;
+uint16_t	ft_atoi_port(uint16_t *ptr, std::string str) {
+	int	i = 0;
+
+	while ((str[i] > 9 && str[i] < 13) || str[i] == 32) {
+		i++;
+	}
+	while (str[i] >= '0' && str[i] <= '9') {
+		if (*ptr > PORT_MAX / 10 || (*ptr > PORT_MAX / 10 && (str[i] - 48) > PORT_MAX % 10))
+			return false;
+		*ptr = *ptr * 10 + (str[i] - 48);
+		i++;
+	}
+	return true;
 }
 
-static void	handleListenParsing(std::vector<std::string> lineSplit) {
-	(void)lineSplit;
-	std::cout << "ListenPars" << std::endl;
+bool	strIsNum(std::string str) {
+	for (size_t i = 0; i < str.size(); i++) {
+		if (str[i] < '0' || str[i] > '9') {
+			return false;
+		}
+	}
+	return true;
 }
 
-static void	handleServerNameParsing(std::vector<std::string> lineSplit) {
+bool	handleListenParsing(std::vector<std::string> lineSplit, int countLine) {
+	uint16_t port = 0;
+
+	if (lineSplit.size() != 2) {
+		std::cerr << "Invalid syntax: at line " << countLine << "should be listen	Port < 65535" << std::endl;
+		return false;
+	}
+	if (!strIsNum(*(lineSplit.begin() + 1))) {
+		std::cerr << "Invalid syntax: Listen Port" << *(lineSplit.begin() + 1) << "at line " << countLine << std::endl;
+		return false;
+	}
+	if (!ft_atoi_port(&port, *(lineSplit.begin() + 1))) {
+		std::cerr << "Invalid syntax " << *(lineSplit.begin() + 1) << " at line " << countLine << std::endl;
+		return false;
+	}
+	return true;
+}
+
+bool	handleServerNameParsing(std::vector<std::string> lineSplit, int countLine) {
 	(void)lineSplit;
 	std::cout << "ServerNamePars" << std::endl;
 }
 
-static void	handleErrorPageParsing(std::vector<std::string> lineSplit) {
+bool	handleErrorPageParsing(std::vector<std::string> lineSplit, int countLine) {
 	(void)lineSplit;
 	std::cout << "ErrorPageParse" << std::endl;
 }
 
-static void	handleClientMaxBodySizeParsing(std::vector<std::string> lineSplit) {
+bool	handleClientMaxBodySizeParsing(std::vector<std::string> lineSplit, int countLine) {
 	(void)lineSplit;
 	std::cout << "ClientMaxBodySizePars" << std::endl;
 }
 
-static void	handleLocationParsing(std::vector<std::string> lineSplit) {
+bool	handleLocationParsing(std::vector<std::string> lineSplit, int countLine) {
 	(void)lineSplit;
 	std::cout << "LocationPars" << std::endl;
 }
 
-static bool AssignToken(std::vector<std::string> lineSplit, int countLine) {
-	const std::string fTokens[] = {"server", "listen", "server_name", "error_page"\
-							, "client_max_body_size", "location"};
+bool AssignToken(std::vector<std::string> lineSplit, int countLine) {
+	const std::string fTokens[] = {"listen", "server_name", "error_page"\
+							, "client_max_body_size", "location"}; // pour location apelle directement getline dans
+							// la fonction de location parse et voir si ca marche
 	const std::string cTokens[] = {"server", "listen", "server_name", "error_page", "client_max_body_size", "location", "}"};
-	void	(*FuncPtr[]) (std::vector<std::string>) = {&handleServerParsing, &handleListenParsing, &handleServerNameParsing\
+	bool	(*FuncPtr[]) (std::vector<std::string>, int) = {&handleListenParsing, &handleServerNameParsing\
 		, &handleErrorPageParsing, &handleClientMaxBodySizeParsing, &handleLocationParsing};
 
 	if (*(lineSplit.begin()) == "}")
@@ -144,14 +182,14 @@ static bool AssignToken(std::vector<std::string> lineSplit, int countLine) {
 			break;
 
 		if (i == cTokens->size()) {
-			std::cerr << "Invalid syntaxe: " << *(lineSplit.begin()) << " at line " << countLine << std::endl;
+			std::cerr << "Invalid syntax: Invalid token [" << *(lineSplit.begin()) << "] at line " << countLine << std::endl;
 			return false;
 		}
 	}
 
 	for (size_t i = 0; i < 6; i++) {
 		if (*(lineSplit.begin()) == fTokens[i])
-			return FuncPtr[i](lineSplit), true;
+			return FuncPtr[i](lineSplit, countLine);
 	}
 	std::cerr << "Invalid syntax: " << *(lineSplit.begin()) << " at line " << countLine << std::endl;
 	return false;
@@ -204,7 +242,6 @@ static int	SyntaxParse(std::vector<std::string> & v, int countLine, int *OCB, in
 	for (std::vector<std::string>::iterator it = v.begin(); it < v.end(); it++) {
 		if (*(it) == "{}")
 		{
-			std::cerr << "???" << std::endl;
 			std::cerr << "Invalid syntax: " << *(it) << " at line " << countLine << std::endl;
 			return false;
 		}
