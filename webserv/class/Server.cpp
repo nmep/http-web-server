@@ -3,7 +3,7 @@
 uint16_t					Server::_port = 0;
 int							Server::_socket = 0;
 int							Server::_server_count = 0;
-std::string			Server::_serverName = "default";
+std::string		Server::_serverName [] = {"default"};
 std::string			Server::_hostName = "default";
 struct sockaddr_in	Server::_addr;
 bool						Server::_autoIndex = false;
@@ -21,8 +21,13 @@ int	Server::GetSocket() const {
 	return this->_socket;
 }
 
-const std::string Server::GetServerName() const {
-	return this->_serverName;
+const std::string Server::GetServerName(int index) const {
+	if ((unsigned long long) index >= sizeof(this->_serverName) / sizeof(std::string)) {
+		std::cout << "NP" << std::endl;
+		return this->_serverName[sizeof(this->_serverName) / sizeof(std::string) - 1];
+	}
+	std::cout << "N" << std::endl;
+	return this->_serverName[index - 1];
 }
 
 const std::string Server::GetHostName() const {
@@ -55,8 +60,8 @@ void	Server::SetServerCount(int & val) {
 	Server::_server_count = val;
 }
 
-void	Server::SetServerName(std::string & val) {
-	Server::_serverName = val;
+void	Server::SetServerName(std::string & val, int index) {
+	Server::_serverName[index - 1] = val;
 }
 
 void Server::SetHostName(std::string & val) {
@@ -130,6 +135,8 @@ bool	strIsNum(std::string str) {
 	return true;
 }
 
+// rajouter un serverparse pour compter le nombre de serveur ?
+
 bool	handleListenParsing(std::vector<std::string> lineSplit, int countLine) {
 	uint16_t port = 0;
 
@@ -138,10 +145,10 @@ bool	handleListenParsing(std::vector<std::string> lineSplit, int countLine) {
 		return false;
 	}
 	// get the port without colom
-	std::string portWithoutColom = (lineSplit.begin() + 1)->erase((lineSplit.begin() + 1)->size() - 1);
+	(lineSplit.begin() + 1)->erase((lineSplit.begin() + 1)->end() - 1);
 
 	// case where there is no value in config file after listen only a ';'
-	if (portWithoutColom == "") {
+	if (*(lineSplit.begin() + 1) == "") {
 		std::cerr << "Invalid syntax: Port value is invalid at line " << countLine << std::endl;
 		return false;
 	}
@@ -161,9 +168,23 @@ bool	handleListenParsing(std::vector<std::string> lineSplit, int countLine) {
 }
 
 bool	handleServerNameParsing(std::vector<std::string> lineSplit, int countLine) {
-	(void)lineSplit;
-	(void)countLine;
 	std::cout << "ServerNamePars" << std::endl;
+	// est ce qu'il y a un servername ?
+	std::string withoutColom;
+
+	if (lineSplit.size() <= 1) {
+		std::cerr << "Invalid syntax: Server name need content at line " << countLine << std::endl;
+		return false;
+	}
+	// prendre a partir de split begin + 1 et ajouter dans _servername peut importe le nom il sera
+	for (size_t i = 0; i < lineSplit.size(); i++) {
+		if (i == lineSplit.size() - 1) {
+			(lineSplit.begin() + i)->erase((lineSplit.begin() + i)->end() - 1);
+		}
+		Server::SetServerName(*(lineSplit.begin() + i), i + 1);
+	}
+	// tester dans la gestion de socket s'il est correct (je pense si c'est le cas et que ca ne marche
+	// pas, 404 ?)
 	return true;
 }
 
@@ -306,7 +327,6 @@ static bool	ReadFile(const std::string & confFileFD) {
 		countLine++;
 	}
 
-	std::cout << OCurlyBrace << ' ' << CCurlyBrace << std::endl;
 	if (OCurlyBrace != CCurlyBrace) {
 		if (OCurlyBrace < CCurlyBrace)
 			std::cerr << "Invalid syntax: " << CCurlyBrace - OCurlyBrace << " Open curly brace is missing" << std::endl;

@@ -10,6 +10,7 @@
 	#include <stdint.h> // uint16_t
 	#include <string> // getline
 	#include <fstream> // inputfile
+	#include <string> // string manip
 
 	#include <map> // map
 	#include <vector> // vector
@@ -24,13 +25,13 @@
 class Server
 {
 	private:
-		static uint16_t			_port;
+		static uint16_t				_port;
 		static int					_socket;
-		static int 				_server_count;
-		static std::string			_serverName;
+		static int 					_server_count;
+		static std::string			_serverName	[];
 		static std::string			_hostName;
 		static struct sockaddr_in	_addr;
-		static bool				_autoIndex;
+		static bool					_autoIndex;
 
 		std::map<const std::string, std::string> _location;
 
@@ -43,7 +44,7 @@ class Server
 		uint16_t			GetPort() const;
 		int					GetSocket() const;
 		int					GetServerCount() const;
-		const std::string	GetServerName() const;
+		const std::string	GetServerName(int index) const;
 		const std::string	GetHostName() const;
 		struct sockaddr_in	GetAddr() const;
 		bool				GetAutoIndex() const;
@@ -51,7 +52,7 @@ class Server
 		static void				SetPort(uint16_t & val);
 		static void				SetSocket(int & val);
 		static void				SetServerCount(int & val);
-		static void				SetServerName(std::string & val);
+		static void				SetServerName(std::string & val, int index);
 		static void				SetHostName(std::string & val);
 		static void				SetAddr(struct sockaddr_in & addr);
 		static void				SetAutoIndex(int val);
