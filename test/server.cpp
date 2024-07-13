@@ -12,7 +12,6 @@ int	main()
 {
 	int socket_fd;
 
-
 	if ((socket_fd = socket(AF_INET, SOCK_STREAM, 0)) == -1)
 	{
 		perror("socket creation failed");
@@ -24,6 +23,7 @@ int	main()
 	addr.sin_family = AF_INET;
 	addr.sin_addr.s_addr = INADDR_ANY; // j'assigne n'importe quel port de connection mais si c'est un vrais serveur il faudra preciser le port a son protocol
 	addr.sin_port = htons(PORT);
+
 	std::memset(addr.sin_zero, '\0', sizeof(addr.sin_zero));
 
 	if (bind(socket_fd, (const sockaddr *) &addr, sizeof(addr)) == -1)
@@ -55,13 +55,15 @@ int	main()
 		char buffer[1024] = {0};
 		int readval = read(accept_socket, buffer, 1024);
 		if (readval < 0)
+		{
 			printf("no bytes are there to read\n");
-		const char *hello = "Hello from the server";
+			continue ;
+		}
+		const char *hello = "HTTP/1.1 200 OK\nContent-Type: text/plain\nContent-Length: 12\n\nHello world!";
 		write(accept_socket, hello, strlen(hello));
 		printf("%s\n", buffer);
 		close(accept_socket);
 	}
-
 	close(socket_fd);
 
 }

@@ -38,6 +38,7 @@ int	main()
 		perror("Connection failed ");
 		return 2;
 	}
+	printf("connection successed\n");
 	// envoier le message
 	const char *hello = "hello from client";
 	send(socket_fd, hello, strlen(hello), 0);
