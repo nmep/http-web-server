@@ -25,13 +25,13 @@
 class Server
 {
 	private:
-		static uint16_t				_port;
-		static int					_socket;
-		static int 					_server_count;
-		static std::string			_serverName	[];
-		static std::string			_hostName;
-		static struct sockaddr_in	_addr;
-		static bool					_autoIndex;
+		static uint16_t							_port;
+		static int								_socket;
+		static int 								_server_count;
+		static std::string						_serverName [];
+		static std::string						_hostName;
+		static struct sockaddr_in				_addr;
+		static bool								_autoIndex;
 
 		std::map<const std::string, std::string> _location;
 
@@ -41,13 +41,13 @@ class Server
 		// faire de la copy
 		// surcharge d'op =
 
-		uint16_t			GetPort() const;
-		int					GetSocket() const;
-		int					GetServerCount() const;
-		const std::string	GetServerName(int index) const;
-		const std::string	GetHostName() const;
-		struct sockaddr_in	GetAddr() const;
-		bool				GetAutoIndex() const;
+		uint16_t				GetPort() const;
+		int						GetSocket() const;
+		int						GetServerCount() const;
+		std::string				GetServerName(int index) const;
+		std::string		GetHostName() const;
+		struct sockaddr_in		GetAddr() const;
+		bool					GetAutoIndex() const;
 
 		static void				SetPort(uint16_t & val);
 		static void				SetSocket(int & val);

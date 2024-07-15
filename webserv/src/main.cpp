@@ -16,12 +16,17 @@ int	main(int ac, char **av)
 		const std::string file(av[1]);
 		if (!serv.ft_parse_config_file(file))
 			std::cerr << "Error config file" << std::endl;
+		std::cout << "main" << std::endl;
 		std::cout << "port = " << serv.GetPort() << std::endl;
 
-		std::cout << "server name = " << serv.GetServerName(1) << std::endl;
+		std::cout << "server name print = " << serv.GetServerName(1) << std::endl;
+		std::cout << "-----------------" << std::endl;
 		std::cout << "server name = " << serv.GetServerName(2) << std::endl;
+		std::cout << "-----------------" << std::endl;
 		std::cout << "server name = " << serv.GetServerName(3) << std::endl;
+		std::cout << "-----------------" << std::endl;
 		std::cout << "server name = " << serv.GetServerName(4) << std::endl;
+		std::cout << "-----------------" << std::endl;
 		// std::cout << "server name = " << serv.GetServerName(5) << std::endl;
 
 

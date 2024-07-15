@@ -3,9 +3,9 @@
 uint16_t					Server::_port = 0;
 int							Server::_socket = 0;
 int							Server::_server_count = 0;
-std::string		Server::_serverName [] = {"default"};
-std::string			Server::_hostName = "default";
-struct sockaddr_in	Server::_addr;
+std::string					Server::_serverName [] = {""};
+std::string					Server::_hostName = "default";
+struct sockaddr_in			Server::_addr;
 bool						Server::_autoIndex = false;
 Server::Server() {}
 
@@ -21,16 +21,17 @@ int	Server::GetSocket() const {
 	return this->_socket;
 }
 
-const std::string Server::GetServerName(int index) const {
-	if ((unsigned long long) index >= sizeof(this->_serverName) / sizeof(std::string)) {
-		std::cout << "NP" << std::endl;
-		return this->_serverName[sizeof(this->_serverName) / sizeof(std::string) - 1];
+std::string Server::GetServerName(int index) const {
+	std::cout << "if " << (unsigned long long) index << " >= " << Server::_serverName->size() << std::endl;
+	if ((unsigned long long) index >= Server::_serverName->size()) {
+		std::cout << "get server name index = " << sizeof(this->_serverName) / sizeof(std::string) - 1 << std::endl;
+		return this->_serverName[sizeof(this->_serverName) / sizeof(std::string)];
 	}
-	std::cout << "N" << std::endl;
+	std::cout << "servNG " << index - 1 << " = " << this->_serverName[index - 1] << std::endl;
 	return this->_serverName[index - 1];
 }
 
-const std::string Server::GetHostName() const {
+std::string Server::GetHostName() const {
 	return this->_hostName;
 }
 
@@ -61,7 +62,10 @@ void	Server::SetServerCount(int & val) {
 }
 
 void	Server::SetServerName(std::string & val, int index) {
+	std::cout << "index = " << index - 1 << " val = " << val << " size = " << Server::_serverName->size() << std::endl;
+	Server::_serverName->resize(index + 1);
 	Server::_serverName[index - 1] = val;
+	std::cout << "serverN " << index - 1 << " = " << Server::_serverName[index - 1] << std::endl;
 }
 
 void Server::SetHostName(std::string & val) {
@@ -177,11 +181,15 @@ bool	handleServerNameParsing(std::vector<std::string> lineSplit, int countLine) 
 		return false;
 	}
 	// prendre a partir de split begin + 1 et ajouter dans _servername peut importe le nom il sera
-	for (size_t i = 0; i < lineSplit.size(); i++) {
+	for (size_t i = 1; i < lineSplit.size(); i++) {
 		if (i == lineSplit.size() - 1) {
+			std::cout << "je cut sur " << *(lineSplit.begin() + i) << std::endl;
 			(lineSplit.begin() + i)->erase((lineSplit.begin() + i)->end() - 1);
 		}
-		Server::SetServerName(*(lineSplit.begin() + i), i + 1);
+		std::cout << "ici" << std::endl;
+		std::cout << "*(lineSplit.begin() + i) = " << *(lineSplit.begin() + i) << std::endl;
+		Server::SetServerName(*(lineSplit.begin() + i), i);
+		std::cout << "---------" << std::endl;
 	}
 	// tester dans la gestion de socket s'il est correct (je pense si c'est le cas et que ca ne marche
 	// pas, 404 ?)
@@ -252,7 +260,7 @@ bool AssignToken(std::vector<std::string> lineSplit, int countLine) {
 bool	StrIsContext(std::string const & str) {
 	const std::string context[] = {"server", "location", "}"};
 
-	for (size_t i = 0; context[i] != "\0" ; i++) {
+	for (size_t i = 0; i < sizeof(context) / sizeof(std::string) ; i++) {
 		if (str == context[i])
 			return true;
 	}
