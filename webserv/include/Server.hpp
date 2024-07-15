@@ -28,7 +28,7 @@ class Server
 		static uint16_t							_port;
 		static int								_socket;
 		static int 								_server_count;
-		static std::string						_serverName [];
+		static std::vector<std::string>			_serverName;
 		static std::string						_hostName;
 		static struct sockaddr_in				_addr;
 		static bool								_autoIndex;

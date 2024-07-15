@@ -19,7 +19,7 @@ int	main(int ac, char **av)
 		std::cout << "main" << std::endl;
 		std::cout << "port = " << serv.GetPort() << std::endl;
 
-		std::cout << "server name print = " << serv.GetServerName(1) << std::endl;
+		std::cout << "server name = " << serv.GetServerName(1) << std::endl;
 		std::cout << "-----------------" << std::endl;
 		std::cout << "server name = " << serv.GetServerName(2) << std::endl;
 		std::cout << "-----------------" << std::endl;
@@ -27,11 +27,9 @@ int	main(int ac, char **av)
 		std::cout << "-----------------" << std::endl;
 		std::cout << "server name = " << serv.GetServerName(4) << std::endl;
 		std::cout << "-----------------" << std::endl;
-		// std::cout << "server name = " << serv.GetServerName(5) << std::endl;
-
-
-
-
+		std::cout << "server name = " << serv.GetServerName(5) << std::endl;
+		std::cout << "-----------------" << std::endl;
+		std::cout << "server name = " << serv.GetServerName(6) << std::endl;
 		// parser le fichier et recuperer ses infos
 		// lancer le serveur
 	}

@@ -3,7 +3,7 @@
 uint16_t					Server::_port = 0;
 int							Server::_socket = 0;
 int							Server::_server_count = 0;
-std::string					Server::_serverName [] = {""};
+std::vector<std::string>	Server::_serverName;
 std::string					Server::_hostName = "default";
 struct sockaddr_in			Server::_addr;
 bool						Server::_autoIndex = false;
@@ -22,13 +22,7 @@ int	Server::GetSocket() const {
 }
 
 std::string Server::GetServerName(int index) const {
-	std::cout << "if " << (unsigned long long) index << " >= " << Server::_serverName->size() << std::endl;
-	if ((unsigned long long) index >= Server::_serverName->size()) {
-		std::cout << "get server name index = " << sizeof(this->_serverName) / sizeof(std::string) - 1 << std::endl;
-		return this->_serverName[sizeof(this->_serverName) / sizeof(std::string)];
-	}
-	std::cout << "servNG " << index - 1 << " = " << this->_serverName[index - 1] << std::endl;
-	return this->_serverName[index - 1];
+	return Server::_serverName[index - 1];
 }
 
 std::string Server::GetHostName() const {
@@ -62,9 +56,8 @@ void	Server::SetServerCount(int & val) {
 }
 
 void	Server::SetServerName(std::string & val, int index) {
-	std::cout << "index = " << index - 1 << " val = " << val << " size = " << Server::_serverName->size() << std::endl;
-	Server::_serverName->resize(index + 1);
-	Server::_serverName[index - 1] = val;
+	std::cout << "index = " << index - 1 << " val = " << val << " size = " << Server::_serverName.size() << std::endl;
+	Server::_serverName.push_back(val);
 	std::cout << "serverN " << index - 1 << " = " << Server::_serverName[index - 1] << std::endl;
 }
 
@@ -83,6 +76,16 @@ void	Server::SetAutoIndex(int val) {
 }
 
 /* --------------------------- PARSING -------------------------------------- */
+
+static void	printVector(std::vector<std::string> & v) {
+	// std::vector<std::string>::iterator it = v.begin();
+	std::vector<std::string>::iterator ite = v.end();
+
+	std::cout << "last = " << *(--ite) << std::endl;
+	for (std::vector<std::string>::iterator it = v.begin(); it < v.end(); it++) {
+		std::cout << "v[] = " << *(it) << std::endl;
+	}
+}
 
 static int	access_file(const std::string & confFile) {
 	return access(confFile.c_str(), F_OK | R_OK);
@@ -175,7 +178,9 @@ bool	handleServerNameParsing(std::vector<std::string> lineSplit, int countLine) 
 	std::cout << "ServerNamePars" << std::endl;
 	// est ce qu'il y a un servername ?
 	std::string withoutColom;
+	// (void)countLine;
 
+	printVector(lineSplit);
 	if (lineSplit.size() <= 1) {
 		std::cerr << "Invalid syntax: Server name need content at line " << countLine << std::endl;
 		return false;
@@ -183,13 +188,11 @@ bool	handleServerNameParsing(std::vector<std::string> lineSplit, int countLine) 
 	// prendre a partir de split begin + 1 et ajouter dans _servername peut importe le nom il sera
 	for (size_t i = 1; i < lineSplit.size(); i++) {
 		if (i == lineSplit.size() - 1) {
-			std::cout << "je cut sur " << *(lineSplit.begin() + i) << std::endl;
 			(lineSplit.begin() + i)->erase((lineSplit.begin() + i)->end() - 1);
+			std::cout << "lineSplit begin + " << i << " = " << *(lineSplit.begin() + i) << std::endl;
 		}
-		std::cout << "ici" << std::endl;
-		std::cout << "*(lineSplit.begin() + i) = " << *(lineSplit.begin() + i) << std::endl;
 		Server::SetServerName(*(lineSplit.begin() + i), i);
-		std::cout << "---------" << std::endl;
+		// std::cout << "*(lineSplit.begin() + i) = " << *(lineSplit.begin() + i) << std::endl;
 	}
 	// tester dans la gestion de socket s'il est correct (je pense si c'est le cas et que ca ne marche
 	// pas, 404 ?)
@@ -246,16 +249,6 @@ bool AssignToken(std::vector<std::string> lineSplit, int countLine) {
 	std::cerr << "Invalid syntax: " << *(lineSplit.begin()) << " at line " << countLine << std::endl;
 	return false;
 }
-
-// static void	printVector(std::vector<std::string> & v) {
-// 	// std::vector<std::string>::iterator it = v.begin();
-// 	std::vector<std::string>::iterator ite = v.end();
-
-// 	std::cout << "last = " << *(--ite) << std::endl;
-// 	// for (std::vector<std::string>::iterator it = v.begin(); it < v.end(); it++) {
-// 	// 	std::cout << "v[] = " << *(it) << std::endl;
-// 	// }
-// }
 
 bool	StrIsContext(std::string const & str) {
 	const std::string context[] = {"server", "location", "}"};
