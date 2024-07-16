@@ -2,6 +2,8 @@
 
 #include <cstring>
 
+void	printMap(std::map<std::string, std::string> map);
+
 int	main(int ac, char **av)
 {
 	if (ac == 1)
@@ -14,22 +16,16 @@ int	main(int ac, char **av)
 		// faire le serveur web avec le fichier de config
 		Server	serv;
 		const std::string file(av[1]);
-		if (!serv.ft_parse_config_file(file))
+		if (!serv.ft_parse_config_file(file)) {
 			std::cerr << "Error config file" << std::endl;
+			return 2;
+		}
 		std::cout << "main" << std::endl;
 		std::cout << "port = " << serv.GetPort() << std::endl;
-
-		std::cout << "server name = " << serv.GetServerName(1) << std::endl;
-		std::cout << "-----------------" << std::endl;
-		std::cout << "server name = " << serv.GetServerName(2) << std::endl;
-		std::cout << "-----------------" << std::endl;
-		std::cout << "server name = " << serv.GetServerName(3) << std::endl;
-		std::cout << "-----------------" << std::endl;
-		std::cout << "server name = " << serv.GetServerName(4) << std::endl;
-		std::cout << "-----------------" << std::endl;
-		std::cout << "server name = " << serv.GetServerName(5) << std::endl;
-		std::cout << "-----------------" << std::endl;
-		std::cout << "server name = " << serv.GetServerName(6) << std::endl;
+		std::cout << "error page" << std::endl;
+		std::cout << serv.GetErrorPage("404") << std::endl;
+		std::cout << "client max body size" << std::endl;
+		std::cout << serv.GetClientMaxBodySize() << std::endl;
 		// parser le fichier et recuperer ses infos
 		// lancer le serveur
 	}

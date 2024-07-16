@@ -25,15 +25,16 @@
 class Server
 {
 	private:
-		static uint16_t							_port;
-		static int								_socket;
-		static int 								_server_count;
-		static std::vector<std::string>			_serverName;
-		static std::string						_hostName;
-		static struct sockaddr_in				_addr;
-		static bool								_autoIndex;
-
-		std::map<const std::string, std::string> _location;
+		static	uint16_t							_port;
+		static	int									_socket;
+		static	int 								_server_count;
+		static	std::vector<std::string>			_serverName;
+		static	std::map<std::string, std::string>	_error_page;
+		static	uint16_t								_client_max_body_size;
+		static	std::string							_hostName;
+		static	struct sockaddr_in					_addr;
+		static	bool								_autoIndex;
+		std::map<const std::string, std::string> 	_location;
 
 	public:
 		Server();
@@ -45,14 +46,19 @@ class Server
 		int						GetSocket() const;
 		int						GetServerCount() const;
 		std::string				GetServerName(int index) const;
-		std::string		GetHostName() const;
+		std::string				GetHostName() const;
 		struct sockaddr_in		GetAddr() const;
 		bool					GetAutoIndex() const;
+		std::string				GetErrorPage(std::string httpCode); // to do
+		uint16_t				GetClientMaxBodySize(void);
 
 		static void				SetPort(uint16_t & val);
 		static void				SetSocket(int & val);
 		static void				SetServerCount(int & val);
-		static void				SetServerName(std::string & val, int index);
+		static void				SetServerName(std::string & val);
+		static void				SetClientMaxBodySize(uint16_t & val);
+		static bool				SetErrorPage(std::vector<std::string> lineSplit, int countLine);
+
 		static void				SetHostName(std::string & val);
 		static void				SetAddr(struct sockaddr_in & addr);
 		static void				SetAutoIndex(int val);

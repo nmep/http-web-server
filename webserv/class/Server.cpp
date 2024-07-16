@@ -1,17 +1,22 @@
 #include "Server.hpp"
 
-uint16_t					Server::_port = 0;
-int							Server::_socket = 0;
-int							Server::_server_count = 0;
-std::vector<std::string>	Server::_serverName;
-std::string					Server::_hostName = "default";
-struct sockaddr_in			Server::_addr;
-bool						Server::_autoIndex = false;
+uint16_t							Server::_port = 0;
+int									Server::_socket = 0;
+int									Server::_server_count = 0;
+std::vector<std::string>			Server::_serverName;
+std::map<std::string, std::string>	Server::_error_page;
+uint16_t								Server::_client_max_body_size;
+std::string							Server::_hostName = "default";
+struct sockaddr_in					Server::_addr;
+bool								Server::_autoIndex = false;
 Server::Server() {}
 
 Server::~Server() {}
 
 /* ----------------------------------------------------------------- */
+
+bool	strIsNum(std::string str);
+bool	CheckErrorClientValue(std::string & str);
 
 uint16_t	Server::GetPort() const {
 	return this->_port;
@@ -22,7 +27,23 @@ int	Server::GetSocket() const {
 }
 
 std::string Server::GetServerName(int index) const {
+	if (index <= 0) {
+		index = 1;
+	}
+	else if (index > (int) Server::_serverName.size()) {
+		index = Server::_serverName.size();
+	}
 	return Server::_serverName[index - 1];
+}
+
+std::string	Server::GetErrorPage(std::string httpCode) {
+	if (Server::_error_page[httpCode].size() > 0)
+		return Server::_error_page[httpCode];
+	return "";
+}
+
+uint16_t	Server::GetClientMaxBodySize(void) {
+	return Server::_client_max_body_size;
 }
 
 std::string Server::GetHostName() const {
@@ -55,10 +76,43 @@ void	Server::SetServerCount(int & val) {
 	Server::_server_count = val;
 }
 
-void	Server::SetServerName(std::string & val, int index) {
-	std::cout << "index = " << index - 1 << " val = " << val << " size = " << Server::_serverName.size() << std::endl;
+void	Server::SetServerName(std::string & val) {
 	Server::_serverName.push_back(val);
-	std::cout << "serverN " << index - 1 << " = " << Server::_serverName[index - 1] << std::endl;
+}
+
+void	printMap(std::map<std::string, std::string> map) {
+	std::map<std::string, std::string>::iterator it = map.begin();
+	std::map<std::string, std::string>::iterator ite = map.end();
+
+	for (/**/; it != ite; it++) {
+		std::cout << "map first = " << it->first << " map second = " << it->second << std::endl;
+	}
+}
+
+bool	Server::SetErrorPage(std::vector<std::string> lineSplit, int countLine) {
+	// std::map<std::string, std::string>::iterator it = Server::_error_page.begin();
+	// std::map<std::string, std::string>::iterator ite = Server::_error_page.end();
+
+	for (size_t i = 1; i < lineSplit.size() - 1; i++) {
+		if (strIsNum(*(lineSplit.begin() + i))) {
+			if (!CheckErrorClientValue(*(lineSplit.begin() + i))) {
+				std::cerr << "Invalid syntax: HTPP code " << *(lineSplit.begin() + i) << " is invalid at line " << countLine << std::endl;
+				return false;
+			}
+			else {
+				Server::_error_page[*(lineSplit.begin() + i)] = *(lineSplit.end() - 1);
+			}
+		}
+		else {
+			std::cerr << "Invalid syntax: " << "HTPP port " << *(lineSplit.begin() + i) << " is invalid" << std::endl;
+			return false;
+		}
+	}
+	return true;
+}
+
+void	Server::SetClientMaxBodySize(uint16_t & val) {
+	Server::_client_max_body_size = val;
 }
 
 void Server::SetHostName(std::string & val) {
@@ -77,15 +131,15 @@ void	Server::SetAutoIndex(int val) {
 
 /* --------------------------- PARSING -------------------------------------- */
 
-static void	printVector(std::vector<std::string> & v) {
-	// std::vector<std::string>::iterator it = v.begin();
-	std::vector<std::string>::iterator ite = v.end();
+// static void	printVector(std::vector<std::string> & v) {
+// 	// std::vector<std::string>::iterator it = v.begin();
+// 	std::vector<std::string>::iterator ite = v.end();
 
-	std::cout << "last = " << *(--ite) << std::endl;
-	for (std::vector<std::string>::iterator it = v.begin(); it < v.end(); it++) {
-		std::cout << "v[] = " << *(it) << std::endl;
-	}
-}
+// 	std::cout << "last = " << *(--ite) << std::endl;
+// 	for (std::vector<std::string>::iterator it = v.begin(); it < v.end(); it++) {
+// 		std::cout << "v[] = " << *(it) << std::endl;
+// 	}
+// }
 
 static int	access_file(const std::string & confFile) {
 	return access(confFile.c_str(), F_OK | R_OK);
@@ -146,7 +200,7 @@ bool	strIsNum(std::string str) {
 
 bool	handleListenParsing(std::vector<std::string> lineSplit, int countLine) {
 	uint16_t port = 0;
-
+ 
 	if (lineSplit.size() != 2) {
 		std::cerr << "Invalid syntax: at line " << countLine << "should be listen	Port < 65535" << std::endl;
 		return false;
@@ -169,47 +223,66 @@ bool	handleListenParsing(std::vector<std::string> lineSplit, int countLine) {
 		std::cerr << "Invalid syntax " << *(lineSplit.begin() + 1) << " at line " << countLine << std::endl;
 		return false;
 	}
-
 	Server::SetPort(port);
 	return true;
 }
 
 bool	handleServerNameParsing(std::vector<std::string> lineSplit, int countLine) {
-	std::cout << "ServerNamePars" << std::endl;
-	// est ce qu'il y a un servername ?
-	std::string withoutColom;
-	// (void)countLine;
-
-	printVector(lineSplit);
 	if (lineSplit.size() <= 1) {
 		std::cerr << "Invalid syntax: Server name need content at line " << countLine << std::endl;
 		return false;
 	}
-	// prendre a partir de split begin + 1 et ajouter dans _servername peut importe le nom il sera
 	for (size_t i = 1; i < lineSplit.size(); i++) {
 		if (i == lineSplit.size() - 1) {
 			(lineSplit.begin() + i)->erase((lineSplit.begin() + i)->end() - 1);
-			std::cout << "lineSplit begin + " << i << " = " << *(lineSplit.begin() + i) << std::endl;
 		}
-		Server::SetServerName(*(lineSplit.begin() + i), i);
-		// std::cout << "*(lineSplit.begin() + i) = " << *(lineSplit.begin() + i) << std::endl;
+		Server::SetServerName(*(lineSplit.begin() + i));
 	}
-	// tester dans la gestion de socket s'il est correct (je pense si c'est le cas et que ca ne marche
-	// pas, 404 ?)
 	return true;
 }
 
+bool	CheckErrorClientValue(std::string & str) {
+	if ((str >= "400" && str <= "419") || (str >= "421" && str <= "429") || str == "431"
+		|| (str >= "449" && str <= "451") || str == "456") {
+			return true;
+	}
+	return false;
+}
+
 bool	handleErrorPageParsing(std::vector<std::string> lineSplit, int countLine) {
-	(void)lineSplit;
-	(void)countLine;
-	std::cout << "ErrorPageParse" << std::endl;
+	if (lineSplit.size() == 1) {
+		std::cerr << "Invalid syntax: Errorpage need content at line " << countLine << std::endl;
+		return false;
+	}
+	Server::SetErrorPage(lineSplit, countLine);
 	return true;
 }
 
 bool	handleClientMaxBodySizeParsing(std::vector<std::string> lineSplit, int countLine) {
-	(void)lineSplit;
-	(void)countLine;
-	std::cout << "ClientMaxBodySizePars" << std::endl;
+	if (lineSplit.size() <= 1) {
+		std::cerr << "Invalid syntax: Client_Max_Body_size need content at line " << countLine << std::endl;
+		return false;
+	}
+
+	uint16_t cmbs;
+	std::cout << "test de atoi sur " << *(lineSplit.begin() + 1) << std::endl;
+	int MPos = (lineSplit.begin() + 1)->find("M");
+	if (MPos <= 0) {
+		std::cerr << "Invalid syntax: Client max body size value [" << *(lineSplit.begin() + 1) << "] Need a value or a type of data (M)" << std::endl;
+		return false;
+	}
+	std::string clientmaxbodysize = (lineSplit.begin() + 1)->substr(0, MPos);
+
+	if (strIsNum(clientmaxbodysize)) {	
+		ft_atoi_port(&cmbs, clientmaxbodysize);
+		if (cmbs > 0 && cmbs <= 200) {
+			Server::SetClientMaxBodySize(cmbs);
+		}
+		else {
+			std::cerr << "Invalid Syntax: Max body client size " << cmbs << " is to large max 200" << std::endl;
+			return false;
+		}
+	}
 	return true;
 }
 
@@ -238,7 +311,7 @@ bool AssignToken(std::vector<std::string> lineSplit, int countLine) {
 
 	for (size_t i = 0; i <= cTokens->size(); i++) {
 		if (*(lineSplit.begin()) == cTokens[i])
-			return true; // break 
+			return true;
 
 		if (i == cTokens->size()) {
 			std::cerr << "Invalid syntax: Invalid token [" << *(lineSplit.begin()) << "] at line " << countLine << std::endl;
