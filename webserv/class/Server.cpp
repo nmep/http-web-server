@@ -17,6 +17,8 @@ Server::~Server() {}
 
 bool	strIsNum(std::string str);
 bool	CheckErrorClientValue(std::string & str);
+bool	checkHtmlAccess(std::string filePath);
+static int	SyntaxParse(std::vector<std::string> & v, int countLine, int *OCB, int *CCB);
 
 uint16_t	Server::GetPort() const {
 	return this->_port;
@@ -90,9 +92,12 @@ void	printMap(std::map<std::string, std::string> map) {
 }
 
 bool	Server::SetErrorPage(std::vector<std::string> lineSplit, int countLine) {
-	// std::map<std::string, std::string>::iterator it = Server::_error_page.begin();
-	// std::map<std::string, std::string>::iterator ite = Server::_error_page.end();
-
+	// cut le colom du last
+	(lineSplit.end() - 1)->erase((lineSplit.end() - 1)->size() - 1);
+	// check access
+	if (!checkHtmlAccess(*(lineSplit.end() - 1))) {
+		return false;
+	}
 	for (size_t i = 1; i < lineSplit.size() - 1; i++) {
 		if (strIsNum(*(lineSplit.begin() + i))) {
 			if (!CheckErrorClientValue(*(lineSplit.begin() + i))) {
@@ -131,15 +136,15 @@ void	Server::SetAutoIndex(int val) {
 
 /* --------------------------- PARSING -------------------------------------- */
 
-// static void	printVector(std::vector<std::string> & v) {
-// 	// std::vector<std::string>::iterator it = v.begin();
-// 	std::vector<std::string>::iterator ite = v.end();
+static void	printVector(std::vector<std::string> & v) {
+	// std::vector<std::string>::iterator it = v.begin();
+	std::vector<std::string>::iterator ite = v.end();
 
-// 	std::cout << "last = " << *(--ite) << std::endl;
-// 	for (std::vector<std::string>::iterator it = v.begin(); it < v.end(); it++) {
-// 		std::cout << "v[] = " << *(it) << std::endl;
-// 	}
-// }
+	std::cout << "last = " << *(--ite) << std::endl;
+	for (std::vector<std::string>::iterator it = v.begin(); it < v.end(); it++) {
+		std::cout << "v[] = " << *(it) << std::endl;
+	}
+}
 
 static int	access_file(const std::string & confFile) {
 	return access(confFile.c_str(), F_OK | R_OK);
@@ -249,12 +254,23 @@ bool	CheckErrorClientValue(std::string & str) {
 	return false;
 }
 
+bool	checkHtmlAccess(std::string filePath) {
+	if (access(filePath.c_str(), F_OK | R_OK) < 0) {
+		std::cerr << "Invalid syntax: " << "Access on html file [" << filePath << "]: " << strerror(errno) << std::endl;
+		return false;
+	}
+	return true;
+}
+
 bool	handleErrorPageParsing(std::vector<std::string> lineSplit, int countLine) {
+	// check avec access le fichier html
 	if (lineSplit.size() == 1) {
 		std::cerr << "Invalid syntax: Errorpage need content at line " << countLine << std::endl;
 		return false;
 	}
-	Server::SetErrorPage(lineSplit, countLine);
+
+	if (!Server::SetErrorPage(lineSplit, countLine))
+		return false;
 	return true;
 }
 
@@ -265,12 +281,12 @@ bool	handleClientMaxBodySizeParsing(std::vector<std::string> lineSplit, int coun
 	}
 
 	uint16_t cmbs;
-	std::cout << "test de atoi sur " << *(lineSplit.begin() + 1) << std::endl;
 	int MPos = (lineSplit.begin() + 1)->find("M");
 	if (MPos <= 0) {
 		std::cerr << "Invalid syntax: Client max body size value [" << *(lineSplit.begin() + 1) << "] Need a value or a type of data (M)" << std::endl;
 		return false;
 	}
+
 	std::string clientmaxbodysize = (lineSplit.begin() + 1)->substr(0, MPos);
 
 	if (strIsNum(clientmaxbodysize)) {	
@@ -286,20 +302,49 @@ bool	handleClientMaxBodySizeParsing(std::vector<std::string> lineSplit, int coun
 	return true;
 }
 
-bool	handleLocationParsing(std::vector<std::string> lineSplit, int countLine) {
-	(void)lineSplit;
-	(void)countLine;
+bool	handleLocationParsing(std::vector<std::string> lineSplit, int *countLine, int *OCB, int *CCB, std::ifstream & file, std::string line) {
 	std::cout << "LocationPars" << std::endl;
+
+	if (lineSplit.size() != 3 && lineSplit.size() != 4) {
+		std::cerr << "Invalid Syntax: location need a match at line " << *countLine << std::endl;
+		return false; 
+	}
+
+	while (getline(file, line)) {
+		// ligne vide?
+		std::cout << "line = " << line << "countline = " << *countLine << std::endl;
+		if (line.empty() || isOnlyWithSpace(line)) {
+			(*countLine)++;
+			continue ;
+		}
+
+		// split la ligne
+		lineSplit = split(line);
+		printVector(lineSplit);
+
+		// parse la ligne
+		if (!SyntaxParse(lineSplit, *countLine, OCB, CCB)) {
+			return false;
+		}
+
+		// si la ligne est } break et sortir
+		if (*(lineSplit.begin()) == "}") {
+			break;
+		}
+		// continuer le parsing de location
+		(*countLine)++;
+
+	}
 	return true;
 }
 
 bool AssignToken(std::vector<std::string> lineSplit, int countLine) {
 	const std::string fTokens[] = {"listen", "server_name", "error_page"\
-							, "client_max_body_size", "location"}; // pour location apelle directement getline dans
+							, "client_max_body_size"}; // pour location apelle directement getline dans
 							// la fonction de location parse et voir si ca marche
 	const std::string cTokens[] = {"server", "listen", "server_name", "error_page", "client_max_body_size", "location", "}"};
 	bool	(*FuncPtr[]) (std::vector<std::string>, int) = {&handleListenParsing, &handleServerNameParsing\
-		, &handleErrorPageParsing, &handleClientMaxBodySizeParsing, &handleLocationParsing};
+		, &handleErrorPageParsing, &handleClientMaxBodySizeParsing};
 
 	if (*(lineSplit.begin()) == "}")
 		return true;
@@ -383,19 +428,33 @@ static bool	ReadFile(const std::string & confFileFD) {
 
 	while (getline(file, line))
 	{
-		if (line.empty() || isOnlyWithSpace(line))
+		std::cout << "countline  = " << countLine << std::endl;
+		if (line.empty() || isOnlyWithSpace(line)) {
+			countLine++;
 			continue ;
+		}
+		
 		/* recuperer le premier mot de la ligne et le faire comp avec les mots
 			cles et en fonctions de mots cles appliquer tels ou tel fonctions*/
 		lineSplit = split(line);
+		
 		// check si la ligne est en dehors du scope des accolade, si oui mettre faux
 		if ((OCurlyBrace == CCurlyBrace && OCurlyBrace > 0) && *(lineSplit.begin()) != "server") {
 			std::cerr << "Invalid syntax: element -> " << line << " isn't in the scope at the line " << countLine << std::endl;   
 			return false;
 		}
+		
 		// check si le premier mot est correct
 		if (!SyntaxParse(lineSplit, countLine, &OCurlyBrace, &CCurlyBrace))
 			return false;
+
+		// location est traite differement des autres parce qu'il a besoin de plus de parametres
+		if (*(lineSplit.begin()) == "location") {
+			countLine++;
+			if (!handleLocationParsing(lineSplit, &countLine, &OCurlyBrace, &CCurlyBrace, file, line))
+				return false;
+		}
+
 		if (!AssignToken(lineSplit, countLine))
 			return false;
 		countLine++;

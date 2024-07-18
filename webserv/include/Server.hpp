@@ -17,6 +17,7 @@
 
 	#include <unistd.h> // access
 	#include <stdio.h> // perror
+	#include <string.h> // strerror
 
 	#include <limits.h>
 
@@ -25,16 +26,16 @@
 class Server
 {
 	private:
-		static	uint16_t							_port;
-		static	int									_socket;
-		static	int 								_server_count;
-		static	std::vector<std::string>			_serverName;
-		static	std::map<std::string, std::string>	_error_page;
-		static	uint16_t								_client_max_body_size;
-		static	std::string							_hostName;
-		static	struct sockaddr_in					_addr;
-		static	bool								_autoIndex;
-		std::map<const std::string, std::string> 	_location;
+		static	uint16_t													_port;
+		static	int															_socket;
+		static	int 														_server_count;
+		static	std::vector<std::string>									_serverName;
+		static	std::map<std::string, std::string>							_error_page;
+		static	uint16_t													_client_max_body_size;
+		static	std::string													_hostName;
+		static	struct sockaddr_in											_addr;
+		static	bool														_autoIndex;
+		std::map<const std::string, std::map<std::string, std::string>> 	_location;
 
 	public:
 		Server();
