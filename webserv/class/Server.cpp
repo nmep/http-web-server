@@ -68,6 +68,10 @@ bool Server::GetAutoIndex() const {
 	return this->_autoIndex;
 }
 
+std::map<std::string, std::map<std::string, std::string> >	Server::GetMap(void) {
+	return Server::_location;
+}
+
 /* ----------------------------------------------------------------- */
 
 void	Server::SetPort(uint16_t & val) {
@@ -85,8 +89,6 @@ void	Server::SetServerCount(int & val) {
 void	Server::SetServerName(std::string & val) {
 	Server::_serverName.push_back(val);
 }
-
-
 
 bool	Server::SetErrorPage(std::vector<std::string> lineSplit, int countLine) {
 	// cut le colom du last
@@ -163,7 +165,7 @@ void	printLocation(std::map<std::string, std::map<std::string, std::string> > ma
 	std::map<std::string, std::string>::iterator it2;
 	std::map<std::string, std::string>::iterator ite2;
 	for (/**/; it1 != ite1; it1++) {
-		
+		std::cout << "PREMIER MAP " << (*it1).first << std::endl;
 	}
 }
 
@@ -376,7 +378,7 @@ bool	handleLocationParsing(std::vector<std::string> lineSplit, int *countLine, i
 		// inserer le split dans map
 		std::cout << "locationName = " << locationName << " location directive = " << *(lineSplit.begin()) << " location directive value = " << *(lineSplit.begin() + 1) << std::endl;
 		Server::SetLocation(locationName, *(lineSplit.begin()), *(lineSplit.begin() + 1));
-
+		printLocation(Server::GetMap());
 		(*countLine)++;
 
 	}

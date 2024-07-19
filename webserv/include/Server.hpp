@@ -43,15 +43,16 @@ class Server
 		// faire de la copy
 		// surcharge d'op =
 
-		uint16_t				GetPort() const;
-		int						GetSocket() const;
-		int						GetServerCount() const;
-		std::string				GetServerName(int index) const;
-		std::string				GetHostName() const;
-		struct sockaddr_in		GetAddr() const;
-		bool					GetAutoIndex() const;
-		std::string				GetErrorPage(std::string httpCode); // to do
-		uint16_t				GetClientMaxBodySize(void);
+		uint16_t													GetPort() const;
+		int															GetSocket() const;
+		int															GetServerCount() const;
+		std::string													GetServerName(int index) const;
+		std::string													GetHostName() const;
+		struct sockaddr_in											GetAddr() const;
+		bool														GetAutoIndex() const;
+		std::string													GetErrorPage(std::string httpCode); // to do
+		uint16_t													GetClientMaxBodySize(void);
+		static std::map<std::string, std::map<std::string, std::string> >	GetMap(void);
 
 		static void				SetPort(uint16_t & val);
 		static void				SetSocket(int & val);
