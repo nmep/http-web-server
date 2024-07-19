@@ -35,7 +35,7 @@ class Server
 		static	std::string													_hostName;
 		static	struct sockaddr_in											_addr;
 		static	bool														_autoIndex;
-		std::map<const std::string, std::map<std::string, std::string>> 	_location;
+		static	std::map<std::string, std::map<std::string, std::string> >			_location;
 
 	public:
 		Server();
@@ -59,6 +59,7 @@ class Server
 		static void				SetServerName(std::string & val);
 		static void				SetClientMaxBodySize(uint16_t & val);
 		static bool				SetErrorPage(std::vector<std::string> lineSplit, int countLine);
+		static void				SetLocation(std::string locationName, std::string locationDirective, std::string locationValue);
 
 		static void				SetHostName(std::string & val);
 		static void				SetAddr(struct sockaddr_in & addr);

@@ -1,14 +1,18 @@
 #include "Server.hpp"
 
-uint16_t							Server::_port = 0;
-int									Server::_socket = 0;
-int									Server::_server_count = 0;
-std::vector<std::string>			Server::_serverName;
-std::map<std::string, std::string>	Server::_error_page;
-uint16_t								Server::_client_max_body_size;
-std::string							Server::_hostName = "default";
-struct sockaddr_in					Server::_addr;
-bool								Server::_autoIndex = false;
+uint16_t															Server::_port = 0;
+int																	Server::_socket = 0;
+int																	Server::_server_count = 0;
+std::vector<std::string>											Server::_serverName;
+std::map<std::string, std::string>									Server::_error_page;
+uint16_t															Server::_client_max_body_size;
+std::string															Server::_hostName = "default";
+struct sockaddr_in													Server::_addr;
+bool																Server::_autoIndex = false;
+std::map<std::string, std::map<std::string, std::string> >			Server::_location;
+
+/* ----------------------------------------------------------------- */
+
 Server::Server() {}
 
 Server::~Server() {}
@@ -82,14 +86,7 @@ void	Server::SetServerName(std::string & val) {
 	Server::_serverName.push_back(val);
 }
 
-void	printMap(std::map<std::string, std::string> map) {
-	std::map<std::string, std::string>::iterator it = map.begin();
-	std::map<std::string, std::string>::iterator ite = map.end();
 
-	for (/**/; it != ite; it++) {
-		std::cout << "map first = " << it->first << " map second = " << it->second << std::endl;
-	}
-}
 
 bool	Server::SetErrorPage(std::vector<std::string> lineSplit, int countLine) {
 	// cut le colom du last
@@ -134,15 +131,39 @@ void	Server::SetAutoIndex(int val) {
 	Server::_autoIndex = val;
 }
 
+void	Server::SetLocation(std::string locationName, std::string locationDirective, std::string locationValue) {
+	Server::_location[locationName][locationDirective] = locationValue;
+}
+
 /* --------------------------- PARSING -------------------------------------- */
 
-static void	printVector(std::vector<std::string> & v) {
+void	printVector(std::vector<std::string> & v) {
 	// std::vector<std::string>::iterator it = v.begin();
 	std::vector<std::string>::iterator ite = v.end();
 
 	std::cout << "last = " << *(--ite) << std::endl;
 	for (std::vector<std::string>::iterator it = v.begin(); it < v.end(); it++) {
 		std::cout << "v[] = " << *(it) << std::endl;
+	}
+}
+
+void	printMap(std::map<std::string, std::string> map) {
+	std::map<std::string, std::string>::iterator it = map.begin();
+	std::map<std::string, std::string>::iterator ite = map.end();
+
+	for (/**/; it != ite; it++) {
+		std::cout << "map first = " << it->first << " map second = " << it->second << std::endl;
+	}
+}
+
+void	printLocation(std::map<std::string, std::map<std::string, std::string> > map) {
+	std::map<std::string, std::map<std::string, std::string> >::iterator it1 = map.begin();
+	std::map<std::string, std::map<std::string, std::string> >::iterator ite1 = map.end();
+
+	std::map<std::string, std::string>::iterator it2;
+	std::map<std::string, std::string>::iterator ite2;
+	for (/**/; it1 != ite1; it1++) {
+		
 	}
 }
 
@@ -178,7 +199,7 @@ static std::vector<std::string>	split(std::string & line) {
 }
 
 uint16_t	ft_atoi_port(uint16_t *ptr, std::string str) {
-	int	i = 0;
+	uint16_t	i = 0;
 
 	while ((str[i] > 9 && str[i] < 13) || str[i] == 32) {
 		i++;
@@ -280,7 +301,7 @@ bool	handleClientMaxBodySizeParsing(std::vector<std::string> lineSplit, int coun
 		return false;
 	}
 
-	uint16_t cmbs;
+	uint16_t cmbs = 0;
 	int MPos = (lineSplit.begin() + 1)->find("M");
 	if (MPos <= 0) {
 		std::cerr << "Invalid syntax: Client max body size value [" << *(lineSplit.begin() + 1) << "] Need a value or a type of data (M)" << std::endl;
@@ -304,15 +325,22 @@ bool	handleClientMaxBodySizeParsing(std::vector<std::string> lineSplit, int coun
 
 bool	handleLocationParsing(std::vector<std::string> lineSplit, int *countLine, int *OCB, int *CCB, std::ifstream & file, std::string line) {
 	std::cout << "LocationPars" << std::endl;
+	std::string LocationKeyWord[] = {"root", "auto_index", "index"};
 
-	if (lineSplit.size() != 3 && lineSplit.size() != 4) {
+	if (lineSplit.size() != 3) {
 		std::cerr << "Invalid Syntax: location need a match at line " << *countLine << std::endl;
 		return false; 
 	}
 
+	std::string locationName = *(lineSplit.begin() + 1);
+	std::cout << "locationName = " << locationName << std::endl;
+
+	// JE PENSE que pour que ca marche je dois assigner les trois valeurs
+	// en meme temps donc
+	// la locationName - la directive de la locationName puis sa valeur
+
 	while (getline(file, line)) {
 		// ligne vide?
-		std::cout << "line = " << line << "countline = " << *countLine << std::endl;
 		if (line.empty() || isOnlyWithSpace(line)) {
 			(*countLine)++;
 			continue ;
@@ -320,7 +348,7 @@ bool	handleLocationParsing(std::vector<std::string> lineSplit, int *countLine, i
 
 		// split la ligne
 		lineSplit = split(line);
-		printVector(lineSplit);
+		// printVector(lineSplit);
 
 		// parse la ligne
 		if (!SyntaxParse(lineSplit, *countLine, OCB, CCB)) {
@@ -329,9 +357,26 @@ bool	handleLocationParsing(std::vector<std::string> lineSplit, int *countLine, i
 
 		// si la ligne est } break et sortir
 		if (*(lineSplit.begin()) == "}") {
+			(*countLine)++;
 			break;
 		}
-		// continuer le parsing de location
+		std::cout << "line = " << line << std::endl;
+		// continuer le parsing de locationName
+		std::cout << "size de locationkeyword = " << LocationKeyWord->length() << std::endl;
+		for (size_t i = 0; i < LocationKeyWord->size() - 1; i++) {
+			// s'il correspondance il y a, break il y aura
+			if (*(lineSplit.begin()) == LocationKeyWord[i])
+				break;
+			// si il n'y a aucune correspondance alors mess d'err et return
+			if (i == LocationKeyWord->size() - 1) {
+				std::cerr << "Invalid Syntax: Location Invalid token " << *(lineSplit.begin()) << std::endl;
+				return false;
+			}
+		}
+		// inserer le split dans map
+		std::cout << "locationName = " << locationName << " location directive = " << *(lineSplit.begin()) << " location directive value = " << *(lineSplit.begin() + 1) << std::endl;
+		Server::SetLocation(locationName, *(lineSplit.begin()), *(lineSplit.begin() + 1));
+
 		(*countLine)++;
 
 	}
@@ -428,12 +473,10 @@ static bool	ReadFile(const std::string & confFileFD) {
 
 	while (getline(file, line))
 	{
-		std::cout << "countline  = " << countLine << std::endl;
 		if (line.empty() || isOnlyWithSpace(line)) {
 			countLine++;
 			continue ;
 		}
-		
 		/* recuperer le premier mot de la ligne et le faire comp avec les mots
 			cles et en fonctions de mots cles appliquer tels ou tel fonctions*/
 		lineSplit = split(line);
