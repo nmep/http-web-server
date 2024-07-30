@@ -9,7 +9,7 @@ uint16_t															Server::_client_max_body_size;
 std::string															Server::_hostName = "default";
 struct sockaddr_in													Server::_addr;
 bool																Server::_autoIndex = false;
-std::map<std::string, std::map<std::string, std::string> >			Server::_location;
+std::map<std::string, std::map<std::string, std::vector<std::string> > >			Server::_location;
 
 /* ----------------------------------------------------------------- */
 
@@ -68,7 +68,7 @@ bool Server::GetAutoIndex() const {
 	return this->_autoIndex;
 }
 
-std::map<std::string, std::map<std::string, std::string> >	Server::GetMap(void) {
+std::map<std::string, std::map<std::string, std::vector<std::string> > >	Server::GetMap(void) {
 	return Server::_location;
 }
 
@@ -133,7 +133,7 @@ void	Server::SetAutoIndex(int val) {
 	Server::_autoIndex = val;
 }
 
-void	Server::SetLocation(std::string locationName, std::string locationDirective, std::string locationValue) {
+void	Server::SetLocation(std::string locationName, std::string locationDirective, std::vector<std::string> locationValue) {
 	Server::_location[locationName][locationDirective] = locationValue;
 }
 
@@ -158,9 +158,9 @@ void	printMap(std::map<std::string, std::string> map) {
 	}
 }
 
-void	printLocation(std::map<std::string, std::map<std::string, std::string> > map) {
-	std::map<std::string, std::map<std::string, std::string> >::iterator it1 = map.begin();
-	std::map<std::string, std::map<std::string, std::string> >::iterator ite1 = map.end();
+void	printLocation(std::map<std::string, std::map<std::string, std::vector<std::string> > > map) {
+	std::map<std::string, std::map<std::string, std::vector<std::string> > >::iterator it1 = map.begin();
+	std::map<std::string, std::map<std::string, std::vector<std::string> > >::iterator ite1 = map.end();
 
 	std::map<std::string, std::string>::iterator it2;
 	std::map<std::string, std::string>::iterator ite2;
@@ -325,9 +325,27 @@ bool	handleClientMaxBodySizeParsing(std::vector<std::string> lineSplit, int coun
 	return true;
 }
 
+bool	isAllowedMethodsValid(std::vector<std::string> allowedMethods, int countLine) {
+	std::string	AcceptMethods[] = {"GET", "POST"};
+	std::vector<std::string>::iterator it = allowedMethods.begin() + 1;
+
+	if (allowedMethods.size())
+	for (/*nope*/; it != allowedMethods.end(); it++) {
+		
+		for (size_t i = 0; i < AcceptMethods->size() - 1; i++) {
+			if (*it == AcceptMethods[i])
+				break ;
+			else if (i + 1 == AcceptMethods->size() - 1) {
+				std::cerr << "Invalid Allowed methods: Line " << countLine << " [" << *it << ']' << std::endl;
+				return false;
+			}
+		}
+	}
+	return true;
+}
+
 bool	handleLocationParsing(std::vector<std::string> lineSplit, int *countLine, int *OCB, int *CCB, std::ifstream & file, std::string line) {
-	std::cout << "LocationPars" << std::endl;
-	std::string LocationKeyWord[] = {"root", "auto_index", "index"};
+	std::string LocationKeyWord[] = {"root", "auto_index", "index", "allowedMethods"};
 
 	if (lineSplit.size() != 3) {
 		std::cerr << "Invalid Syntax: location need a match at line " << *countLine << std::endl;
@@ -335,7 +353,6 @@ bool	handleLocationParsing(std::vector<std::string> lineSplit, int *countLine, i
 	}
 
 	std::string locationName = *(lineSplit.begin() + 1);
-	std::cout << "locationName = " << locationName << std::endl;
 
 	// JE PENSE que pour que ca marche je dois assigner les trois valeurs
 	// en meme temps donc
@@ -343,45 +360,59 @@ bool	handleLocationParsing(std::vector<std::string> lineSplit, int *countLine, i
 
 	while (getline(file, line)) {
 		// ligne vide?
+		std::cout << "line = " << line << std::endl;
 		if (line.empty() || isOnlyWithSpace(line)) {
 			(*countLine)++;
 			continue ;
 		}
 
-		// split la ligne
 		lineSplit = split(line);
-		// printVector(lineSplit);
 
+		if (*(lineSplit.begin()) == "}") {
+			(*CCB)++;
+			(*countLine)++;
+			break;
+		}
+		// split la ligne
+		if (lineSplit.size() == 1 && *(lineSplit.begin()) != "}") {
+			std::cerr << "Invalid location value: At line " << *countLine << " " << *(lineSplit.begin()) << " need a value" << std::endl;
+			return false;
+		}
+		// printVector(lineSplit);
 		// parse la ligne
 		if (!SyntaxParse(lineSplit, *countLine, OCB, CCB)) {
 			return false;
 		}
 
+		(lineSplit.end() - 1)->erase((lineSplit.end() - 1)->size() - 1);
 		// si la ligne est } break et sortir
-		if (*(lineSplit.begin()) == "}") {
-			(*countLine)++;
-			break;
-		}
-		std::cout << "line = " << line << std::endl;
 		// continuer le parsing de locationName
-		std::cout << "size de locationkeyword = " << LocationKeyWord->length() << std::endl;
-		for (size_t i = 0; i < LocationKeyWord->size() - 1; i++) {
-			// s'il correspondance il y a, break il y aura
+		// check si la ligne a le bon mot cle
+		for (size_t i = 0; i < LocationKeyWord->size(); i++) {
+			// si correspondance il y a, break il y aura
 			if (*(lineSplit.begin()) == LocationKeyWord[i])
 				break;
 			// si il n'y a aucune correspondance alors mess d'err et return
-			if (i == LocationKeyWord->size() - 1) {
-				std::cerr << "Invalid Syntax: Location Invalid token " << *(lineSplit.begin()) << std::endl;
+			if (i + 1 == LocationKeyWord->size()) {
+				std::cerr << "Invalid Syntax: Location Invalid token [" << *(lineSplit.begin()) << ']' << std::endl;
 				return false;
 			}
 		}
+		// check si les methodes autorisees de x location sont valid
+		if (*(lineSplit.begin()) == "allowedMethods") {
+			if (!isAllowedMethodsValid(lineSplit, *countLine))
+				return false;
+		}
 		// inserer le split dans map
-		std::cout << "locationName = " << locationName << " location directive = " << *(lineSplit.begin()) << " location directive value = " << *(lineSplit.begin() + 1) << std::endl;
-		Server::SetLocation(locationName, *(lineSplit.begin()), *(lineSplit.begin() + 1));
+		// j'insere un vector donc j'enleve le premier car il est la directive et non la valeur
+		lineSplit.erase(lineSplit.begin());
+
+		Server::SetLocation(locationName, *(lineSplit.begin()), lineSplit);
 		printLocation(Server::GetMap());
 		(*countLine)++;
 
 	}
+	// verifier si les occolades sont correctement ouvert et ferme
 	return true;
 }
 
@@ -482,13 +513,13 @@ static bool	ReadFile(const std::string & confFileFD) {
 		/* recuperer le premier mot de la ligne et le faire comp avec les mots
 			cles et en fonctions de mots cles appliquer tels ou tel fonctions*/
 		lineSplit = split(line);
-		
+
 		// check si la ligne est en dehors du scope des accolade, si oui mettre faux
 		if ((OCurlyBrace == CCurlyBrace && OCurlyBrace > 0) && *(lineSplit.begin()) != "server") {
 			std::cerr << "Invalid syntax: element -> " << line << " isn't in the scope at the line " << countLine << std::endl;   
 			return false;
 		}
-		
+
 		// check si le premier mot est correct
 		if (!SyntaxParse(lineSplit, countLine, &OCurlyBrace, &CCurlyBrace))
 			return false;
