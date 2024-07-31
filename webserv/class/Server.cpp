@@ -72,6 +72,28 @@ std::map<std::string, std::map<std::string, std::vector<std::string> > >	Server:
 	return Server::_location;
 }
 
+/* Cette fonction sert a obtenir la valeur d'une location
+location name est le nom de la location principale.
+location directive est le nom de la directive de la location principale
+La valeur renvoyer est un vector contenant la valeurs associer a la location directive
+
+Example:
+	location / {
+		allowedMethods GET POST;
+		root est la aussi;
+	}
+Pour obtenir GET et POST il faut que location name soit "/" et location directive doit etre "allowedMethods"
+
+return value:
+un vector contenant [GET] et [POST] sera retourne
+
+Si la locationName ou locationDirective n'existe pas le vector renvoyer sera de taille 0
+
+*/
+std::vector<std::string> Server::GetLocationDirectiveValue(std::string locationName, std::string locationDirective) {
+	return Server::_location[locationName][locationDirective];
+}
+
 /* ----------------------------------------------------------------- */
 
 void	Server::SetPort(uint16_t & val) {
@@ -139,22 +161,9 @@ void	Server::SetLocation(std::string locationName, std::string locationDirective
 
 /* --------------------------- PARSING -------------------------------------- */
 
-void	printVector(std::vector<std::string> & v) {
-	// std::vector<std::string>::iterator it = v.begin();
-	std::vector<std::string>::iterator ite = v.end();
-
-	std::cout << "last = " << *(--ite) << std::endl;
+void	printVector(std::vector<std::string> v) {
 	for (std::vector<std::string>::iterator it = v.begin(); it < v.end(); it++) {
 		std::cout << "v[] = " << *(it) << std::endl;
-	}
-}
-
-void	printMap(std::map<std::string, std::string> map) {
-	std::map<std::string, std::string>::iterator it = map.begin();
-	std::map<std::string, std::string>::iterator ite = map.end();
-
-	for (/**/; it != ite; it++) {
-		std::cout << "map first = " << it->first << " map second = " << it->second << std::endl;
 	}
 }
 
@@ -162,10 +171,20 @@ void	printLocation(std::map<std::string, std::map<std::string, std::vector<std::
 	std::map<std::string, std::map<std::string, std::vector<std::string> > >::iterator it1 = map.begin();
 	std::map<std::string, std::map<std::string, std::vector<std::string> > >::iterator ite1 = map.end();
 
-	std::map<std::string, std::string>::iterator it2;
-	std::map<std::string, std::string>::iterator ite2;
+	std::map<std::string, std::vector<std::string> >::iterator it2;
+	std::map<std::string, std::vector<std::string> >::iterator ite2;
 	for (/**/; it1 != ite1; it1++) {
-		std::cout << "PREMIER MAP " << (*it1).first << std::endl;
+		std::cout << "first MAP = " << (*it1).first << std::endl;
+
+		it2 = it1->second.begin();
+		ite2 = it1->second.end();
+
+		for (/**/; it2 != ite2; it2++) {
+			std::cout << "location directive = " << (*it2).first << std::endl;
+			std::cout << "location directive value = " << std::endl;
+			printVector(it2->second);
+		}
+		
 	}
 }
 
@@ -353,14 +372,12 @@ bool	handleLocationParsing(std::vector<std::string> lineSplit, int *countLine, i
 	}
 
 	std::string locationName = *(lineSplit.begin() + 1);
-
 	// JE PENSE que pour que ca marche je dois assigner les trois valeurs
 	// en meme temps donc
 	// la locationName - la directive de la locationName puis sa valeur
 
 	while (getline(file, line)) {
 		// ligne vide?
-		std::cout << "line = " << line << std::endl;
 		if (line.empty() || isOnlyWithSpace(line)) {
 			(*countLine)++;
 			continue ;
@@ -368,6 +385,7 @@ bool	handleLocationParsing(std::vector<std::string> lineSplit, int *countLine, i
 
 		lineSplit = split(line);
 
+		// si la ligne est } break et sortir
 		if (*(lineSplit.begin()) == "}") {
 			(*CCB)++;
 			(*countLine)++;
@@ -385,7 +403,6 @@ bool	handleLocationParsing(std::vector<std::string> lineSplit, int *countLine, i
 		}
 
 		(lineSplit.end() - 1)->erase((lineSplit.end() - 1)->size() - 1);
-		// si la ligne est } break et sortir
 		// continuer le parsing de locationName
 		// check si la ligne a le bon mot cle
 		for (size_t i = 0; i < LocationKeyWord->size(); i++) {
@@ -405,12 +422,11 @@ bool	handleLocationParsing(std::vector<std::string> lineSplit, int *countLine, i
 		}
 		// inserer le split dans map
 		// j'insere un vector donc j'enleve le premier car il est la directive et non la valeur
+		std::string locationDirective = *(lineSplit.begin());
 		lineSplit.erase(lineSplit.begin());
 
-		Server::SetLocation(locationName, *(lineSplit.begin()), lineSplit);
-		printLocation(Server::GetMap());
+		Server::SetLocation(locationName, locationDirective, lineSplit);
 		(*countLine)++;
-
 	}
 	// verifier si les occolades sont correctement ouvert et ferme
 	return true;

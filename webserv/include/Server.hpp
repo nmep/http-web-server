@@ -30,7 +30,7 @@ class Server
 		static	int															_socket;
 		static	int 														_server_count;
 		static	std::vector<std::string>									_serverName;
-		static	std::map<std::string, std::string>							_error_page;
+		static	std::map<std::string, std::string>							_error_page; // le second doit etre un vector
 		static	uint16_t													_client_max_body_size;
 		static	std::string													_hostName;
 		static	struct sockaddr_in											_addr;
@@ -52,7 +52,8 @@ class Server
 		bool														GetAutoIndex() const;
 		std::string													GetErrorPage(std::string httpCode); // to do
 		uint16_t													GetClientMaxBodySize(void);
-		static std::map<std::string, std::map<std::string, std::vector<std::string> > >	GetMap(void);
+		std::map<std::string, std::map<std::string, std::vector<std::string> > >	GetMap(void);
+		std::vector<std::string>									GetLocationDirectiveValue(std::string locationName, std::string locationDirective);
 
 		static void				SetPort(uint16_t & val);
 		static void				SetSocket(int & val);
