@@ -31,3 +31,58 @@
 // 	}
 // 	return true;
 // }
+
+// boucle
+
+// bool	Server::ReadFile(const std::string & confFileFD) {
+// 	std::string line;
+
+// 	std::ifstream file(confFileFD.c_str());
+// 	std::vector<std::string> lineSplit;
+
+// 	// int OCurlyBrace = 0;
+// 	// int CCurlyBrace = 0;
+// 	int	countLine = 1;
+
+// 	while (getline(file, line))
+// 	{
+// 		if (line.empty() || isOnlyWithSpace(line)) {
+// 			countLine++;
+// 			continue ;
+// 		}
+// 		/* recuperer le premier mot de la ligne et le faire comp avec les mots
+// 			cles et en fonctions de mots cles appliquer tels ou tel fonctions*/
+// 		lineSplit = split(line);
+
+// 		// check si la ligne est en dehors du scope des accolade, si oui mettre faux
+// 		// if ((OCurlyBrace == CCurlyBrace && OCurlyBrace > 0) && *(lineSplit.begin()) != "server") {
+// 		// 	std::cerr << "Invalid syntax: element -> " << line << " isn't in the scope at the line " << countLine << std::endl;   
+// 		// 	return false;
+// 		// }
+
+// 		// check si le premier mot est correct
+// 		// if (!SyntaxParse(lineSplit, countLine, &OCurlyBrace, &CCurlyBrace))
+// 		// 	return false;
+
+// 		// location est traite differement des autres parce qu'il a besoin de plus de parametres
+// 		// if (*(lineSplit.begin()) == "location") {
+// 		// 	if (!handleLocationParsing(lineSplit, &countLine, &OCurlyBrace, &CCurlyBrace, file, line)) {
+// 		// 		countLine++;
+// 		// 		return false;
+// 		// 	}
+// 		// }
+
+// 		if (!AssignToken(lineSplit, countLine))
+// 			return false;
+// 		countLine++;
+// 	}
+
+// 	// if (OCurlyBrace != CCurlyBrace) {
+// 	// 	if (OCurlyBrace < CCurlyBrace)
+// 	// 		std::cerr << "Invalid syntax: " << CCurlyBrace - OCurlyBrace << " Open curly brace is missing" << std::endl;
+// 	// 	else
+// 	// 		std::cerr << "Invalid syntax: " << OCurlyBrace - CCurlyBrace << " Close curly brace is missing" << std::endl;
+// 	// 	return false;
+// 	// }
+// 	return true;
+// }

@@ -2,7 +2,7 @@
 
 /* ----------------------------------------------------------------- */
 
-Server::Server() {}
+Server::Server() : _default_server(0), _port(8080), _serverName("server_name"), _hostName("localhost"), _autoIndex(false) {}
 
 Server::~Server() {}
 
@@ -12,51 +12,48 @@ bool	strIsNum(std::string str);
 bool	CheckErrorClientValue(std::string & str);
 bool	checkHtmlAccess(std::string filePath);
 
+bool	Server::GetDefaultServer() const
+{
+	return _default_server;
+}
+
 uint16_t	Server::GetPort() const {
-	return this->_port;
+	return _port;
 }
 
-std::string Server::GetServerName(int index) const {
-	if (index <= 0) {
-		index = 1;
-	}
-	else if (index > (int) Server::_serverName.size()) {
-		index = Server::_serverName.size();
-	}
-	return Server::_serverName[index - 1];
+std::string Server::GetServerName() const {
+	return _serverName;
 }
 
-/*
-GetError page renvoie le page html associer au code http
-
-return value:
-	si le code http est associer a une page html le nom du fichier html est renvoyer avec l'extention
-	sinon une string de taille 0 est renvoye
-*/
-std::string	Server::GetErrorPage(std::string httpCode) {
+std::string	Server::GetErrorPage(std::string const & httpCode) {
 	return Server::_error_page[httpCode];
 }
 
 uint16_t	Server::GetClientMaxBodySize(void) {
-	return Server::_client_max_body_size;
+	return _client_max_body_size;
 }
 
 std::string Server::GetHostName() const {
-	return this->_hostName;
+	return _hostName;
 }
 
 bool Server::GetAutoIndex() const {
-	return this->_autoIndex;
+	return _autoIndex;
 }
 
 /* ----------------------------------------------------------------- */
+
+void	Server::SetDefaultServer()
+{
+	_default_server = true;
+}
 
 void	Server::SetPort(uint16_t & val) {
 	Server::_port = val;
 }
 
-void	Server::SetServerName(std::string & val) {
-	Server::_serverName.push_back(val);
+void	Server::SetServerName(std::string const & serverName) {
+	_serverName = serverName;
 }
 
 bool	Server::SetErrorPage(std::vector<std::string> lineSplit, int countLine) {
@@ -88,8 +85,8 @@ void	Server::SetClientMaxBodySize(uint16_t & val) {
 	Server::_client_max_body_size = val;
 }
 
-void Server::SetHostName(std::string & val) {
-	Server::_hostName = val;
+void Server::SetHostName(std::string const & hostName) {
+	Server::_hostName = hostName;
 }
 
 void	Server::SetAutoIndex(int val) {
@@ -125,11 +122,7 @@ void	printLocation(std::map<std::string, std::map<std::string, std::vector<std::
 	}
 }
 
-static int	access_file(const std::string & confFile) {
-	return access(confFile.c_str(), F_OK | R_OK);
-}
-
-static bool isOnlyWithSpace(std::string const & line)
+bool isOnlyWithSpace(std::string const & line)
 {
 	for (size_t i = 0; i < line.length(); i++) {
 		if ((line[i] < 9 || line[i] > 13) && line[i] != 32)
@@ -138,7 +131,7 @@ static bool isOnlyWithSpace(std::string const & line)
 	return true;
 }
 
-static std::vector<std::string>	split(std::string & line) {
+std::vector<std::string>	split(std::string & line) {
 	std::vector<std::string> v;
 	size_t start = 0;
 	size_t end = 0;
@@ -319,13 +312,13 @@ bool	isAllowedMethodsValid(std::vector<std::string> allowedMethods, int countLin
 	return true;
 }
 
-bool AssignToken(std::vector<std::string> lineSplit, int countLine) {
+bool Server::AssignToken(std::vector<std::string> lineSplit, int countLine) {
 	const std::string fTokens[] = {"listen", "server_name", "error_page"\
 							, "client_max_body_size", "autoindex"}; // pour location apelle directement getline dans
 							// la fonction de location parse et voir si ca marche
 	const std::string cTokens[] = {"server", "listen", "server_name", "error_page", "client_max_body_size", "location", "}"};
-	bool	(*FuncPtr[]) (std::vector<std::string>, int) = {Server::handleListenParsing, &handleServerNameParsing\
-		, &handleErrorPageParsing, &handleClientMaxBodySizeParsing, &handleAutoIndex};
+	bool	(Server::*FuncPtr[]) (std::vector<std::string>, int) = {&Server::handleListenParsing, &Server::handleServerNameParsing\
+		, &Server::handleErrorPageParsing, &Server::handleClientMaxBodySizeParsing, &Server::handleAutoIndex};
 
 	// si une segment de directive et finit on return true et on passe au suivant
 	if (*(lineSplit.begin()) == "}")
@@ -334,7 +327,7 @@ bool AssignToken(std::vector<std::string> lineSplit, int countLine) {
 	// si une directive est trouve faire sa fonction associe
 	for (size_t i = 0; i < 5; i++) {
 		if (*(lineSplit.begin()) == fTokens[i]) {
-			return FuncPtr[i](lineSplit, countLine);
+			return (this->*FuncPtr[i])(lineSplit, countLine);
 		}
 	}
 

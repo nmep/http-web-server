@@ -28,7 +28,7 @@ class Server
 	private:
 		bool									_default_server;
 		uint16_t								_port;
-		std::vector<std::string>				_serverName;
+		std::string								_serverName;
 		std::string								_hostName;
 		std::map<std::string, std::string>		_error_page;
 		uint16_t								_client_max_body_size;
@@ -40,20 +40,21 @@ class Server
 		// faire de la copy
 		// surcharge d'op =
 
+		bool			GetDefaultServer() const;
 		uint16_t		GetPort() const;
-		std::string		GetServerName(int index) const;
+		std::string		GetServerName() const;
 		std::string		GetHostName() const;
 		bool			GetAutoIndex() const;
-		std::string		GetErrorPage(std::string httpCode);
+		std::string		GetErrorPage(std::string const & httpCode);
 		uint16_t		GetClientMaxBodySize(void);
 
+		void			SetDefaultServer();
 		void			SetPort(uint16_t & val);
-		void			SetServerName(std::string & val);
-		void			SetHostName(std::string & val);
+		void			SetServerName(std::string const & val);
+		void			SetHostName(std::string const & val);
 		void			SetAutoIndex(int val);
 		void			SetClientMaxBodySize(uint16_t & val);
 		bool			SetErrorPage(std::vector<std::string> lineSplit, int countLine);
-
 
 		bool	handleListenParsing(std::vector<std::string> lineSplit, int countLine);
 		bool	handleServerNameParsing(std::vector<std::string> lineSplit, int countLine);
@@ -61,6 +62,8 @@ class Server
 		bool	handleAutoIndex(std::vector<std::string> lineSplit, int countLine);
 		bool	handleClientMaxBodySizeParsing(std::vector<std::string> lineSplit, int countLine);
 
+
+		bool 	AssignToken(std::vector<std::string> lineSplit, int countLine);
 		bool	ReadFile(const std::string & confFileFD);
 
 
