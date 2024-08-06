@@ -26,16 +26,13 @@
 class Server
 {
 	private:
-		static	uint16_t													_port;
-		static	int															_socket;
-		static	int 														_server_count;
-		static	std::vector<std::string>									_serverName;
-		static	std::map<std::string, std::string>							_error_page; // le second doit etre un vector
-		static	uint16_t													_client_max_body_size;
-		static	std::string													_hostName;
-		static	struct sockaddr_in											_addr;
-		static	bool														_autoIndex;
-		static	std::map<std::string, std::map<std::string, std::vector<std::string> > >			_location;
+		bool									_default_server;
+		uint16_t								_port;
+		std::vector<std::string>				_serverName;
+		std::string								_hostName;
+		std::map<std::string, std::string>		_error_page;
+		uint16_t								_client_max_body_size;
+		bool									_autoIndex;
 
 	public:
 		Server();
@@ -43,31 +40,30 @@ class Server
 		// faire de la copy
 		// surcharge d'op =
 
-		uint16_t													GetPort() const;
-		int															GetSocket() const;
-		int															GetServerCount() const;
-		std::string													GetServerName(int index) const;
-		std::string													GetHostName() const;
-		struct sockaddr_in											GetAddr() const;
-		bool														GetAutoIndex() const;
-		std::string													GetErrorPage(std::string httpCode); // to do
-		uint16_t													GetClientMaxBodySize(void);
-		std::map<std::string, std::map<std::string, std::vector<std::string> > >	GetMap(void);
-		std::vector<std::string>									GetLocationDirectiveValue(std::string locationName, std::string locationDirective);
+		uint16_t		GetPort() const;
+		std::string		GetServerName(int index) const;
+		std::string		GetHostName() const;
+		bool			GetAutoIndex() const;
+		std::string		GetErrorPage(std::string httpCode);
+		uint16_t		GetClientMaxBodySize(void);
 
-		static void				SetPort(uint16_t & val);
-		static void				SetSocket(int & val);
-		static void				SetServerCount(int & val);
-		static void				SetServerName(std::string & val);
-		static void				SetClientMaxBodySize(uint16_t & val);
-		static bool				SetErrorPage(std::vector<std::string> lineSplit, int countLine);
-		static void				SetLocation(std::string locationName, std::string locationDirective, std::vector<std::string> locationValue);
+		void			SetPort(uint16_t & val);
+		void			SetServerName(std::string & val);
+		void			SetHostName(std::string & val);
+		void			SetAutoIndex(int val);
+		void			SetClientMaxBodySize(uint16_t & val);
+		bool			SetErrorPage(std::vector<std::string> lineSplit, int countLine);
 
-		static void				SetHostName(std::string & val);
-		static void				SetAddr(struct sockaddr_in & addr);
-		static void				SetAutoIndex(int val);
 
-		bool	ft_parse_config_file(const std::string & confFile);
+		bool	handleListenParsing(std::vector<std::string> lineSplit, int countLine);
+		bool	handleServerNameParsing(std::vector<std::string> lineSplit, int countLine);
+		bool	handleErrorPageParsing(std::vector<std::string> lineSplit, int countLine);
+		bool	handleAutoIndex(std::vector<std::string> lineSplit, int countLine);
+		bool	handleClientMaxBodySizeParsing(std::vector<std::string> lineSplit, int countLine);
+
+		bool	ReadFile(const std::string & confFileFD);
+
+
 };
 // surcharge d'op <<
 

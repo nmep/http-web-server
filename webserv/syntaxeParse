@@ -1,0 +1,33 @@
+// static int	SyntaxParse(std::vector<std::string> & v, int countLine, int *OCB, int *CCB) {
+// 	std::vector<std::string>::iterator ite = v.end();
+// 	if (StrIsContext(*(v.begin())))
+// 	{
+// 		if (*(ite - 1) != "{" && *(ite - 1) != "}")
+// 		{
+// 			std::cerr << "Invalid syntax: " << *(ite - 1) << " at line " << countLine \
+// 				<< " curly brace is missing" << std::endl;
+// 				return false;
+// 		}
+// 	}
+// 	else
+// 	{
+// 		if (!StrSyntaxeCheck(*(ite - 1)))
+// 		{
+// 			std::cerr << "Invalid syntax: " << *(ite - 1) << " at line " << countLine \
+// 				<< " ';' is missing at the end of line" << std::endl;
+// 			return false;
+// 		}
+// 	}
+// 	for (std::vector<std::string>::iterator it = v.begin(); it < v.end(); it++) {
+// 		if (*(it) == "{}")
+// 		{
+// 			std::cerr << "Invalid syntax: " << *(it) << " at line " << countLine << std::endl;
+// 			return false;
+// 		}
+// 		else if (*(it) == "{")
+// 			(*OCB)++;
+// 		else if (*(it) == "}")
+// 			(*CCB)++;
+// 	}
+// 	return true;
+// }

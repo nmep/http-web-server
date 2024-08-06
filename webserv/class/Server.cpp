@@ -1,16 +1,5 @@
 #include "Server.hpp"
 
-uint16_t															Server::_port = 0;
-int																	Server::_socket = 0;
-int																	Server::_server_count = 0;
-std::vector<std::string>											Server::_serverName;
-std::map<std::string, std::string>									Server::_error_page;
-uint16_t															Server::_client_max_body_size;
-std::string															Server::_hostName = "default";
-struct sockaddr_in													Server::_addr;
-bool																Server::_autoIndex = false;
-std::map<std::string, std::map<std::string, std::vector<std::string> > >			Server::_location;
-
 /* ----------------------------------------------------------------- */
 
 Server::Server() {}
@@ -22,14 +11,9 @@ Server::~Server() {}
 bool	strIsNum(std::string str);
 bool	CheckErrorClientValue(std::string & str);
 bool	checkHtmlAccess(std::string filePath);
-static int	SyntaxParse(std::vector<std::string> & v, int countLine, int *OCB, int *CCB);
 
 uint16_t	Server::GetPort() const {
 	return this->_port;
-}
-
-int	Server::GetSocket() const {
-	return this->_socket;
 }
 
 std::string Server::GetServerName(int index) const {
@@ -42,10 +26,15 @@ std::string Server::GetServerName(int index) const {
 	return Server::_serverName[index - 1];
 }
 
+/*
+GetError page renvoie le page html associer au code http
+
+return value:
+	si le code http est associer a une page html le nom du fichier html est renvoyer avec l'extention
+	sinon une string de taille 0 est renvoye
+*/
 std::string	Server::GetErrorPage(std::string httpCode) {
-	if (Server::_error_page[httpCode].size() > 0)
-		return Server::_error_page[httpCode];
-	return "";
+	return Server::_error_page[httpCode];
 }
 
 uint16_t	Server::GetClientMaxBodySize(void) {
@@ -56,56 +45,14 @@ std::string Server::GetHostName() const {
 	return this->_hostName;
 }
 
-struct sockaddr_in Server::GetAddr() const {
-	return this->_addr;
-}
-
-int	Server::GetServerCount() const {
-	return this->_server_count;
-}
-
 bool Server::GetAutoIndex() const {
 	return this->_autoIndex;
-}
-
-std::map<std::string, std::map<std::string, std::vector<std::string> > >	Server::GetMap(void) {
-	return Server::_location;
-}
-
-/* Cette fonction sert a obtenir la valeur d'une location
-location name est le nom de la location principale.
-location directive est le nom de la directive de la location principale
-La valeur renvoyer est un vector contenant la valeurs associer a la location directive
-
-Example:
-	location / {
-		allowedMethods GET POST;
-		root est la aussi;
-	}
-Pour obtenir GET et POST il faut que location name soit "/" et location directive doit etre "allowedMethods"
-
-return value:
-un vector contenant [GET] et [POST] sera retourne
-
-Si la locationName ou locationDirective n'existe pas le vector renvoyer sera de taille 0
-
-*/
-std::vector<std::string> Server::GetLocationDirectiveValue(std::string locationName, std::string locationDirective) {
-	return Server::_location[locationName][locationDirective];
 }
 
 /* ----------------------------------------------------------------- */
 
 void	Server::SetPort(uint16_t & val) {
 	Server::_port = val;
-}
-
-void	Server::SetSocket(int & val) {
-	Server::_socket = val;
-}
-
-void	Server::SetServerCount(int & val) {
-	Server::_server_count = val;
 }
 
 void	Server::SetServerName(std::string & val) {
@@ -145,18 +92,8 @@ void Server::SetHostName(std::string & val) {
 	Server::_hostName = val;
 }
 
-void	Server::SetAddr(struct sockaddr_in & val) {
-	Server::_addr.sin_family = val.sin_family;
-	Server::_addr.sin_addr.s_addr = val.sin_addr.s_addr;
-	Server::_addr.sin_port = val.sin_port;
-}
-
 void	Server::SetAutoIndex(int val) {
 	Server::_autoIndex = val;
-}
-
-void	Server::SetLocation(std::string locationName, std::string locationDirective, std::vector<std::string> locationValue) {
-	Server::_location[locationName][locationDirective] = locationValue;
 }
 
 /* --------------------------- PARSING -------------------------------------- */
@@ -243,11 +180,25 @@ bool	strIsNum(std::string str) {
 	return true;
 }
 
-// rajouter un serverparse pour compter le nombre de serveur ?
+bool	CheckErrorClientValue(std::string & str) {
+	if ((str >= "400" && str <= "419") || (str >= "421" && str <= "429") || str == "431"
+		|| (str >= "449" && str <= "451") || str == "456") {
+			return true;
+	}
+	return false;
+}
 
-bool	handleListenParsing(std::vector<std::string> lineSplit, int countLine) {
+bool	checkHtmlAccess(std::string filePath) {
+	if (access(filePath.c_str(), F_OK | R_OK) < 0) {
+		std::cerr << "Invalid syntax: " << "Access on html file [" << filePath << "]: " << strerror(errno) << std::endl;
+		return false;
+	}
+	return true;
+}
+
+bool	Server::handleListenParsing(std::vector<std::string> lineSplit, int countLine) {
 	uint16_t port = 0;
- 
+
 	if (lineSplit.size() != 2) {
 		std::cerr << "Invalid syntax: at line " << countLine << "should be listen	Port < 65535" << std::endl;
 		return false;
@@ -270,11 +221,11 @@ bool	handleListenParsing(std::vector<std::string> lineSplit, int countLine) {
 		std::cerr << "Invalid syntax " << *(lineSplit.begin() + 1) << " at line " << countLine << std::endl;
 		return false;
 	}
-	Server::SetPort(port);
+	SetPort(port);
 	return true;
 }
 
-bool	handleServerNameParsing(std::vector<std::string> lineSplit, int countLine) {
+bool	Server::handleServerNameParsing(std::vector<std::string> lineSplit, int countLine) {
 	if (lineSplit.size() <= 1) {
 		std::cerr << "Invalid syntax: Server name need content at line " << countLine << std::endl;
 		return false;
@@ -283,40 +234,45 @@ bool	handleServerNameParsing(std::vector<std::string> lineSplit, int countLine) 
 		if (i == lineSplit.size() - 1) {
 			(lineSplit.begin() + i)->erase((lineSplit.begin() + i)->end() - 1);
 		}
-		Server::SetServerName(*(lineSplit.begin() + i));
+		SetServerName(*(lineSplit.begin() + i));
 	}
 	return true;
 }
 
-bool	CheckErrorClientValue(std::string & str) {
-	if ((str >= "400" && str <= "419") || (str >= "421" && str <= "429") || str == "431"
-		|| (str >= "449" && str <= "451") || str == "456") {
-			return true;
-	}
-	return false;
-}
-
-bool	checkHtmlAccess(std::string filePath) {
-	if (access(filePath.c_str(), F_OK | R_OK) < 0) {
-		std::cerr << "Invalid syntax: " << "Access on html file [" << filePath << "]: " << strerror(errno) << std::endl;
-		return false;
-	}
-	return true;
-}
-
-bool	handleErrorPageParsing(std::vector<std::string> lineSplit, int countLine) {
+bool	Server::handleErrorPageParsing(std::vector<std::string> lineSplit, int countLine) {
 	// check avec access le fichier html
 	if (lineSplit.size() == 1) {
 		std::cerr << "Invalid syntax: Errorpage need content at line " << countLine << std::endl;
 		return false;
 	}
 
-	if (!Server::SetErrorPage(lineSplit, countLine))
+	if (!SetErrorPage(lineSplit, countLine))
 		return false;
 	return true;
 }
 
-bool	handleClientMaxBodySizeParsing(std::vector<std::string> lineSplit, int countLine) {
+bool	Server::handleAutoIndex(std::vector<std::string> lineSplit, int countLine) {
+	if (lineSplit.size() != 2) {
+		std::cerr << "Invalid Syntax: at line " << countLine << " Autoindex need a value (on or off)" << std::endl;
+		return false;
+	}
+	std::cout << "line begin = " << *(lineSplit.begin() + 1) << " avant" << std::endl;
+	*(lineSplit.begin() + 1)->erase((lineSplit.begin() + 1)->end() - 1);
+	std::cout << "line begin = " << *(lineSplit.begin() + 1) << " apres" << std::endl;
+
+	if (*(lineSplit.begin() + 1) != "on" && *(lineSplit.begin() + 1) != "off") {
+		std::cerr << "Invalid AutoIndex Value at line " << countLine << " it must be on or off" << std::endl;
+		return false;
+	}
+	if (*(lineSplit.begin() + 1) == "on")
+		SetAutoIndex(1);
+
+	else
+		SetAutoIndex(0);
+	return true;
+}
+
+bool	Server::handleClientMaxBodySizeParsing(std::vector<std::string> lineSplit, int countLine) {
 	if (lineSplit.size() <= 1) {
 		std::cerr << "Invalid syntax: Client_Max_Body_size need content at line " << countLine << std::endl;
 		return false;
@@ -334,7 +290,7 @@ bool	handleClientMaxBodySizeParsing(std::vector<std::string> lineSplit, int coun
 	if (strIsNum(clientmaxbodysize)) {	
 		ft_atoi_port(&cmbs, clientmaxbodysize);
 		if (cmbs > 0 && cmbs <= 200) {
-			Server::SetClientMaxBodySize(cmbs);
+			SetClientMaxBodySize(cmbs);
 		}
 		else {
 			std::cerr << "Invalid Syntax: Max body client size " << cmbs << " is to large max 200" << std::endl;
@@ -363,99 +319,32 @@ bool	isAllowedMethodsValid(std::vector<std::string> allowedMethods, int countLin
 	return true;
 }
 
-bool	handleLocationParsing(std::vector<std::string> lineSplit, int *countLine, int *OCB, int *CCB, std::ifstream & file, std::string line) {
-	std::string LocationKeyWord[] = {"root", "auto_index", "index", "allowedMethods"};
-
-	if (lineSplit.size() != 3) {
-		std::cerr << "Invalid Syntax: location need a match at line " << *countLine << std::endl;
-		return false; 
-	}
-
-	std::string locationName = *(lineSplit.begin() + 1);
-	// JE PENSE que pour que ca marche je dois assigner les trois valeurs
-	// en meme temps donc
-	// la locationName - la directive de la locationName puis sa valeur
-
-	while (getline(file, line)) {
-		// ligne vide?
-		if (line.empty() || isOnlyWithSpace(line)) {
-			(*countLine)++;
-			continue ;
-		}
-
-		lineSplit = split(line);
-
-		// si la ligne est } break et sortir
-		if (*(lineSplit.begin()) == "}") {
-			(*CCB)++;
-			(*countLine)++;
-			break;
-		}
-		// split la ligne
-		if (lineSplit.size() == 1 && *(lineSplit.begin()) != "}") {
-			std::cerr << "Invalid location value: At line " << *countLine << " " << *(lineSplit.begin()) << " need a value" << std::endl;
-			return false;
-		}
-		// printVector(lineSplit);
-		// parse la ligne
-		if (!SyntaxParse(lineSplit, *countLine, OCB, CCB)) {
-			return false;
-		}
-
-		(lineSplit.end() - 1)->erase((lineSplit.end() - 1)->size() - 1);
-		// continuer le parsing de locationName
-		// check si la ligne a le bon mot cle
-		for (size_t i = 0; i < LocationKeyWord->size(); i++) {
-			// si correspondance il y a, break il y aura
-			if (*(lineSplit.begin()) == LocationKeyWord[i])
-				break;
-			// si il n'y a aucune correspondance alors mess d'err et return
-			if (i + 1 == LocationKeyWord->size()) {
-				std::cerr << "Invalid Syntax: Location Invalid token [" << *(lineSplit.begin()) << ']' << std::endl;
-				return false;
-			}
-		}
-		// check si les methodes autorisees de x location sont valid
-		if (*(lineSplit.begin()) == "allowedMethods") {
-			if (!isAllowedMethodsValid(lineSplit, *countLine))
-				return false;
-		}
-		// inserer le split dans map
-		// j'insere un vector donc j'enleve le premier car il est la directive et non la valeur
-		std::string locationDirective = *(lineSplit.begin());
-		lineSplit.erase(lineSplit.begin());
-
-		Server::SetLocation(locationName, locationDirective, lineSplit);
-		(*countLine)++;
-	}
-	// verifier si les occolades sont correctement ouvert et ferme
-	return true;
-}
-
 bool AssignToken(std::vector<std::string> lineSplit, int countLine) {
 	const std::string fTokens[] = {"listen", "server_name", "error_page"\
-							, "client_max_body_size"}; // pour location apelle directement getline dans
+							, "client_max_body_size", "autoindex"}; // pour location apelle directement getline dans
 							// la fonction de location parse et voir si ca marche
 	const std::string cTokens[] = {"server", "listen", "server_name", "error_page", "client_max_body_size", "location", "}"};
-	bool	(*FuncPtr[]) (std::vector<std::string>, int) = {&handleListenParsing, &handleServerNameParsing\
-		, &handleErrorPageParsing, &handleClientMaxBodySizeParsing};
+	bool	(*FuncPtr[]) (std::vector<std::string>, int) = {Server::handleListenParsing, &handleServerNameParsing\
+		, &handleErrorPageParsing, &handleClientMaxBodySizeParsing, &handleAutoIndex};
 
+	// si une segment de directive et finit on return true et on passe au suivant
 	if (*(lineSplit.begin()) == "}")
 		return true;
 
+	// si une directive est trouve faire sa fonction associe
 	for (size_t i = 0; i < 5; i++) {
-		if (*(lineSplit.begin()) == fTokens[i])
+		if (*(lineSplit.begin()) == fTokens[i]) {
 			return FuncPtr[i](lineSplit, countLine);
+		}
 	}
 
+	// verifier si le mot est valide
 	for (size_t i = 0; i <= cTokens->size(); i++) {
 		if (*(lineSplit.begin()) == cTokens[i])
 			return true;
-
-		if (i == cTokens->size()) {
-			std::cerr << "Invalid syntax: Invalid token [" << *(lineSplit.begin()) << "] at line " << countLine << std::endl;
-			return false;
-		}
+		// if (i == cTokens->size()) {
+		// 	std::cerr << "Invalid syntax: Invalid token [" << *(lineSplit.begin()) << "] at line " << countLine << std::endl;
+		// 	return false; C'EST UTILE CA ??
 	}
 
 	std::cerr << "Invalid syntax: " << *(lineSplit.begin()) << " at line " << countLine << std::endl;
@@ -476,48 +365,14 @@ bool	StrSyntaxeCheck(std::string const & str) {
 	return str[str.size() - 1] == ';' ? true : false;
 }
 
-static int	SyntaxParse(std::vector<std::string> & v, int countLine, int *OCB, int *CCB) {
-	std::vector<std::string>::iterator ite = v.end();
-	if (StrIsContext(*(v.begin())))
-	{
-		if (*(ite - 1) != "{" && *(ite - 1) != "}")
-		{
-			std::cerr << "Invalid syntax: " << *(ite - 1) << " at line " << countLine \
-				<< " curly brace is missing" << std::endl;
-				return false;
-		}
-	}
-	else
-	{
-		if (!StrSyntaxeCheck(*(ite - 1)))
-		{
-			std::cerr << "Invalid syntax: " << *(ite - 1) << " at line " << countLine \
-				<< " ';' is missing at the end of line" << std::endl;
-			return false;
-		}
-	}
-	for (std::vector<std::string>::iterator it = v.begin(); it < v.end(); it++) {
-		if (*(it) == "{}")
-		{
-			std::cerr << "Invalid syntax: " << *(it) << " at line " << countLine << std::endl;
-			return false;
-		}
-		else if (*(it) == "{")
-			(*OCB)++;
-		else if (*(it) == "}")
-			(*CCB)++;
-	}
-	return true;
-}
-
-static bool	ReadFile(const std::string & confFileFD) {
+bool	Server::ReadFile(const std::string & confFileFD) {
 	std::string line;
 
 	std::ifstream file(confFileFD.c_str());
 	std::vector<std::string> lineSplit;
 
-	int OCurlyBrace = 0;
-	int CCurlyBrace = 0;
+	// int OCurlyBrace = 0;
+	// int CCurlyBrace = 0;
 	int	countLine = 1;
 
 	while (getline(file, line))
@@ -531,43 +386,44 @@ static bool	ReadFile(const std::string & confFileFD) {
 		lineSplit = split(line);
 
 		// check si la ligne est en dehors du scope des accolade, si oui mettre faux
-		if ((OCurlyBrace == CCurlyBrace && OCurlyBrace > 0) && *(lineSplit.begin()) != "server") {
-			std::cerr << "Invalid syntax: element -> " << line << " isn't in the scope at the line " << countLine << std::endl;   
-			return false;
-		}
+		// if ((OCurlyBrace == CCurlyBrace && OCurlyBrace > 0) && *(lineSplit.begin()) != "server") {
+		// 	std::cerr << "Invalid syntax: element -> " << line << " isn't in the scope at the line " << countLine << std::endl;   
+		// 	return false;
+		// }
 
 		// check si le premier mot est correct
-		if (!SyntaxParse(lineSplit, countLine, &OCurlyBrace, &CCurlyBrace))
-			return false;
+		// if (!SyntaxParse(lineSplit, countLine, &OCurlyBrace, &CCurlyBrace))
+		// 	return false;
 
 		// location est traite differement des autres parce qu'il a besoin de plus de parametres
-		if (*(lineSplit.begin()) == "location") {
-			countLine++;
-			if (!handleLocationParsing(lineSplit, &countLine, &OCurlyBrace, &CCurlyBrace, file, line))
-				return false;
-		}
+		// if (*(lineSplit.begin()) == "location") {
+		// 	if (!handleLocationParsing(lineSplit, &countLine, &OCurlyBrace, &CCurlyBrace, file, line)) {
+		// 		countLine++;
+		// 		return false;
+		// 	}
+		// }
 
 		if (!AssignToken(lineSplit, countLine))
 			return false;
 		countLine++;
 	}
 
-	if (OCurlyBrace != CCurlyBrace) {
-		if (OCurlyBrace < CCurlyBrace)
-			std::cerr << "Invalid syntax: " << CCurlyBrace - OCurlyBrace << " Open curly brace is missing" << std::endl;
-		else
-			std::cerr << "Invalid syntax: " << OCurlyBrace - CCurlyBrace << " Close curly brace is missing" << std::endl;
-		return false;
-	}
+	// if (OCurlyBrace != CCurlyBrace) {
+	// 	if (OCurlyBrace < CCurlyBrace)
+	// 		std::cerr << "Invalid syntax: " << CCurlyBrace - OCurlyBrace << " Open curly brace is missing" << std::endl;
+	// 	else
+	// 		std::cerr << "Invalid syntax: " << OCurlyBrace - CCurlyBrace << " Close curly brace is missing" << std::endl;
+	// 	return false;
+	// }
 	return true;
 }
 
-bool	Server::ft_parse_config_file(const std::string & confFile) {
+// bool	Server::ft_parse_config_file(const std::string & confFile) {
 	// ouvrir le fichier
-	if (access_file(confFile) < 0)
-		return false;
+	// if (access_file(confFile) < 0)
+		// return false;
 	// lire le fichier
-	if (!ReadFile(confFile))
-		return false;
-	return true;
-}
+	// if (!ReadFile(confFile))
+	// 	return false;
+// 	return true;
+// }

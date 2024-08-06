@@ -25,22 +25,18 @@ int	main(int ac, char **av)
 		std::cout << "main" << std::endl;
 		std::cout << "port = " << serv.GetPort() << std::endl;
 		std::cout << "error page" << std::endl;
-		std::cout << serv.GetErrorPage("404") << std::endl;
+		std::cout << serv.GetErrorPage("888") << std::endl;
+		std::string errorpage = serv.GetErrorPage("888");
+		
+		std::cout << "error page" << std::endl;
+		std::cout << serv.GetErrorPage("401") << std::endl;
 		std::cout << "client max body size" << std::endl;
 		std::cout << serv.GetClientMaxBodySize() << std::endl;
-		std::cout << "Location" << std::endl;
-		printLocation(serv.GetMap());
-
 
 		std::cout << "GetLocation directive value " << std::endl;
 		
-		std::vector<std::string> locationvalue;
-		printVector(serv.GetLocationDirectiveValue("weqr", "allowedMethods"));
+		std::cout << "autoIndex = " << serv.GetAutoIndex() << std::endl;
 
-		locationvalue = serv.GetLocationDirectiveValue("/", "allowedMethods");
-		if (locationvalue.size() == 0) {
-			std::cout << "location existe pas" << std::endl;
-		}
 		// lancer le serveur
 	}
 	else
