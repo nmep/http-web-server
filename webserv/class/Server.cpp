@@ -1,4 +1,5 @@
 #include "Server.hpp"
+#include "print_tools.hpp"
 
 /* ----------------------------------------------------------------- */
 
@@ -112,40 +113,6 @@ void Server::SetHostName(std::string const & hostName) {
 }
 
 /* --------------------------- PARSING -------------------------------------- */
-
-void	printVector(std::vector<std::string> v) {
-	for (std::vector<std::string>::iterator it = v.begin(); it < v.end(); it++) {
-		std::cout << "v[] = " << *(it) << std::endl;
-	}
-}
-
-void	printLocation(std::map<std::string, std::map<std::string, std::vector<std::string> > > map) {
-	std::map<std::string, std::map<std::string, std::vector<std::string> > >::iterator it1 = map.begin();
-	std::map<std::string, std::map<std::string, std::vector<std::string> > >::iterator ite1 = map.end();
-
-	std::map<std::string, std::vector<std::string> >::iterator it2;
-	std::map<std::string, std::vector<std::string> >::iterator ite2;
-	for (/**/; it1 != ite1; it1++) {
-		std::cout << "first MAP = " << (*it1).first << std::endl;
-
-		it2 = it1->second.begin();
-		ite2 = it1->second.end();
-
-		for (/**/; it2 != ite2; it2++) {
-			std::cout << "location directive = " << (*it2).first << std::endl;
-			std::cout << "location directive value = " << std::endl;
-			printVector(it2->second);
-		}
-	}
-}
-
-void	printMap(std::map<std::string, std::string> map)
-{
-	for (std::map<std::string, std::string>::iterator it = map.begin(); it != map.end(); it++) {
-		std::cout << "first = " << it->first << std::endl;
-		std::cout << "second = " << it->second << std::endl;
-	}
-}
 
 bool isOnlyWithSpace(std::string const & line)
 {
@@ -438,12 +405,7 @@ std::ostream & operator<<(std::ostream & o, Server const & server)
     o << "serverName = " << server.GetServerName() << std::endl;
     o << "hostName = " << server.GetHostName() << std::endl;
     o << "Error page:" << std::endl;
-
-    std::map<std::string, std::string> errorPageMap = server.getErrorPageMap();
-    for (std::map<std::string, std::string>::iterator it = errorPageMap.begin(); it != errorPageMap.end(); ++it) {
-        o << "first = " << it->first << " second = " << it->second << std::endl;
-    }
-
+	printMap(server.getErrorPageMap(), o);
     o << "Client max body size = " << server.GetClientMaxBodySize() << std::endl;
     return o;
 }

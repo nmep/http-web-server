@@ -1,25 +1,7 @@
 # ifndef SERVER_HPP
-	# define SERVER_HPP
+# define SERVER_HPP
 
-	#include <sys/socket.h> // socket + network function
-	#include <netinet/in.h> // netwok
-
-	#include <iostream> // std
-	#include <sstream> // type for file input
-	#include <exception> // exception
-	#include <stdint.h> // uint16_t
-	#include <string> // getline
-	#include <fstream> // inputfile
-	#include <string> // string manip
-
-	#include <map> // map
-	#include <vector> // vector
-
-	#include <unistd.h> // access
-	#include <stdio.h> // perror
-	#include <string.h> // strerror
-
-	#include <limits.h>
+	#include "library_needed.hpp"
 
 	#define PORT_MAX 65535
 
@@ -62,11 +44,6 @@ class Server
 		bool 	AssignToken(std::vector<std::string> lineSplit, int countLine);
 		bool	parseConfFile(const std::string & confFileFD);
 };
-
-// surcharge d'op <<
-// void	printVector(std::vector<std::string> v);
-// void	printLocation(std::map<std::string, std::map<std::string, std::vector<std::string> > > map);
-// void	printMap(std::map<std::string, std::string> map);
 
 std::ostream & operator<<(std::ostream& o, Server const & server);
 

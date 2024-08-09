@@ -1,9 +1,6 @@
 #include "Server.hpp"
 
-#include <cstring>
-
-void	printLocation(std::map<std::string, std::map<std::string, std::vector<std::string> > > map);
-void	printVector(std::vector<std::string> v);
+// #include <cstring>
 
 int	main(int ac, char **av)
 {
@@ -22,18 +19,7 @@ int	main(int ac, char **av)
 			std::cerr << "Error config file" << std::endl;
 			return 2;
 		}
-		// std::cout << "main" << std::endl;
-		// std::cout << "port = " << serv.GetPort() << std::endl;
-		// std::cout << "error page fichier ?" << std::endl;
-		// std::cout << serv.GetErrorPage("402") << std::endl;
-		// std::string errorpage = serv.GetErrorPage("414");
-
-		// std::cout << "error page tto ? " << std::endl;
-		// std::cout << serv.GetErrorPage("414") << std::endl;
-		// std::cout << "client max body size" << std::endl;
-		// std::cout << serv.GetClientMaxBodySize() << std::endl;
-
-		// std::cout << "GetLocation directive value " << std::endl;
+		// config du serv
 		std::cout << serv << std::endl;
 
 		// lancer le serveur
