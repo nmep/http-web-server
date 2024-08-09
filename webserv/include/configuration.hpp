@@ -7,7 +7,6 @@
 		private:
 			int	_nbServer;
 
-
 		public:
 			Configuration();
 			~Configuration();

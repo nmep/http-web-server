@@ -2,8 +2,8 @@
 # define SERVER_HPP
 
 	#include "library_needed.hpp"
-
-	#define PORT_MAX 65535
+	#include "print_tools.hpp"
+	#include "tools.hpp"
 
 class Server
 {
