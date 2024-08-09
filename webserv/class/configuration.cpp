@@ -24,7 +24,7 @@ bool	Configuration::readFile(const std::string const & confFileFD)
 {
 	// to do
 }
-
+// YA CA A FAIRE
 bool	Configuration::syntaxePArse(std::vector<std::string> const & v, int countLine)
 {
 		std::vector<std::string>::const_iterator ite = v.end();
