@@ -254,8 +254,8 @@ bool	Server::handleListenParsing(std::vector<std::string> lineSplit, int countLi
 }
 
 bool	Server::handleServerNameParsing(std::vector<std::string> lineSplit, int countLine) {
-	if (lineSplit.size() <= 1) {
-		std::cerr << "Invalid syntax: Server name need content at line " << countLine << std::endl;
+	if (lineSplit.size() != 2) {
+		std::cerr << "Invalid syntax: Server name need one value at line " << countLine << std::endl;
 		return false;
 	}
 	for (size_t i = 1; i < lineSplit.size(); i++) {
@@ -322,7 +322,8 @@ bool Server::AssignToken(std::vector<std::string> lineSplit, int countLine) {
 	const std::string fTokens[] = {"listen", "server_name", "error_page"\
 							, "client_max_body_size", "hostName"}; // pour location apelle directement getline dans
 							// la fonction de location parse et voir si ca marche
-	const std::string cTokens[] = {"server", "listen", "server_name", "error_page", "client_max_body_size", "location", "}", "allowedMethods"};
+	const std::string cTokens[] = {"server", "listen", "server_name",
+	 "error_page", "client_max_body_size", "location", "allowedMethods", "autoindex"};
 	bool	(Server::*FuncPtr[]) (std::vector<std::string>, int) = {&Server::handleListenParsing, &Server::handleServerNameParsing\
 		, &Server::handleErrorPageParsing, &Server::handleClientMaxBodySizeParsing}; // manque  hostname
 
@@ -331,22 +332,19 @@ bool Server::AssignToken(std::vector<std::string> lineSplit, int countLine) {
 		return true;
 
 	// si une directive est trouve faire sa fonction associe
-	for (size_t i = 0; i < 5; i++) {
+	for (size_t i = 0; i < sizeof(fTokens) / sizeof(fTokens[0]); i++) {
 		if (*(lineSplit.begin()) == fTokens[i]) {
 			return (this->*FuncPtr[i])(lineSplit, countLine);
 		}
 	}
 
 	// verifier si le mot est valide
-	for (size_t i = 0; i <= cTokens->size(); i++) {
+	for (size_t i = 0; i < sizeof(cTokens) / sizeof(cTokens[0]) ; i++) {
 		if (*(lineSplit.begin()) == cTokens[i])
 			return true;
-		// if (i == cTokens->size()) {
-		// 	std::cerr << "Invalid syntax: Invalid token [" << *(lineSplit.begin()) << "] at line " << countLine << std::endl;
-		// 	return false; C'EST UTILE CA ??
 	}
 
-	std::cerr << "Invalid syntax: " << *(lineSplit.begin()) << " at line " << countLine << std::endl;
+	std::cerr << "Invalid syntax: Invalid token [" << *(lineSplit.begin()) << "] at line " << countLine << std::endl;
 	return false;
 }
 
@@ -443,8 +441,7 @@ std::ostream & operator<<(std::ostream & o, Server const & server)
 
     std::map<std::string, std::string> errorPageMap = server.getErrorPageMap();
     for (std::map<std::string, std::string>::iterator it = errorPageMap.begin(); it != errorPageMap.end(); ++it) {
-        o << "first = " << it->first << std::endl;
-        o << "second = " << it->second << std::endl;
+        o << "first = " << it->first << " second = " << it->second << std::endl;
     }
 
     o << "Client max body size = " << server.GetClientMaxBodySize() << std::endl;
