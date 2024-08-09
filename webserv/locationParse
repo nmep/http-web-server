@@ -66,3 +66,49 @@
 // 	// verifier si les occolades sont correctement ouvert et ferme
 // 	return true;
 // }
+
+
+// AUTO INDEX
+
+// bool	Server::handleAutoIndex(std::vector<std::string> lineSplit, int countLine) {
+// 	if (lineSplit.size() != 2) {
+// 		std::cerr << "Invalid Syntax: at line " << countLine << " Autoindex need a value (on or off)" << std::endl;
+// 		return false;
+// 	}
+// 	std::cout << "line begin = " << *(lineSplit.begin() + 1) << " avant" << std::endl;
+// 	*(lineSplit.begin() + 1)->erase((lineSplit.begin() + 1)->end() - 1);
+// 	std::cout << "line begin = " << *(lineSplit.begin() + 1) << " apres" << std::endl;
+
+// 	if (*(lineSplit.begin() + 1) != "on" && *(lineSplit.begin() + 1) != "off") {
+// 		std::cerr << "Invalid AutoIndex Value at line " << countLine << " it must be on or off" << std::endl;
+// 		return false;
+// 	}
+// 	if (*(lineSplit.begin() + 1) == "on")
+// 		SetAutoIndex(1);
+
+// 	else
+// 		SetAutoIndex(0);
+// 	return true;
+// }
+
+// ALLOWED METHODS
+
+
+// bool	isAllowedMethodsValid(std::vector<std::string> allowedMethods, int countLine) {
+// 	std::string	AcceptMethods[] = {"GET", "POST"};
+// 	std::vector<std::string>::iterator it = allowedMethods.begin() + 1;
+
+// 	if (allowedMethods.size())
+// 	for (/*nope*/; it != allowedMethods.end(); it++) {
+		
+// 		for (size_t i = 0; i < AcceptMethods->size() - 1; i++) {
+// 			if (*it == AcceptMethods[i])
+// 				break ;
+// 			else if (i + 1 == AcceptMethods->size() - 1) {
+// 				std::cerr << "Invalid Allowed methods: Line " << countLine << " [" << *it << ']' << std::endl;
+// 				return false;
+// 			}
+// 		}
+// 	}
+// 	return true;
+// }

@@ -18,24 +18,22 @@ int	main(int ac, char **av)
 		Server	serv;
 		const std::string file(av[1]);
 		// parser le fichier et recuperer ses infos
-		if (!serv.ft_parse_config_file(file)) {
+		if (!serv.parseConfFile(file)) {
 			std::cerr << "Error config file" << std::endl;
 			return 2;
 		}
 		std::cout << "main" << std::endl;
 		std::cout << "port = " << serv.GetPort() << std::endl;
-		std::cout << "error page" << std::endl;
-		std::cout << serv.GetErrorPage("888") << std::endl;
-		std::string errorpage = serv.GetErrorPage("888");
-		
-		std::cout << "error page" << std::endl;
-		std::cout << serv.GetErrorPage("401") << std::endl;
+		std::cout << "error page fichier ?" << std::endl;
+		std::cout << serv.GetErrorPage("402") << std::endl;
+		std::string errorpage = serv.GetErrorPage("414");
+
+		std::cout << "error page tto ? " << std::endl;
+		std::cout << serv.GetErrorPage("414") << std::endl;
 		std::cout << "client max body size" << std::endl;
 		std::cout << serv.GetClientMaxBodySize() << std::endl;
 
 		std::cout << "GetLocation directive value " << std::endl;
-		
-		std::cout << "autoIndex = " << serv.GetAutoIndex() << std::endl;
 
 		// lancer le serveur
 	}

@@ -2,9 +2,25 @@
 
 /* ----------------------------------------------------------------- */
 
-Server::Server() : _default_server(0), _port(8080), _serverName("server_name"), _hostName("localhost"), _autoIndex(false) {}
+Server::Server() : _default_server(0), _port(8080), _serverName("server_name"), _hostName("localhost"), _client_max_body_size(0) {}
 
 Server::~Server() {}
+
+Server::Server(Server const & copy)
+{
+	*this = copy;
+}
+
+Server & Server::operator=(Server const & rhs)
+{
+	_default_server = rhs._default_server;
+	_port = rhs._port;
+	_serverName = rhs._serverName;
+	_hostName = rhs._hostName;
+	_error_page = rhs._error_page;
+	_client_max_body_size = rhs._client_max_body_size;
+	return *this;
+}
 
 /* ----------------------------------------------------------------- */
 
@@ -26,10 +42,10 @@ std::string Server::GetServerName() const {
 }
 
 std::string	Server::GetErrorPage(std::string const & httpCode) {
-	return Server::_error_page[httpCode];
+	return _error_page[httpCode];
 }
 
-uint16_t	Server::GetClientMaxBodySize(void) {
+uint16_t	Server::GetClientMaxBodySize(void) const {
 	return _client_max_body_size;
 }
 
@@ -37,8 +53,9 @@ std::string Server::GetHostName() const {
 	return _hostName;
 }
 
-bool Server::GetAutoIndex() const {
-	return _autoIndex;
+std::map<std::string, std::string> Server::getErrorPageMap() const
+{
+	return _error_page;
 }
 
 /* ----------------------------------------------------------------- */
@@ -49,7 +66,7 @@ void	Server::SetDefaultServer()
 }
 
 void	Server::SetPort(uint16_t & val) {
-	Server::_port = val;
+	_port = val;
 }
 
 void	Server::SetServerName(std::string const & serverName) {
@@ -70,7 +87,12 @@ bool	Server::SetErrorPage(std::vector<std::string> lineSplit, int countLine) {
 				return false;
 			}
 			else {
-				Server::_error_page[*(lineSplit.begin() + i)] = *(lineSplit.end() - 1);
+				if (_error_page.find(*(lineSplit.begin() + i)) == _error_page.end())
+					_error_page[*(lineSplit.begin() + i)] = *(lineSplit.end() - 1);
+				else {
+					std::cerr << "Invalid error page config: " << *(lineSplit.begin() + i) << " is already attribute tu an other error page, wich is " << GetErrorPage(*(lineSplit.begin() + i)) << " line: " << countLine << std::endl;
+					return false;
+				}
 			}
 		}
 		else {
@@ -82,15 +104,11 @@ bool	Server::SetErrorPage(std::vector<std::string> lineSplit, int countLine) {
 }
 
 void	Server::SetClientMaxBodySize(uint16_t & val) {
-	Server::_client_max_body_size = val;
+	_client_max_body_size = val;
 }
 
 void Server::SetHostName(std::string const & hostName) {
-	Server::_hostName = hostName;
-}
-
-void	Server::SetAutoIndex(int val) {
-	Server::_autoIndex = val;
+	_hostName = hostName;
 }
 
 /* --------------------------- PARSING -------------------------------------- */
@@ -118,7 +136,14 @@ void	printLocation(std::map<std::string, std::map<std::string, std::vector<std::
 			std::cout << "location directive value = " << std::endl;
 			printVector(it2->second);
 		}
-		
+	}
+}
+
+void	printMap(std::map<std::string, std::string> map)
+{
+	for (std::map<std::string, std::string>::iterator it = map.begin(); it != map.end(); it++) {
+		std::cout << "first = " << it->first << std::endl;
+		std::cout << "second = " << it->second << std::endl;
 	}
 }
 
@@ -182,6 +207,16 @@ bool	CheckErrorClientValue(std::string & str) {
 }
 
 bool	checkHtmlAccess(std::string filePath) {
+	std::string checkHTMLExtension = filePath;
+	checkHTMLExtension = checkHTMLExtension.erase(0, checkHTMLExtension.find('.') + 1);
+	if (checkHTMLExtension.empty()) {
+		std::cerr << "Invalid extension file: [" << filePath << "] dosn't have a .html" << std::endl;
+		return false;
+	}
+	if (checkHTMLExtension != "html") {
+		std::cerr << "Invalid extension file: [" << filePath << "] dosn't have a .html" << std::endl;
+		return false;
+	}
 	if (access(filePath.c_str(), F_OK | R_OK) < 0) {
 		std::cerr << "Invalid syntax: " << "Access on html file [" << filePath << "]: " << strerror(errno) << std::endl;
 		return false;
@@ -244,27 +279,6 @@ bool	Server::handleErrorPageParsing(std::vector<std::string> lineSplit, int coun
 	return true;
 }
 
-bool	Server::handleAutoIndex(std::vector<std::string> lineSplit, int countLine) {
-	if (lineSplit.size() != 2) {
-		std::cerr << "Invalid Syntax: at line " << countLine << " Autoindex need a value (on or off)" << std::endl;
-		return false;
-	}
-	std::cout << "line begin = " << *(lineSplit.begin() + 1) << " avant" << std::endl;
-	*(lineSplit.begin() + 1)->erase((lineSplit.begin() + 1)->end() - 1);
-	std::cout << "line begin = " << *(lineSplit.begin() + 1) << " apres" << std::endl;
-
-	if (*(lineSplit.begin() + 1) != "on" && *(lineSplit.begin() + 1) != "off") {
-		std::cerr << "Invalid AutoIndex Value at line " << countLine << " it must be on or off" << std::endl;
-		return false;
-	}
-	if (*(lineSplit.begin() + 1) == "on")
-		SetAutoIndex(1);
-
-	else
-		SetAutoIndex(0);
-	return true;
-}
-
 bool	Server::handleClientMaxBodySizeParsing(std::vector<std::string> lineSplit, int countLine) {
 	if (lineSplit.size() <= 1) {
 		std::cerr << "Invalid syntax: Client_Max_Body_size need content at line " << countLine << std::endl;
@@ -293,32 +307,24 @@ bool	Server::handleClientMaxBodySizeParsing(std::vector<std::string> lineSplit, 
 	return true;
 }
 
-bool	isAllowedMethodsValid(std::vector<std::string> allowedMethods, int countLine) {
-	std::string	AcceptMethods[] = {"GET", "POST"};
-	std::vector<std::string>::iterator it = allowedMethods.begin() + 1;
-
-	if (allowedMethods.size())
-	for (/*nope*/; it != allowedMethods.end(); it++) {
-		
-		for (size_t i = 0; i < AcceptMethods->size() - 1; i++) {
-			if (*it == AcceptMethods[i])
-				break ;
-			else if (i + 1 == AcceptMethods->size() - 1) {
-				std::cerr << "Invalid Allowed methods: Line " << countLine << " [" << *it << ']' << std::endl;
-				return false;
-			}
-		}
+bool	Server::handleHostName(std::vector<std::string> lineSplit, int countLine)
+{
+	if (lineSplit.size() != 2) {
+		// std::cerr << "Error host name syntax: at line " << countLine << " must be only one value for the hostName" <<std::endl;
+		std::cout << countLine << std::endl;
+		return false;
 	}
+	// SetHostName(*(lineSplit.begin() + 1));
 	return true;
 }
 
 bool Server::AssignToken(std::vector<std::string> lineSplit, int countLine) {
 	const std::string fTokens[] = {"listen", "server_name", "error_page"\
-							, "client_max_body_size", "autoindex"}; // pour location apelle directement getline dans
+							, "client_max_body_size", "hostName"}; // pour location apelle directement getline dans
 							// la fonction de location parse et voir si ca marche
-	const std::string cTokens[] = {"server", "listen", "server_name", "error_page", "client_max_body_size", "location", "}"};
+	const std::string cTokens[] = {"server", "listen", "server_name", "error_page", "client_max_body_size", "location", "}", "allowedMethods"};
 	bool	(Server::*FuncPtr[]) (std::vector<std::string>, int) = {&Server::handleListenParsing, &Server::handleServerNameParsing\
-		, &Server::handleErrorPageParsing, &Server::handleClientMaxBodySizeParsing, &Server::handleAutoIndex};
+		, &Server::handleErrorPageParsing, &Server::handleClientMaxBodySizeParsing}; // manque  hostname
 
 	// si une segment de directive et finit on return true et on passe au suivant
 	if (*(lineSplit.begin()) == "}")
@@ -358,7 +364,7 @@ bool	StrSyntaxeCheck(std::string const & str) {
 	return str[str.size() - 1] == ';' ? true : false;
 }
 
-bool	Server::ReadFile(const std::string & confFileFD) {
+bool	Server::parseConfFile(const std::string & confFileFD) {
 	std::string line;
 
 	std::ifstream file(confFileFD.c_str());
@@ -366,6 +372,7 @@ bool	Server::ReadFile(const std::string & confFileFD) {
 
 	// int OCurlyBrace = 0;
 	// int CCurlyBrace = 0;
+	bool	defaultServIsSet = false;
 	int	countLine = 1;
 
 	while (getline(file, line))
@@ -377,6 +384,10 @@ bool	Server::ReadFile(const std::string & confFileFD) {
 		/* recuperer le premier mot de la ligne et le faire comp avec les mots
 			cles et en fonctions de mots cles appliquer tels ou tel fonctions*/
 		lineSplit = split(line);
+
+		if (!defaultServIsSet && *(lineSplit.begin()) == "server") {
+			SetDefaultServer();
+		}
 
 		// check si la ligne est en dehors du scope des accolade, si oui mettre faux
 		// if ((OCurlyBrace == CCurlyBrace && OCurlyBrace > 0) && *(lineSplit.begin()) != "server") {
@@ -416,7 +427,26 @@ bool	Server::ReadFile(const std::string & confFileFD) {
 	// if (access_file(confFile) < 0)
 		// return false;
 	// lire le fichier
-	// if (!ReadFile(confFile))
+	// if (!parseConfFile(confFile))
 	// 	return false;
 // 	return true;
 // }
+
+std::ostream & operator<<(std::ostream & o, Server const & server)
+{
+    o << "SERVER PRINTING\n" << std::endl;
+    o << "Default Server = " << server.GetDefaultServer() << std::endl;
+    o << "Port = " << server.GetPort() << std::endl;
+    o << "serverName = " << server.GetServerName() << std::endl;
+    o << "hostName = " << server.GetHostName() << std::endl;
+    o << "Error page:" << std::endl;
+
+    std::map<std::string, std::string> errorPageMap = server.getErrorPageMap();
+    for (std::map<std::string, std::string>::iterator it = errorPageMap.begin(); it != errorPageMap.end(); ++it) {
+        o << "first = " << it->first << std::endl;
+        o << "second = " << it->second << std::endl;
+    }
+
+    o << "Client max body size = " << server.GetClientMaxBodySize() << std::endl;
+    return o;
+}
