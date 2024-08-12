@@ -92,23 +92,3 @@
 // }
 
 // ALLOWED METHODS
-
-
-// bool	isAllowedMethodsValid(std::vector<std::string> allowedMethods, int countLine) {
-// 	std::string	AcceptMethods[] = {"GET", "POST"};
-// 	std::vector<std::string>::iterator it = allowedMethods.begin() + 1;
-
-// 	if (allowedMethods.size())
-// 	for (/*nope*/; it != allowedMethods.end(); it++) {
-		
-// 		for (size_t i = 0; i < AcceptMethods->size() - 1; i++) {
-// 			if (*it == AcceptMethods[i])
-// 				break ;
-// 			else if (i + 1 == AcceptMethods->size() - 1) {
-// 				std::cerr << "Invalid Allowed methods: Line " << countLine << " [" << *it << ']' << std::endl;
-// 				return false;
-// 			}
-// 		}
-// 	}
-// 	return true;
-// }

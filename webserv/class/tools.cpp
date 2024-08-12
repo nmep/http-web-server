@@ -76,3 +76,22 @@ bool	checkHtmlAccess(std::string filePath) {
 	}
 	return true;
 }
+
+bool	checkAccessFile(std::string const & fileName, int mode)
+{
+	return access(fileName.c_str(), mode) == 0 ? true : false;
+}
+
+bool	StrIsContext(std::string const & str) {
+	const std::string context[] = {"server", "location", "}"};
+
+	for (size_t i = 0; i < sizeof(context) / sizeof(std::string) ; i++) {
+		if (str == context[i])
+			return true;
+	}
+	return false;
+}
+
+bool	StrSyntaxeCheck(std::string const & str) {
+	return str[str.size() - 1] == ';' ? true : false;
+}

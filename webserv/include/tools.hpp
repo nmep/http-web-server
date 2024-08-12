@@ -13,6 +13,8 @@
 	uint16_t					ft_atoi_port(uint16_t *ptr, std::string str);
 	bool						CheckErrorClientValue(std::string & str);
 	bool						checkHtmlAccess(std::string filePath);
-
+	bool						StrIsContext(std::string const & str);
+	bool						StrSyntaxeCheck(std::string const & str);
+	bool						checkAccessFile(std::string const & fileName, int mode);
 
 #endif

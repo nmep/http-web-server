@@ -4,6 +4,7 @@
 	#include "library_needed.hpp"
 	#include "print_tools.hpp"
 	#include "tools.hpp"
+	#include "Location.hpp"
 
 class Server
 {
@@ -14,6 +15,7 @@ class Server
 		std::string								_hostName;
 		std::map<std::string, std::string>		_error_page;
 		uint16_t								_client_max_body_size;
+		std::map<std::string, Location>			_location;
 
 	public:
 		Server();
@@ -42,7 +44,7 @@ class Server
 		bool	handleHostName(std::vector<std::string> lineSplit, int countLine);
 		bool	handleClientMaxBodySizeParsing(std::vector<std::string> lineSplit, int countLine);
 		bool 	AssignToken(std::vector<std::string> lineSplit, int countLine);
-		bool	parseConfFile(const std::string & confFileFD);
+		bool	parseConfFile(std::ifstream & confFileFD, int *countLine);
 };
 
 std::ostream & operator<<(std::ostream& o, Server const & server);

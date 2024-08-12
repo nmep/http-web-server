@@ -121,7 +121,7 @@ bool	Server::handleListenParsing(std::vector<std::string> lineSplit, int countLi
 	// get the port without colom
 	(lineSplit.begin() + 1)->erase((lineSplit.begin() + 1)->end() - 1);
 
-	// case where there is no value in config file after listen only a ';'
+	// case where there is no value in config fileFD after listen only a ';'
 	if (*(lineSplit.begin() + 1) == "") {
 		std::cerr << "Invalid syntax: Port value is invalid at line " << countLine << std::endl;
 		return false;
@@ -209,8 +209,7 @@ bool Server::AssignToken(std::vector<std::string> lineSplit, int countLine) {
 	const std::string fTokens[] = {"listen", "server_name", "error_page"\
 							, "client_max_body_size", "hostName"}; // pour location apelle directement getline dans
 							// la fonction de location parse et voir si ca marche
-	const std::string cTokens[] = {"server", "listen", "server_name",
-	 "error_page", "client_max_body_size", "location", "allowedMethods", "autoindex"};
+
 	bool	(Server::*FuncPtr[]) (std::vector<std::string>, int) = {&Server::handleListenParsing, &Server::handleServerNameParsing\
 		, &Server::handleErrorPageParsing, &Server::handleClientMaxBodySizeParsing}; // manque  hostname
 
@@ -224,88 +223,45 @@ bool Server::AssignToken(std::vector<std::string> lineSplit, int countLine) {
 			return (this->*FuncPtr[i])(lineSplit, countLine);
 		}
 	}
-
-	// verifier si le mot est valide
-	for (size_t i = 0; i < sizeof(cTokens) / sizeof(cTokens[0]) ; i++) {
-		if (*(lineSplit.begin()) == cTokens[i])
-			return true;
-	}
-
-	std::cerr << "Invalid syntax: Invalid token [" << *(lineSplit.begin()) << "] at line " << countLine << std::endl;
-	return false;
-}
-
-bool	StrIsContext(std::string const & str) {
-	const std::string context[] = {"server", "location", "}"};
-
-	for (size_t i = 0; i < sizeof(context) / sizeof(std::string) ; i++) {
-		if (str == context[i])
-			return true;
-	}
-	return false;
-}
-
-bool	StrSyntaxeCheck(std::string const & str) {
-	return str[str.size() - 1] == ';' ? true : false;
-}
-
-bool	Server::parseConfFile(const std::string & confFileFD) {
-	std::string line;
-
-	std::ifstream file(confFileFD.c_str());
-	std::vector<std::string> lineSplit;
-
-	// int OCurlyBrace = 0;
-	// int CCurlyBrace = 0;
-	bool	defaultServIsSet = false;
-	int	countLine = 1;
-
-	while (getline(file, line))
-	{
-		if (line.empty() || isOnlyWithSpace(line)) {
-			countLine++;
-			continue ;
-		}
-		/* recuperer le premier mot de la ligne et le faire comp avec les mots
-			cles et en fonctions de mots cles appliquer tels ou tel fonctions*/
-		lineSplit = split(line);
-
-		if (!defaultServIsSet && *(lineSplit.begin()) == "server") {
-			SetDefaultServer();
-		}
-
-		// check si la ligne est en dehors du scope des accolade, si oui mettre faux
-		// if ((OCurlyBrace == CCurlyBrace && OCurlyBrace > 0) && *(lineSplit.begin()) != "server") {
-		// 	std::cerr << "Invalid syntax: element -> " << line << " isn't in the scope at the line " << countLine << std::endl;   
-		// 	return false;
-		// }
-
-		// check si le premier mot est correct
-		// if (!SyntaxParse(lineSplit, countLine, &OCurlyBrace, &CCurlyBrace))
-		// 	return false;
-
-		// location est traite differement des autres parce qu'il a besoin de plus de parametres
-		// if (*(lineSplit.begin()) == "location") {
-		// 	if (!handleLocationParsing(lineSplit, &countLine, &OCurlyBrace, &CCurlyBrace, file, line)) {
-		// 		countLine++;
-		// 		return false;
-		// 	}
-		// }
-
-		if (!AssignToken(lineSplit, countLine))
-			return false;
-		countLine++;
-	}
-
-	// if (OCurlyBrace != CCurlyBrace) {
-	// 	if (OCurlyBrace < CCurlyBrace)
-	// 		std::cerr << "Invalid syntax: " << CCurlyBrace - OCurlyBrace << " Open curly brace is missing" << std::endl;
-	// 	else
-	// 		std::cerr << "Invalid syntax: " << OCurlyBrace - CCurlyBrace << " Close curly brace is missing" << std::endl;
-	// 	return false;
-	// }
 	return true;
 }
+
+
+bool	Server::parseConfFile(std::ifstream & confFileFD, int *countLine) {
+	std::string line;
+	std::vector<std::string> lineSplit;
+
+	while (getline(confFileFD, line))
+	{
+		std::cout << "line dans SERVER " << line << std::endl;
+		if (line.empty() || isOnlyWithSpace(line)) {
+			(*countLine)++;
+			continue ;
+		}
+		lineSplit = split(line);
+
+		if (*(lineSplit.begin()) == "}") {
+			return true;
+		}
+
+		if (*(lineSplit.begin()) == "location") {
+
+			if (lineSplit.size() != 3) {
+				std::cerr << "Invalid Syntax: location need a match at line " << *countLine << std::endl;
+				return false; 
+			}
+			Location &location = _location[*(lineSplit.begin() + 1)];
+			if (!location.LocationParsing(confFileFD, countLine))
+				return false;
+		}
+		if (!AssignToken(lineSplit, (*countLine)))
+			return false;
+		(*countLine)++;
+	}
+	return true;
+}
+
+
 
 // bool	Server::ft_parse_config_file(const std::string & confFile) {
 	// ouvrir le fichier
