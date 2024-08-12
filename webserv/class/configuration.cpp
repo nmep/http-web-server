@@ -10,9 +10,7 @@ Configuration::Configuration() : _nbServer(0)
 
 Configuration::~Configuration()
 {
-	if (_servTab) {
-		delete [] _servTab;
-	}
+	std::cout << "Configuration destructor called" << std::endl;
 }
 
 Configuration::Configuration(Configuration const & copy)
@@ -68,7 +66,7 @@ void	Configuration::setNBServer(int nbServer)
 bool	Configuration::syntaxParse(std::vector<std::string> const & lineSplit)
 {
 	const std::string cTokens[] = {"server", "listen", "server_name",
-	 "error_page", "client_max_body_size", "location", "allowedMethods", "autoindex", "}", "root", "return"};
+	 "error_page", "client_max_body_size", "location", "allowedMethods", "autoindex", "}", "root", "return", "index"};
 
 	std::vector<std::string>::const_iterator ite = lineSplit.end();
 
@@ -173,7 +171,7 @@ bool	Configuration::launchServerConf(const std::string & confFileName)
 	// lancer le read file
 	if (!readFileSyntax())
 		return false;
-	
+
 	_servTab = new Server[_nbServer];
 	// lancer la lecture de mot et si je trouve le mot server je lance la config d'un server
 	// 		(important: il faut que ce soit avec le meme fd pour etre sur la meme ligne)
@@ -190,14 +188,21 @@ bool	Configuration::launchServerConf(const std::string & confFileName)
 				_servTab[serverToConf].SetDefaultServer();
 			}
 			// lancer la conf du serveur
-			
-			if (!_servTab[serverToConf].parseConfFile(confFileFD, &countLine))
+			std::cout << "je lance la conf du serveur " << serverToConf << std::endl;
+			if (!_servTab[serverToConf].parseConfFile(confFileFD, &countLine)) {
+				std::cout << "conf. cpp return" << std::endl;
 				return false;
-
+			}
 			serverToConf++;
 			countLine++;
 		}
 	}
+	std::cout << "start" << std::endl;
+	if (_servTab[1].isLocationExisting("/")) {
+		std::cout << "\e[0;31m" << "location dans configuration.cpp" << "\033[0m" << std::endl;
+		std::cout << _servTab[1].getLocation("/") << std::endl;
+	}
+	std::cout << "return to main" << std::endl;
 	return true;
 }
 

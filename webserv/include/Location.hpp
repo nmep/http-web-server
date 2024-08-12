@@ -14,7 +14,7 @@
 			bool						_autoIndex;
 			std::string					_index;
 			bool						_isUploadFileAccepted;
-			std::string					_directoryUpload;
+			std::string					_uploadStore;
 
 		public:
 			Location();
@@ -27,7 +27,7 @@
 			std::string					getRoot() const;
 			bool						getAutoInex() const;
 			bool						getIsUploadFileAccepted() const;
-			std::string					getDirectoryUpload() const;
+			std::string					getUploadStore() const;
 			std::vector<std::string>	getAllowedMethodVector() const;
 
 			void	setAllowedMethod(std::vector<std::string> const & allowedMethod);
@@ -35,7 +35,7 @@
 			void	setRoot(std::string const & root);
 			void	setAutoIndex(bool value);
 			void	setIsUploadFileAccepted(bool value);
-			void	setDirectoryUpload(std::string directoryUpload);
+			void	setUploadStore(std::string directoryUpload);
 			void	setIndex(std::string const & indexFileName);
 
 			// fonction de handle
@@ -44,6 +44,7 @@
 			bool	handleIndex(std::vector<std::string> lineSplit, int countLine);
 			bool	handleAllowedMethods(std::vector<std::string> lineSplit, int countLine);
 			bool	handleRedirection(std::vector<std::string> lineSplit, int countLine);
+			bool	handleUploadStore(std::vector<std::string> lineSplit, int countLine);
 			// fonction de lancement de location
 			bool	LocationParsing(std::ifstream & file, int *countLine);
 	};

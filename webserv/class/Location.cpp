@@ -2,7 +2,7 @@
 
 Location::Location() : _redirection(NULL), _autoIndex(false), _isUploadFileAccepted(false)
 {
-	std::cerr << "creation" << std::endl;
+	std::cout << "location default constructor called" << std::endl;
 }
 
 Location::Location(Location const & copy) :  _redirection(NULL), _autoIndex(false), _isUploadFileAccepted(false)
@@ -12,13 +12,9 @@ Location::Location(Location const & copy) :  _redirection(NULL), _autoIndex(fals
 
 Location & Location::operator=(Location const & rhs)
 {
-	std::cerr << "egal" << std::endl;
-	std::cerr << "_redirection = " << _redirection << std::endl;
 	_allowedMethod = rhs._allowedMethod;
 	if (rhs._redirection) {
-		std::cerr << "rhs est alloue" << std::endl;
 		if (!_redirection) {
-			std::cerr << "_redirection est alloue" << std::endl;
 			_redirection = new std::string[2];
 		}
 		_redirection[0] = rhs._redirection[0];
@@ -27,13 +23,16 @@ Location & Location::operator=(Location const & rhs)
 	_root = rhs._root;
 	_autoIndex = rhs._autoIndex;
 	_isUploadFileAccepted = rhs._isUploadFileAccepted;
-	_directoryUpload = rhs._directoryUpload;
+	_uploadStore = rhs._uploadStore;
 	return *this;
 }
 
 Location::~Location(){
+	// std::cout << "DESTRUCTO" << std::endl;
+	// std::cout << *this << std::endl;
 	if (_redirection)
 		delete[] _redirection;
+	std::cout << "Location destructeur called" << std::endl;
 }
 
 
@@ -48,6 +47,8 @@ bool Location::getAllowedMethod(std::string const & method) const {
 }
 
 std::string Location::getRedirection(std::string const & returnValue) const {
+	if (!_redirection)
+		return "";
 	if (returnValue == "CODE")
 		return _redirection[0];
 	return _redirection[1];
@@ -67,8 +68,8 @@ bool Location::getIsUploadFileAccepted() const {
 	return false;
 }
 
-std::string Location::getDirectoryUpload() const {
-	return _directoryUpload;
+std::string Location::getUploadStore() const {
+	return _uploadStore;
 }
 
 std::vector<std::string> Location::getAllowedMethodVector() const {
@@ -98,8 +99,8 @@ void	Location::setIsUploadFileAccepted(bool value) {
 	_isUploadFileAccepted = value;
 }
 
-void	Location::setDirectoryUpload(std::string directoryUpload) {
-	_directoryUpload = directoryUpload;
+void	Location::setUploadStore(std::string directoryUpload) {
+	_uploadStore = directoryUpload;
 }
 
 void	Location::setIndex(std::string const & indexFileName) {
@@ -154,10 +155,10 @@ bool	Location::handleIndex(std::vector<std::string> lineSplit, int countLine)
 		std::cerr << "Invalid index syntax it must be index <index_path>, at line " << countLine << std::endl;
 		return false;
 	}
-	if (!checkHtmlAccess(*(lineSplit.begin() + 1)))
-		return false;
 	// erase ;
 	(lineSplit.begin() + 1)->erase((lineSplit.begin() + 1)->end() - 1);
+	if (!checkHtmlAccess(*(lineSplit.begin() + 1)))
+		return false;
 	setIndex(*(lineSplit.begin() + 1));
 	return true;
 }
@@ -170,14 +171,17 @@ bool	Location::handleAllowedMethods(std::vector<std::string> lineSplit, int coun
 		return false;
 	}
 	// erase le point virgule
-	(lineSplit.begin() + 1)->erase((lineSplit.begin() + 1)->end() - 1);
+	(lineSplit.end() - 1)->erase((lineSplit.end() - 1)->end() - 1);
 	for (std::vector<std::string>::iterator it = (lineSplit.begin() + 1); it != lineSplit.end(); ++it) {
 		if (*it != "GET" && *it != "POST") {
 			std::cerr << "Invalid Allowed methods syntax: [" << *it << "] isn't accepted it must be GET or POST, at line " << countLine << std::endl;
 			return false;
 		}
+		if (*it == "POST")
+			setIsUploadFileAccepted(true);
 	}
 	// erase le premier mot
+	lineSplit.erase(lineSplit.begin());
 	setAllowedMethod(lineSplit);
 	return true;
 }
@@ -190,7 +194,7 @@ bool	Location::handleRedirection(std::vector<std::string> lineSplit, int countLi
 		return false;
 	}
 	// erase ;
-	(lineSplit.begin() + 2)->erase((lineSplit.begin() + 2)->end() - 1);
+	*(lineSplit.end() - 1)->erase((lineSplit.end() - 1)->end() - 1);
 	if (!checkHtmlAccess(*(lineSplit.begin() + 2))) 
 		return false;
 
@@ -198,6 +202,22 @@ bool	Location::handleRedirection(std::vector<std::string> lineSplit, int countLi
 	// erase le premier 
 	lineSplit.erase(lineSplit.begin());
 	setRedirection(lineSplit);
+	return true;
+}
+
+bool Location::handleUploadStore(std::vector<std::string> lineSplit, int countLine)
+{
+	if (lineSplit.size() != 2) {
+		std::cerr << "Invalid upload_store syntax: no value associate, at line " << countLine << std::endl;
+		return false;
+	}
+	*(lineSplit.end() - 1)->erase((lineSplit.end() - 1)->end() - 1);	
+	// check if dir exist
+	if (!checkAccessFile(*(lineSplit.begin() + 1), F_OK | R_OK | W_OK)) {
+		std::cerr << "Invalid upload_store syntax: " << strerror(errno) << " at line " << countLine << std::endl;
+		return false;
+	}
+	setUploadStore(*(lineSplit.begin() + 1));
 	return true;
 }
 
@@ -218,10 +238,8 @@ bool	Location::LocationParsing(std::ifstream & file, int *countLine) {
 			(*countLine)++;
 			continue ;
 		}
-
 		// split la ligne
 		lineSplit = split(line);
-
 		// si la ligne est } break et sortir
 		if (*(lineSplit.begin()) == "}")
 			return true;
@@ -234,7 +252,6 @@ bool	Location::LocationParsing(std::ifstream & file, int *countLine) {
 
 		// continuer le parsing de locationName
 		// check si la ligne a le bon mot cle
-		std::cout << "size = " << sizeof(LocationKeyWord) / sizeof(std::string) << std::endl;
 		for (size_t i = 0; i < sizeof(LocationKeyWord) / sizeof(std::string) ; i++) {
 			// si correspondance il y a, break il y aura
 			if (*(lineSplit.begin()) == LocationKeyWord[i])
@@ -246,24 +263,23 @@ bool	Location::LocationParsing(std::ifstream & file, int *countLine) {
 			}
 			// si il n'y a aucune correspondance alors mess d'err et return
 			if (i + 1 == sizeof(LocationKeyWord) / sizeof(std::string)) {
-				std::cerr << "loc Invalid syntax: Location Invalid token [" << *(lineSplit.begin()) << ']' << std::endl;
+				std::cerr << "Invalid syntax: Location Invalid token [" << *(lineSplit.begin()) << ']' << std::endl;
 				return false;
 			}
 		}
-
 		(*countLine)++;
 	}
 	return true;
 }
 
 std::ostream & operator<<(std::ostream & o, Location const & location) {
-	o << "LOCATION PRINTING" << std::endl;
-	o << "Allowed Method = "; printVector(location.getAllowedMethodVector(), o);
-	o << "Redirection HTTP CODE = " << location.getRedirection("CODE") << " Redirection PATH = " << location.getRedirection("") << std::endl;
-	o << "Root = " << location.getRoot() << std::endl;
-	o << "Auto Index = " << location.getAutoInex() << std::endl;
-	o << "IsUploadFileAccepted = " << location.getIsUploadFileAccepted() << std::endl;
-	o << "Directory upload = " << location.getDirectoryUpload() << std::endl;
+		o << "LOCATION PRINTING" << std::endl;
+		o << "Allowed Method = "; printVector(location.getAllowedMethodVector(), o);
+		o << "Redirection HTTP CODE = " << location.getRedirection("CODE") << " Redirection PATH = " << location.getRedirection("") << std::endl;
+		o << "Root = " << location.getRoot() << std::endl;
+		o << "Auto Index = " << location.getAutoInex() << std::endl;
+		o << "IsUploadFileAccepted = " << location.getIsUploadFileAccepted() << std::endl;
+		o << "Upload store = " << location.getUploadStore() << std::endl;
 	return o;
 }
 

@@ -2,9 +2,14 @@
 
 /* ----------------------------------------------------------------- */
 
-Server::Server() : _default_server(0), _port(8080), _serverName("server_name"), _hostName("localhost"), _client_max_body_size(0) {}
+Server::Server() : _default_server(0), _port(8080), _serverName("server_name"), _hostName("localhost"), _client_max_body_size(0)
+{
+	std::cout << "Server COnstructor called" << std::endl;
+}
 
-Server::~Server() {}
+Server::~Server(){
+	std::cout << "Server destructor called" << std::endl;
+}
 
 Server::Server(Server const & copy)
 {
@@ -52,6 +57,17 @@ std::string Server::GetHostName() const {
 std::map<std::string, std::string> Server::getErrorPageMap() const
 {
 	return _error_page;
+}
+
+Location Server::getLocation(std::string const & locationName)
+{
+	return this->_location[locationName];
+
+}
+
+std::map<std::string, Location> Server::getLocationMap() const
+{
+	return _location;
 }
 
 /* ----------------------------------------------------------------- */
@@ -109,7 +125,13 @@ void Server::SetHostName(std::string const & hostName) {
 
 /* --------------------------- PARSING -------------------------------------- */
 
-
+bool	Server::isLocationExisting(std::string const & locationName) const
+{
+	std::cout << "loca name = " << locationName << std::endl;
+	if (_location.find(locationName) != _location.end())
+		return true;
+	return false;
+}
 
 bool	Server::handleListenParsing(std::vector<std::string> lineSplit, int countLine) {
 	uint16_t port = 0;
@@ -226,7 +248,6 @@ bool Server::AssignToken(std::vector<std::string> lineSplit, int countLine) {
 	return true;
 }
 
-
 bool	Server::parseConfFile(std::ifstream & confFileFD, int *countLine) {
 	std::string line;
 	std::vector<std::string> lineSplit;
@@ -240,19 +261,25 @@ bool	Server::parseConfFile(std::ifstream & confFileFD, int *countLine) {
 		}
 		lineSplit = split(line);
 
-		if (*(lineSplit.begin()) == "}") {
+		if (*(lineSplit.begin()) == "}")
 			return true;
-		}
 
 		if (*(lineSplit.begin()) == "location") {
-
 			if (lineSplit.size() != 3) {
 				std::cerr << "Invalid Syntax: location need a match at line " << *countLine << std::endl;
 				return false; 
 			}
-			Location &location = _location[*(lineSplit.begin() + 1)];
-			if (!location.LocationParsing(confFileFD, countLine))
+			// Location &location = _location[*(lineSplit.begin() + 1)];
+
+			if (!_location[*(lineSplit.begin() + 1)].LocationParsing(confFileFD, countLine))
 				return false;
+			std::cout << "\e[0;31m" << "location dans server.cpp" << "\033[0m" << std::endl;
+			if (isLocationExisting("/")) {
+				std::cout << "existe" << std::endl;
+				std::cout << getLocation("/") << std::endl;;
+			}
+
+			// std::cout << "SERVER.CPP addr de la location de " << *(lineSplit.begin()) << "= " << _location[*(lineSplit.begin() + 1)] << std::endl;
 		}
 		if (!AssignToken(lineSplit, (*countLine)))
 			return false;
@@ -260,7 +287,6 @@ bool	Server::parseConfFile(std::ifstream & confFileFD, int *countLine) {
 	}
 	return true;
 }
-
 
 
 // bool	Server::ft_parse_config_file(const std::string & confFile) {

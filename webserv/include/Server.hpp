@@ -31,6 +31,10 @@ class Server
 		uint16_t		GetClientMaxBodySize(void) const;
 		std::map<std::string, std::string> getErrorPageMap() const;
 
+		Location		getLocation(std::string const & locationName);
+		bool			isLocationExisting(std::string const & locationName) const;
+		std::map<std::string, Location>	getLocationMap() const;
+
 		void			SetDefaultServer();
 		void			SetPort(uint16_t & val);
 		void			SetServerName(std::string const & val);
@@ -44,6 +48,7 @@ class Server
 		bool	handleHostName(std::vector<std::string> lineSplit, int countLine);
 		bool	handleClientMaxBodySizeParsing(std::vector<std::string> lineSplit, int countLine);
 		bool 	AssignToken(std::vector<std::string> lineSplit, int countLine);
+
 		bool	parseConfFile(std::ifstream & confFileFD, int *countLine);
 };
 
