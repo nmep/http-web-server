@@ -18,8 +18,13 @@ int	main(int ac, char **av)
 		// lancer la config des serveur
 		if (!conf.launchServerConf(confFileName))
 			return 2;
-		std::cout << "\e[0;31m" << "je suis dans le main.cpp" << "\033[0m" << std::endl;
-		std::cout << conf.getServer(1).getLocation("/") << std::endl;
+		std::cout << "\e[0;31m je suis dans le main.cpp" << "\033[0m" << std::endl;
+		if (conf.getServer(1).getLocation("/")) {
+			std::cout << "trouve" << std::endl;
+			std::cout << *(conf.getServer(1).getLocation("/")) << std::endl;
+		}
+		else
+			std::cout  << "pas trouve" << std::endl;
 	}
 	else
 	{

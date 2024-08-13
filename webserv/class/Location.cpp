@@ -2,7 +2,7 @@
 
 Location::Location() : _redirection(NULL), _autoIndex(false), _isUploadFileAccepted(false)
 {
-	std::cout << "location default constructor called" << std::endl;
+	std::cout << GREEN << "location default constructor called" << RESET << std::endl;
 }
 
 Location::Location(Location const & copy) :  _redirection(NULL), _autoIndex(false), _isUploadFileAccepted(false)
@@ -27,15 +27,9 @@ Location & Location::operator=(Location const & rhs)
 	return *this;
 }
 
-Location::~Location(){
-	// std::cout << "DESTRUCTO" << std::endl;
-	// std::cout << *this << std::endl;
-	if (_redirection)
-		delete[] _redirection;
-	std::cout << "Location destructeur called" << std::endl;
+Location::~Location() {
+	std::cout << GREEN << "Location destructeur called" << RESET << std::endl;
 }
-
-
 
 bool Location::getAllowedMethod(std::string const & method) const {
 	std::vector<std::string>::const_iterator it = _allowedMethod.begin();
@@ -272,7 +266,7 @@ bool	Location::LocationParsing(std::ifstream & file, int *countLine) {
 	return true;
 }
 
-std::ostream & operator<<(std::ostream & o, Location const & location) {
+std::ostream & operator<<(std::ostream & o, Location location) {
 		o << "LOCATION PRINTING" << std::endl;
 		o << "Allowed Method = "; printVector(location.getAllowedMethodVector(), o);
 		o << "Redirection HTTP CODE = " << location.getRedirection("CODE") << " Redirection PATH = " << location.getRedirection("") << std::endl;

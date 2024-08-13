@@ -6,7 +6,7 @@ OBJ = $(addprefix obj/, $(SRC:.cpp=.o))
 OBJ_DIR = $(addprefix ./obj/, $(notdir $(shell find ./ -type d -not -path ./conf -not -path ./include -not -path ./obj)))
 
 # COMPILATION
-CC = c++
+CC = g++
 CXXFLAGS = -Wall -Wextra -Werror -std=c++98 -I./include -g3
 
 # RULES

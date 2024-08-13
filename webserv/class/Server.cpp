@@ -4,11 +4,11 @@
 
 Server::Server() : _default_server(0), _port(8080), _serverName("server_name"), _hostName("localhost"), _client_max_body_size(0)
 {
-	std::cout << "Server COnstructor called" << std::endl;
+	std::cout << BLUE << "Server COnstructor called" << RESET << std::endl;
 }
 
-Server::~Server(){
-	std::cout << "Server destructor called" << std::endl;
+Server::~Server() {
+	std::cout << BLUE << "Server destructor called" << RESET << std::endl;
 }
 
 Server::Server(Server const & copy)
@@ -59,13 +59,12 @@ std::map<std::string, std::string> Server::getErrorPageMap() const
 	return _error_page;
 }
 
-Location Server::getLocation(std::string const & locationName)
+Location* Server::getLocation(std::string const & locationName)
 {
-	return this->_location[locationName];
-
+	return this->_location[locationName	];
 }
 
-std::map<std::string, Location> Server::getLocationMap() const
+std::map<std::string, Location*> Server::getLocationMap() const
 {
 	return _location;
 }
@@ -127,7 +126,8 @@ void Server::SetHostName(std::string const & hostName) {
 
 bool	Server::isLocationExisting(std::string const & locationName) const
 {
-	std::cout << "loca name = " << locationName << std::endl;
+	std::cout << "loca name = [" << locationName << "]" << std::endl;
+	// std::cout << "dans la map first = " << _location.begin()->first << std::endl;
 	if (_location.find(locationName) != _location.end())
 		return true;
 	return false;
@@ -270,8 +270,8 @@ bool	Server::parseConfFile(std::ifstream & confFileFD, int *countLine) {
 				return false; 
 			}
 			// Location &location = _location[*(lineSplit.begin() + 1)];
-
-			if (!_location[*(lineSplit.begin() + 1)].LocationParsing(confFileFD, countLine))
+			_location[*(lineSplit.begin() + 1)] = new Location;
+			if (!_location[*(lineSplit.begin() + 1)]->LocationParsing(confFileFD, countLine))
 				return false;
 			std::cout << "\e[0;31m" << "location dans server.cpp" << "\033[0m" << std::endl;
 			if (isLocationExisting("/")) {

@@ -15,7 +15,7 @@ class Server
 		std::string								_hostName;
 		std::map<std::string, std::string>		_error_page;
 		uint16_t								_client_max_body_size;
-		std::map<std::string, Location>			_location;
+		std::map<std::string, Location*>			_location;
 
 	public:
 		Server();
@@ -23,17 +23,17 @@ class Server
 		Server(Server const & copy);
 		Server & operator=(Server const & rhs);
 
-		bool			GetDefaultServer() const;
-		uint16_t		GetPort() const;
-		std::string		GetServerName() const;
-		std::string		GetHostName() const;
-		std::string		GetErrorPage(std::string const & httpCode);
-		uint16_t		GetClientMaxBodySize(void) const;
-		std::map<std::string, std::string> getErrorPageMap() const;
+		bool								GetDefaultServer() const;
+		uint16_t							GetPort() const;
+		std::string							GetServerName() const;
+		std::string							GetHostName() const;
+		std::string							GetErrorPage(std::string const & httpCode);
+		uint16_t							GetClientMaxBodySize(void) const;
+		std::map<std::string, std::string>	getErrorPageMap() const;
 
-		Location		getLocation(std::string const & locationName);
-		bool			isLocationExisting(std::string const & locationName) const;
-		std::map<std::string, Location>	getLocationMap() const;
+		Location*							getLocation(std::string const & locationName);
+		bool								isLocationExisting(std::string const & locationName) const;
+		std::map<std::string, Location*>		getLocationMap() const;
 
 		void			SetDefaultServer();
 		void			SetPort(uint16_t & val);

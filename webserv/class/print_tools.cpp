@@ -1,7 +1,7 @@
 #include "print_tools.hpp"
 
-void	printVector(std::vector<std::string> v, std::ostream & o) {
-	for (std::vector<std::string>::iterator it = v.begin(); it < v.end(); it++) {
+void	printVector(std::vector<std::string> const & v, std::ostream & o) {
+	for (std::vector<std::string>::const_iterator it = v.begin(); it < v.end(); it++) {
 		o << "v[] = " << *(it) << std::endl;
 	}
 }

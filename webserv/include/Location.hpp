@@ -49,6 +49,6 @@
 			bool	LocationParsing(std::ifstream & file, int *countLine);
 	};
 
-std::ostream & operator<<(std::ostream& o, Location const & location);
+std::ostream & operator<<(std::ostream& o, Location location);
 
 #endif

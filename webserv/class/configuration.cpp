@@ -10,7 +10,7 @@ Configuration::Configuration() : _nbServer(0)
 
 Configuration::~Configuration()
 {
-	std::cout << "Configuration destructor called" << std::endl;
+	std::cout << RED << "Configuration destructor called" << RESET  << std::endl;
 }
 
 Configuration::Configuration(Configuration const & copy)
@@ -46,7 +46,7 @@ t_syntaxParse	Configuration::getSyntaxData() const
 	return _syntaxData;
 }
 
-Server	Configuration::getServer(int index) const
+Server&	Configuration::getServer(int index) const
 {
 	return _servTab[index];
 }
@@ -200,10 +200,19 @@ bool	Configuration::launchServerConf(const std::string & confFileName)
 	std::cout << "start" << std::endl;
 	if (_servTab[1].isLocationExisting("/")) {
 		std::cout << "\e[0;31m" << "location dans configuration.cpp" << "\033[0m" << std::endl;
-		std::cout << _servTab[1].getLocation("/") << std::endl;
+		if (_servTab[1].getLocation("/"))
+			std::cout << *(_servTab[1].getLocation("/")) << std::endl;
+		else
+			std::cout << "location / n'existe pas" << std::endl;
 	}
 	std::cout << "return to main" << std::endl;
 	return true;
+}
+
+void	Configuration::test(Location const & location) const
+{
+	std::cout <<  "TEST" << std::endl;
+	std::cout << location << std::endl;
 }
 
 std::ostream & operator<<(std::ostream & o, Configuration const & conf)
