@@ -19,9 +19,9 @@ int	main(int ac, char **av)
 		if (!conf.launchServerConf(confFileName))
 			return 2;
 		std::cout << "\e[0;31m je suis dans le main.cpp" << "\033[0m" << std::endl;
-		if (conf.getServer(1).getLocation("/")) {
+		if (conf.getServer(0).getLocation("/")) {
 			std::cout << "trouve" << std::endl;
-			std::cout << *(conf.getServer(1).getLocation("/")) << std::endl;
+			std::cout << *(conf.getServer(0).getLocation("/")) << std::endl;
 		}
 		else
 			std::cout  << "pas trouve" << std::endl;
@@ -31,7 +31,6 @@ int	main(int ac, char **av)
 		std::cerr << "Usage: ./webserv [config file]" << std::endl;
 		return 2;
 	}
-	// tester getserver name si l'index est trop grand il est sence renvoyer le dernier elements
-
+	conf.clearConfiguration();
 	return 0;
 }

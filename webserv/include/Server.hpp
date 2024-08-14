@@ -50,6 +50,8 @@ class Server
 		bool 	AssignToken(std::vector<std::string> lineSplit, int countLine);
 
 		bool	parseConfFile(std::ifstream & confFileFD, int *countLine);
+
+		void	clearServerLocation();
 };
 
 std::ostream & operator<<(std::ostream& o, Server const & server);

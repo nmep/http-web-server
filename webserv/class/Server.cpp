@@ -270,7 +270,7 @@ bool	Server::parseConfFile(std::ifstream & confFileFD, int *countLine) {
 				return false; 
 			}
 			// Location &location = _location[*(lineSplit.begin() + 1)];
-			_location[*(lineSplit.begin() + 1)] = new Location;
+			_location[*(lineSplit.begin() + 1)] = new Location();
 			if (!_location[*(lineSplit.begin() + 1)]->LocationParsing(confFileFD, countLine))
 				return false;
 			std::cout << "\e[0;31m" << "location dans server.cpp" << "\033[0m" << std::endl;
@@ -288,16 +288,15 @@ bool	Server::parseConfFile(std::ifstream & confFileFD, int *countLine) {
 	return true;
 }
 
+void	Server::clearServerLocation() {
+	std::map<std::string, Location*>::iterator it = this->_location.begin();
 
-// bool	Server::ft_parse_config_file(const std::string & confFile) {
-	// ouvrir le fichier
-	// if (access_file(confFile) < 0)
-		// return false;
-	// lire le fichier
-	// if (!parseConfFile(confFile))
-	// 	return false;
-// 	return true;
-// }
+	for (/**/; it != _location.end(); ++it) {
+		if (it->second)
+			delete it->second;
+	}
+	_location.clear();
+}
 
 std::ostream & operator<<(std::ostream & o, Server const & server)
 {

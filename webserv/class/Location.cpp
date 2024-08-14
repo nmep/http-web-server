@@ -1,11 +1,11 @@
 #include "Location.hpp"
 
-Location::Location() : _redirection(NULL), _autoIndex(false), _isUploadFileAccepted(false)
+Location::Location() : _autoIndex(false), _isUploadFileAccepted(false)
 {
 	std::cout << GREEN << "location default constructor called" << RESET << std::endl;
 }
 
-Location::Location(Location const & copy) :  _redirection(NULL), _autoIndex(false), _isUploadFileAccepted(false)
+Location::Location(Location const & copy) :_autoIndex(false), _isUploadFileAccepted(false)
 {
 	*this = copy;
 }
@@ -13,13 +13,10 @@ Location::Location(Location const & copy) :  _redirection(NULL), _autoIndex(fals
 Location & Location::operator=(Location const & rhs)
 {
 	_allowedMethod = rhs._allowedMethod;
-	if (rhs._redirection) {
-		if (!_redirection) {
-			_redirection = new std::string[2];
-		}
+	if (!rhs._redirection->empty()) {
 		_redirection[0] = rhs._redirection[0];
-		_redirection[1] = rhs._redirection[1];
 	}
+		_redirection[1] = rhs._redirection[1];
 	_root = rhs._root;
 	_autoIndex = rhs._autoIndex;
 	_isUploadFileAccepted = rhs._isUploadFileAccepted;
@@ -73,10 +70,16 @@ std::vector<std::string> Location::getAllowedMethodVector() const {
 /* -------------------------------------------------------------------- */
 
 void	Location::setAllowedMethod(std::vector<std::string> const & allowedMethod) {
-	_allowedMethod = allowedMethod;
+	_allowedMethod.clear();
+	// printVector(allowedMethod, std::cout);
+	std::vector<std::string>::const_iterator _it = _allowedMethod.begin();
+	for (std::vector<std::string>::const_iterator it = allowedMethod.begin(); it != allowedMethod.end(); it++) {
+		_it = it;
+		_it++;
+	}
 }
 
-void	Location::setRedirection(std::vector<std::string> redirection) {
+void	Location::setRedirection(std::vector<std::string> const & redirection) {
 	_redirection[0] = redirection[0];
 	_redirection[1] = redirection[1];
 }
@@ -192,7 +195,6 @@ bool	Location::handleRedirection(std::vector<std::string> lineSplit, int countLi
 	if (!checkHtmlAccess(*(lineSplit.begin() + 2))) 
 		return false;
 
-	_redirection = new std::string[2];
 	// erase le premier 
 	lineSplit.erase(lineSplit.begin());
 	setRedirection(lineSplit);
@@ -264,6 +266,10 @@ bool	Location::LocationParsing(std::ifstream & file, int *countLine) {
 		(*countLine)++;
 	}
 	return true;
+}
+
+void	Location::clearAllowedMethods() {
+	this->_allowedMethod.clear();
 }
 
 std::ostream & operator<<(std::ostream & o, Location location) {

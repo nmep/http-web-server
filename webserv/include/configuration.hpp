@@ -35,7 +35,8 @@
 			bool	syntaxParse(std::vector<std::string> const & v);
 			bool	readFileSyntax(); 
 			bool	launchServerConf(const std::string & confFileName);
-			void	test(Location const & location) const;
+
+			void	clearConfiguration();
 	};
 
 std::ostream & operator<<(std::ostream & o, Configuration const & conf);

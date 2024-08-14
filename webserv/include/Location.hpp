@@ -9,12 +9,12 @@
 	{
 		private:
 			std::vector<std::string>	_allowedMethod;
-			std::string*				_redirection; // return html if it ping the location name
+			std::string					_redirection[2]; // return html if it ping the location name
 			std::string					_root;
-			bool						_autoIndex;
-			std::string					_index;
-			bool						_isUploadFileAccepted;
 			std::string					_uploadStore;
+			std::string					_index;
+			bool						_autoIndex;
+			bool						_isUploadFileAccepted;
 
 		public:
 			Location();
@@ -22,16 +22,16 @@
 			Location & operator=(Location const & rhs);
 			~Location();
 
-			bool						getAllowedMethod(std::string const & method) const;
+			std::vector<std::string>	getAllowedMethodVector() const;
 			std::string					getRedirection(std::string const & returnValue) const;
 			std::string					getRoot() const;
+			std::string					getUploadStore() const;
+			bool						getAllowedMethod(std::string const & method) const;
 			bool						getAutoInex() const;
 			bool						getIsUploadFileAccepted() const;
-			std::string					getUploadStore() const;
-			std::vector<std::string>	getAllowedMethodVector() const;
 
 			void	setAllowedMethod(std::vector<std::string> const & allowedMethod);
-			void	setRedirection(std::vector<std::string> redirection);
+			void	setRedirection(std::vector<std::string> const & redirection);
 			void	setRoot(std::string const & root);
 			void	setAutoIndex(bool value);
 			void	setIsUploadFileAccepted(bool value);
@@ -47,6 +47,9 @@
 			bool	handleUploadStore(std::vector<std::string> lineSplit, int countLine);
 			// fonction de lancement de location
 			bool	LocationParsing(std::ifstream & file, int *countLine);
+
+			void	clearAllowedMethods();
+
 	};
 
 std::ostream & operator<<(std::ostream& o, Location location);

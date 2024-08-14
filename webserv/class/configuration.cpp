@@ -198,10 +198,11 @@ bool	Configuration::launchServerConf(const std::string & confFileName)
 		}
 	}
 	std::cout << "start" << std::endl;
-	if (_servTab[1].isLocationExisting("/")) {
+	std::cout << _nbServer << std::endl;
+	if (_servTab[0].isLocationExisting("/")) {
 		std::cout << "\e[0;31m" << "location dans configuration.cpp" << "\033[0m" << std::endl;
-		if (_servTab[1].getLocation("/"))
-			std::cout << *(_servTab[1].getLocation("/")) << std::endl;
+		if (_servTab[0].getLocation("/"))
+			std::cout << *(_servTab[0].getLocation("/")) << std::endl;
 		else
 			std::cout << "location / n'existe pas" << std::endl;
 	}
@@ -209,10 +210,12 @@ bool	Configuration::launchServerConf(const std::string & confFileName)
 	return true;
 }
 
-void	Configuration::test(Location const & location) const
-{
-	std::cout <<  "TEST" << std::endl;
-	std::cout << location << std::endl;
+void	Configuration::clearConfiguration() {
+	// delete les possible location dans la map de location
+	for (int i = 0; i < _nbServer; i++) {
+		_servTab[i].clearServerLocation();
+	}
+	delete[] _servTab;
 }
 
 std::ostream & operator<<(std::ostream & o, Configuration const & conf)
