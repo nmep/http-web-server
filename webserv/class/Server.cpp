@@ -254,7 +254,6 @@ bool	Server::parseConfFile(std::ifstream & confFileFD, int *countLine) {
 
 	while (getline(confFileFD, line))
 	{
-		std::cout << "line dans SERVER " << line << std::endl;
 		if (line.empty() || isOnlyWithSpace(line)) {
 			(*countLine)++;
 			continue ;
@@ -273,13 +272,6 @@ bool	Server::parseConfFile(std::ifstream & confFileFD, int *countLine) {
 			_location[*(lineSplit.begin() + 1)] = new Location();
 			if (!_location[*(lineSplit.begin() + 1)]->LocationParsing(confFileFD, countLine))
 				return false;
-			std::cout << "\e[0;31m" << "location dans server.cpp" << "\033[0m" << std::endl;
-			if (isLocationExisting("/")) {
-				std::cout << "existe" << std::endl;
-				std::cout << getLocation("/") << std::endl;;
-			}
-
-			// std::cout << "SERVER.CPP addr de la location de " << *(lineSplit.begin()) << "= " << _location[*(lineSplit.begin() + 1)] << std::endl;
 		}
 		if (!AssignToken(lineSplit, (*countLine)))
 			return false;
@@ -305,8 +297,38 @@ std::ostream & operator<<(std::ostream & o, Server const & server)
     o << "Port = " << server.GetPort() << std::endl;
     o << "serverName = " << server.GetServerName() << std::endl;
     o << "hostName = " << server.GetHostName() << std::endl;
+
     o << "Error page:" << std::endl;
 	printMap(server.getErrorPageMap(), o);
+
     o << "Client max body size = " << server.GetClientMaxBodySize() << std::endl;
+
+	o << "Location" << std::endl;
+	if (server.getLocationMap().empty()) {
+		o << "No location for this serv" << std::endl;
+	}
+	else {
+		o << "il y a une location" << std::endl;
+		std::map<std::string, Location*>::iterator it = server.getLocationMap().begin();
+		o << server.getLocationMap().size() << std::endl;
+		// it++;
+		(void)it;
+		o << "first = " << it->first << std::endl;
+		o << "second = " << *it->second << std::endl;
+	}
     return o;
 }
+
+
+		// if (it == server.getLocationMap().end()) {
+		// 	o << "bizzare tout ca" << std::endl;
+		// }
+		// else {
+		// 	for (/**/ ; it != server.getLocationMap().end() ;it++) {
+		// 		if (it->second)
+		// 			o << "\n\n\n\nlocation name = \n\n\n\n" << it->first;
+		// 		else 
+		// 			break;
+		// 		o << "picabou" << std::endl;
+		// 	}
+		// }

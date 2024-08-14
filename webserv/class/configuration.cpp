@@ -152,6 +152,7 @@ bool	Configuration::readFileSyntax()
 			std::cerr << "Invalid syntax: " << this->_syntaxData.OCB - this->_syntaxData.CCB << " Close curly brace is missing" << std::endl;
 		return false;
 	}
+	std::cout << "CL = " << this->_syntaxData.CountLine << std::endl;
 	return true;
 }
 
@@ -180,7 +181,6 @@ bool	Configuration::launchServerConf(const std::string & confFileName)
 			countLine++;
 			continue;
 		}
-		std::cout << "line dans CONFIGURATION = " << line << std::endl;
 		lineSplit = split(line);
 		if (*(lineSplit.begin()) == "server") {
 			// mettre le premier serveur rencontre comme serveur par defaut
@@ -188,25 +188,12 @@ bool	Configuration::launchServerConf(const std::string & confFileName)
 				_servTab[serverToConf].SetDefaultServer();
 			}
 			// lancer la conf du serveur
-			std::cout << "je lance la conf du serveur " << serverToConf << std::endl;
-			if (!_servTab[serverToConf].parseConfFile(confFileFD, &countLine)) {
-				std::cout << "conf. cpp return" << std::endl;
+			if (!_servTab[serverToConf].parseConfFile(confFileFD, &countLine))
 				return false;
-			}
 			serverToConf++;
 			countLine++;
 		}
 	}
-	std::cout << "start" << std::endl;
-	std::cout << _nbServer << std::endl;
-	if (_servTab[0].isLocationExisting("/")) {
-		std::cout << "\e[0;31m" << "location dans configuration.cpp" << "\033[0m" << std::endl;
-		if (_servTab[0].getLocation("/"))
-			std::cout << *(_servTab[0].getLocation("/")) << std::endl;
-		else
-			std::cout << "location / n'existe pas" << std::endl;
-	}
-	std::cout << "return to main" << std::endl;
 	return true;
 }
 
@@ -220,7 +207,7 @@ void	Configuration::clearConfiguration() {
 
 std::ostream & operator<<(std::ostream & o, Configuration const & conf)
 {
-	o << "CONFIGURATION PRINTING" << std::endl;
+	o << RED << "CONFIGURATION PRINTING" << RESET << std::endl;
 	o << "Nb server = " << conf.getNbServer() << std::endl;
 	o << "Syntax Data -> Open curly brace = " << conf.getSyntaxData().OCB << std::endl;
 	o << "Syntax Data -> Close curly brace = " << conf.getSyntaxData().CCB << std::endl;
@@ -228,7 +215,7 @@ std::ostream & operator<<(std::ostream & o, Configuration const & conf)
 	o << "Configuration file name = " << conf.getConfFileName() << std::endl;
 	o << "Server info:" << std::endl;
 	for (int i = 0; i < conf.getNbServer(); i++) {
-		o << "\tServer[" << i << "]: " << conf.getServer(i) << std::endl;
+		o << BLUE << "\tServer[" << i << "]: " << RESET << conf.getServer(i) << std::endl;
 	}
 	return o;
 }
