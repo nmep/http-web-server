@@ -16,8 +16,10 @@ int	main(int ac, char **av)
 		const std::string confFileName(av[1]);
 
 		// lancer la config des serveur
-		if (!conf.launchServerConf(confFileName))
+		if (!conf.launchServerConf(confFileName)) {
+			conf.clearConfiguration();
 			return 2;
+		}
 	}
 	else
 	{

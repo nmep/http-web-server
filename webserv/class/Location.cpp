@@ -70,13 +70,7 @@ std::vector<std::string> Location::getAllowedMethodVector() const {
 /* -------------------------------------------------------------------- */
 
 void	Location::setAllowedMethod(std::vector<std::string> const & allowedMethod) {
-	_allowedMethod.clear();
-	// printVector(allowedMethod, std::cout);
-	std::vector<std::string>::const_iterator _it = _allowedMethod.begin();
-	for (std::vector<std::string>::const_iterator it = allowedMethod.begin(); it != allowedMethod.end(); it++) {
-		_it = it;
-		_it++;
-	}
+	this->_allowedMethod = allowedMethod;
 }
 
 void	Location::setRedirection(std::vector<std::string> const & redirection) {
@@ -221,9 +215,9 @@ bool Location::handleUploadStore(std::vector<std::string> lineSplit, int countLi
 
 bool	Location::LocationParsing(std::ifstream & file, int *countLine) {
 
-	std::string LocationKeyWord[] = {"root", "auto_index", "index", "allowedMethods", "return"};
+	std::string LocationKeyWord[] = {"root", "auto_index", "index", "allowedMethods", "return", "upload_store"};
 	bool	(Location::*FuncPtr[]) (std::vector<std::string>, int) = {&Location::handleRoot, &Location::handleAutoIndex, \
-				&Location::handleIndex, &Location::handleAllowedMethods, &Location::handleRedirection};
+				&Location::handleIndex, &Location::handleAllowedMethods, &Location::handleRedirection, &Location::handleUploadStore};
 	std::string 				line;
 	std::vector<std::string>	lineSplit;
 
@@ -281,5 +275,3 @@ std::ostream & operator<<(std::ostream & o, Location location) {
 		o << "Upload store = " << location.getUploadStore() << std::endl;
 	return o;
 }
-
-

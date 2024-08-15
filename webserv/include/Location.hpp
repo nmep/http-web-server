@@ -22,6 +22,7 @@
 			Location & operator=(Location const & rhs);
 			~Location();
 
+			// GETTEUR
 			std::vector<std::string>	getAllowedMethodVector() const;
 			std::string					getRedirection(std::string const & returnValue) const;
 			std::string					getRoot() const;
@@ -30,6 +31,7 @@
 			bool						getAutoInex() const;
 			bool						getIsUploadFileAccepted() const;
 
+			// SETTEUR
 			void	setAllowedMethod(std::vector<std::string> const & allowedMethod);
 			void	setRedirection(std::vector<std::string> const & redirection);
 			void	setRoot(std::string const & root);
@@ -38,16 +40,18 @@
 			void	setUploadStore(std::string directoryUpload);
 			void	setIndex(std::string const & indexFileName);
 
-			// fonction de handle
+			// FONCTION DE GESTION DES MOTS CLES
 			bool	handleRoot(std::vector<std::string> lineSplit, int countLine);
 			bool	handleAutoIndex(std::vector<std::string> lineSplit, int countLine);
 			bool	handleIndex(std::vector<std::string> lineSplit, int countLine);
 			bool	handleAllowedMethods(std::vector<std::string> lineSplit, int countLine);
 			bool	handleRedirection(std::vector<std::string> lineSplit, int countLine);
 			bool	handleUploadStore(std::vector<std::string> lineSplit, int countLine);
-			// fonction de lancement de location
+
+			// FONCTION PRINCIPALE DE PARSING POUR UNE LOCATION
 			bool	LocationParsing(std::ifstream & file, int *countLine);
 
+			// clear memory
 			void	clearAllowedMethods();
 
 	};

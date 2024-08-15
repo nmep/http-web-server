@@ -127,7 +127,6 @@ void Server::SetHostName(std::string const & hostName) {
 bool	Server::isLocationExisting(std::string const & locationName) const
 {
 	std::cout << "loca name = [" << locationName << "]" << std::endl;
-	// std::cout << "dans la map first = " << _location.begin()->first << std::endl;
 	if (_location.find(locationName) != _location.end())
 		return true;
 	return false;
@@ -309,28 +308,12 @@ std::ostream & operator<<(std::ostream & o, Server const & server)
 	}
 	else {
 		o << "il y a une location" << std::endl;
-		std::map<std::string, Location*> maptest =  server.getLocationMap();
-		std::map<std::string, Location*>::iterator it = maptest.begin();
-
-		o << server.getLocationMap().size() << std::endl;
-		// it++;
-		(void)it;
-		o << "first = " << it->first << std::endl;
-		// o << "second = " << it->second << std::endl;
+		std::map<std::string, Location*> map =  server.getLocationMap();
+		std::map<std::string, Location*>::iterator it = map.begin();
+		for (/**/; it != map.end(); it++) {
+			o << "first = " << it->first << std::endl;
+			o << "second = " << *it->second << std::endl;
+		}
 	}
-    return o;
+	return o;
 }
-
-
-		// if (it == server.getLocationMap().end()) {
-		// 	o << "bizzare tout ca" << std::endl;
-		// }
-		// else {
-		// 	for (/**/ ; it != server.getLocationMap().end() ;it++) {
-		// 		if (it->second)
-		// 			o << "\n\n\n\nlocation name = \n\n\n\n" << it->first;
-		// 		else 
-		// 			break;
-		// 		o << "picabou" << std::endl;
-		// 	}
-		// }

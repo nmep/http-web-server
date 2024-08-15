@@ -23,6 +23,7 @@ class Server
 		Server(Server const & copy);
 		Server & operator=(Server const & rhs);
 
+		// GETTEUR
 		bool								GetDefaultServer() const;
 		uint16_t							GetPort() const;
 		std::string							GetServerName() const;
@@ -35,6 +36,7 @@ class Server
 		bool								isLocationExisting(std::string const & locationName) const;
 		std::map<std::string, Location*>		getLocationMap() const;
 
+		// SETTEUR
 		void			SetDefaultServer();
 		void			SetPort(uint16_t & val);
 		void			SetServerName(std::string const & val);
@@ -42,6 +44,7 @@ class Server
 		void			SetClientMaxBodySize(uint16_t & val);
 		bool			SetErrorPage(std::vector<std::string> lineSplit, int countLine);
 
+		// FONCTIONS DE GESTION DES MOTS CLES
 		bool	handleListenParsing(std::vector<std::string> lineSplit, int countLine);
 		bool	handleServerNameParsing(std::vector<std::string> lineSplit, int countLine);
 		bool	handleErrorPageParsing(std::vector<std::string> lineSplit, int countLine);
@@ -49,8 +52,10 @@ class Server
 		bool	handleClientMaxBodySizeParsing(std::vector<std::string> lineSplit, int countLine);
 		bool 	AssignToken(std::vector<std::string> lineSplit, int countLine);
 
+		// FONCTION PRINCIPALE DE PARSING DE SERVEUR
 		bool	parseConfFile(std::ifstream & confFileFD, int *countLine);
 
+		// CLEAR MEMORY
 		void	clearServerLocation();
 };
 
