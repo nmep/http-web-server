@@ -199,9 +199,9 @@ bool	Configuration::launchServerConf(const std::string & confFileName)
 
 void	Configuration::clearConfiguration() {
 	// delete les possible location dans la map de location
-	for (int i = 0; i < _nbServer; i++) {
+	for (int i = 0; i < _nbServer; i++)
 		_servTab[i].clearServerLocation();
-	}
+
 	delete[] _servTab;
 }
 

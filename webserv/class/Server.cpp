@@ -309,12 +309,14 @@ std::ostream & operator<<(std::ostream & o, Server const & server)
 	}
 	else {
 		o << "il y a une location" << std::endl;
-		std::map<std::string, Location*>::iterator it = server.getLocationMap().begin();
+		std::map<std::string, Location*> maptest =  server.getLocationMap();
+		std::map<std::string, Location*>::iterator it = maptest.begin();
+
 		o << server.getLocationMap().size() << std::endl;
 		// it++;
 		(void)it;
 		o << "first = " << it->first << std::endl;
-		o << "second = " << *it->second << std::endl;
+		// o << "second = " << it->second << std::endl;
 	}
     return o;
 }
