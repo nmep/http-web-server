@@ -17,7 +17,7 @@ int	main(int ac, char **av)
 
 		// lancer la config des serveur
 		if (!conf.launchServerConf(confFileName)) {
-			conf.clearConfiguration();
+			// conf.clearConfiguration();
 			return 2;
 		}
 	}
@@ -27,6 +27,6 @@ int	main(int ac, char **av)
 		return 2;
 	}
 	std::cout << conf << std::endl;
-	conf.clearConfiguration();
+	// conf.clearConfiguration();
 	return 0;
 }

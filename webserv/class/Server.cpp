@@ -9,6 +9,13 @@ Server::Server() : _default_server(0), _port(8080), _serverName("server_name"), 
 
 Server::~Server() {
 	std::cout << BLUE << "Server destructor called" << RESET << std::endl;
+	std::map<std::string, Location*>::iterator it = this->_location.begin();
+
+	for (/**/; it != _location.end(); ++it) {
+		if (it->second)
+			delete it->second;
+	}
+	_location.clear();
 }
 
 Server::Server(Server const & copy)
@@ -253,6 +260,7 @@ bool	Server::parseConfFile(std::ifstream & confFileFD, int *countLine) {
 
 	while (getline(confFileFD, line))
 	{
+		std::cout << "SERVER line = " << line << " n line = " << *countLine << std::endl;
 		if (line.empty() || isOnlyWithSpace(line)) {
 			(*countLine)++;
 			continue ;
@@ -268,6 +276,7 @@ bool	Server::parseConfFile(std::ifstream & confFileFD, int *countLine) {
 				return false; 
 			}
 			// Location &location = _location[*(lineSplit.begin() + 1)];
+			(*countLine)++;
 			_location[*(lineSplit.begin() + 1)] = new Location();
 			if (!_location[*(lineSplit.begin() + 1)]->LocationParsing(confFileFD, countLine))
 				return false;
@@ -277,16 +286,6 @@ bool	Server::parseConfFile(std::ifstream & confFileFD, int *countLine) {
 		(*countLine)++;
 	}
 	return true;
-}
-
-void	Server::clearServerLocation() {
-	std::map<std::string, Location*>::iterator it = this->_location.begin();
-
-	for (/**/; it != _location.end(); ++it) {
-		if (it->second)
-			delete it->second;
-	}
-	_location.clear();
 }
 
 std::ostream & operator<<(std::ostream & o, Server const & server)

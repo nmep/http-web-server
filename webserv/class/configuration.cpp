@@ -11,6 +11,7 @@ Configuration::Configuration() : _nbServer(0)
 Configuration::~Configuration()
 {
 	std::cout << RED << "Configuration destructor called" << RESET  << std::endl;
+	delete[] _servTab;
 }
 
 Configuration::Configuration(Configuration const & copy)
@@ -177,6 +178,7 @@ bool	Configuration::launchServerConf(const std::string & confFileName)
 	// lancer la lecture de mot et si je trouve le mot server je lance la config d'un server
 	// 		(important: il faut que ce soit avec le meme fd pour etre sur la meme ligne)
 	while (getline(confFileFD, line)) {
+		std::cout << "line = " << line << " n line = " << countLine << std::endl;
 		if (line.empty() || isOnlyWithSpace(line)) {
 			countLine++;
 			continue;
@@ -188,6 +190,7 @@ bool	Configuration::launchServerConf(const std::string & confFileName)
 				_servTab[serverToConf].SetDefaultServer();
 			}
 			// lancer la conf du serveur
+			countLine++;
 			if (!_servTab[serverToConf].parseConfFile(confFileFD, &countLine))
 				return false;
 			serverToConf++;
@@ -195,14 +198,6 @@ bool	Configuration::launchServerConf(const std::string & confFileName)
 		}
 	}
 	return true;
-}
-
-void	Configuration::clearConfiguration() {
-	// delete les possible location dans la map de location
-	for (int i = 0; i < _nbServer; i++)
-		_servTab[i].clearServerLocation();
-
-	delete[] _servTab;
 }
 
 std::ostream & operator<<(std::ostream & o, Configuration const & conf)

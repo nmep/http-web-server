@@ -1,12 +1,18 @@
 #include "Location.hpp"
 
+int Location::_locationIndex = 0;
+
 Location::Location() : _autoIndex(false), _isUploadFileAccepted(false)
 {
-	std::cout << GREEN << "location default constructor called" << RESET << std::endl;
+	_locationIndex++;
+	_locationID = _locationIndex;
+	std::cout << GREEN << "location default constructor de location id " << _locationIndex << " called" << RESET << std::endl;
 }
 
 Location::Location(Location const & copy) :_autoIndex(false), _isUploadFileAccepted(false)
 {
+	_locationIndex++;
+	_locationID = _locationIndex;
 	*this = copy;
 }
 
@@ -25,7 +31,7 @@ Location & Location::operator=(Location const & rhs)
 }
 
 Location::~Location() {
-	std::cout << GREEN << "Location destructeur called" << RESET << std::endl;
+	std::cout << GREEN << "Location destructeur de location id " << _locationID << " called" << RESET << std::endl;
 }
 
 bool Location::getAllowedMethod(std::string const & method) const {
@@ -204,7 +210,7 @@ bool Location::handleUploadStore(std::vector<std::string> lineSplit, int countLi
 	*(lineSplit.end() - 1)->erase((lineSplit.end() - 1)->end() - 1);	
 	// check if dir exist
 	if (!checkAccessFile(*(lineSplit.begin() + 1), F_OK | R_OK | W_OK)) {
-		std::cerr << "Invalid upload_store syntax: " << strerror(errno) << " at line " << countLine << std::endl;
+		std::cerr << "Invalid upload_store syntax: [" << *(lineSplit.begin() + 1) << "] " << strerror(errno) << " at line " << countLine << std::endl;
 		return false;
 	}
 	setUploadStore(*(lineSplit.begin() + 1));
@@ -223,6 +229,8 @@ bool	Location::LocationParsing(std::ifstream & file, int *countLine) {
 
 	while (getline(file, line)) {
 		// ligne vide?
+		std::cout << "LOCATION line = " << line << " n line = " << *countLine << std::endl;
+
 		if (line.empty() || isOnlyWithSpace(line)) {
 			(*countLine)++;
 			continue ;
@@ -261,9 +269,9 @@ bool	Location::LocationParsing(std::ifstream & file, int *countLine) {
 	return true;
 }
 
-void	Location::clearAllowedMethods() {
-	this->_allowedMethod.clear();
-}
+// void	Location::clearAllowedMethods() {
+// 	this->_allowedMethod.clear();
+// }
 
 std::ostream & operator<<(std::ostream & o, Location location) {
 		o << "LOCATION PRINTING" << std::endl;
@@ -273,5 +281,6 @@ std::ostream & operator<<(std::ostream & o, Location location) {
 		o << "Auto Index = " << location.getAutoInex() << std::endl;
 		o << "IsUploadFileAccepted = " << location.getIsUploadFileAccepted() << std::endl;
 		o << "Upload store = " << location.getUploadStore() << std::endl;
+		o << "location index = " << location.getLocationID() << std::endl;
 	return o;
 }

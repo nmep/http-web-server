@@ -36,7 +36,6 @@
 			bool	readFileSyntax(); 
 			bool	launchServerConf(const std::string & confFileName);
 
-			void	clearConfiguration();
 	};
 
 std::ostream & operator<<(std::ostream & o, Configuration const & conf);

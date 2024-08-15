@@ -15,6 +15,8 @@
 			std::string					_index;
 			bool						_autoIndex;
 			bool						_isUploadFileAccepted;
+			static int					_locationIndex;
+			int							_locationID;
 
 		public:
 			Location();
@@ -30,6 +32,9 @@
 			bool						getAllowedMethod(std::string const & method) const;
 			bool						getAutoInex() const;
 			bool						getIsUploadFileAccepted() const;
+			int							getLocationID() const {
+				return _locationID;
+			}
 
 			// SETTEUR
 			void	setAllowedMethod(std::vector<std::string> const & allowedMethod);
@@ -52,7 +57,7 @@
 			bool	LocationParsing(std::ifstream & file, int *countLine);
 
 			// clear memory
-			void	clearAllowedMethods();
+			// void	clearAllowedMethods();
 
 	};
 

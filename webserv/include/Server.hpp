@@ -55,8 +55,6 @@ class Server
 		// FONCTION PRINCIPALE DE PARSING DE SERVEUR
 		bool	parseConfFile(std::ifstream & confFileFD, int *countLine);
 
-		// CLEAR MEMORY
-		void	clearServerLocation();
 };
 
 std::ostream & operator<<(std::ostream& o, Server const & server);
