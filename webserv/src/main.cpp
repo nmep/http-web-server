@@ -23,10 +23,13 @@ int	main(int ac, char **av)
 	}
 	else
 	{
+		// ici je dois utiliser une config de base pour lancer le serveur donc le else n'a pas lui d'etre
 		std::cerr << "Usage: ./webserv [config file]" << std::endl;
 		return 2;
 	}
+	
 	std::cout << conf << std::endl;
+
 	// conf.clearConfiguration();
 	return 0;
 }

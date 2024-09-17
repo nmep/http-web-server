@@ -60,6 +60,7 @@ int	main()
 			continue ;
 		}
 		const char *hello = "HTTP/1.1 200 OK\nContent-Type: text/plain\nContent-Length: 12\n\nHello world!";
+//		const char *hello = "Hello world!";
 		write(accept_socket, hello, strlen(hello));
 		printf("%s\n", buffer);
 		close(accept_socket);

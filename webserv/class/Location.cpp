@@ -229,7 +229,7 @@ bool	Location::LocationParsing(std::ifstream & file, int *countLine) {
 
 	while (getline(file, line)) {
 		// ligne vide?
-		std::cout << "LOCATION line = " << line << " n line = " << *countLine << std::endl;
+		// std::cout << "LOCATION line = " << line << " n line = " << *countLine << std::endl;
 
 		if (line.empty() || isOnlyWithSpace(line)) {
 			(*countLine)++;
