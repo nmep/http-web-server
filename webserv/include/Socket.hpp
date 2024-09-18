@@ -12,9 +12,6 @@
 		- un fd associe a la socket
 	bind:
 		- un structure sockaddr_in
-	
-
-
 */
 
 typedef	struct	s_socket
