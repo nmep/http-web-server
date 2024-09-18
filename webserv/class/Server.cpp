@@ -260,7 +260,6 @@ bool	Server::parseConfFile(std::ifstream & confFileFD, int *countLine) {
 
 	while (getline(confFileFD, line))
 	{
-		std::cout << "SERVER line = " << line << " n line = " << *countLine << std::endl;
 		if (line.empty() || isOnlyWithSpace(line)) {
 			(*countLine)++;
 			continue ;

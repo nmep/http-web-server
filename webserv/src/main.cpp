@@ -1,10 +1,10 @@
 #include "configuration.hpp"
-
-// #include <cstring>
+#include "Socket.hpp"
 
 int	main(int ac, char **av)
 {
-	Configuration conf;
+	Configuration	conf;
+	Socket			socket;
 
 	if (ac == 1)
 	{
@@ -27,9 +27,12 @@ int	main(int ac, char **av)
 		std::cerr << "Usage: ./webserv [config file]" << std::endl;
 		return 2;
 	}
-	
+
 	std::cout << conf << std::endl;
 
-	// conf.clearConfiguration();
+	if (!socket.initAllSockets(conf))
+		return 2;
+	// creation de la socket
+
 	return 0;
 }

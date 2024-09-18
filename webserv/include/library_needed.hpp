@@ -12,6 +12,7 @@
 	#define WHITE   "\033[0;37m"
 
 	#include <sys/socket.h> // socket + network function
+	#include <fcntl.h>
 	#include <netinet/in.h> // netwok
 
 	#include <iostream> // std
@@ -19,6 +20,7 @@
 	#include <exception> // exception
 	#include <stdint.h> // uint16_t
 	#include <string> // 
+	#include <cstring> // 
 	#include <fstream> // inputfile
 	#include <string> // string manip
 

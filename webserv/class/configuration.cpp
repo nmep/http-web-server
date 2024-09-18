@@ -153,7 +153,6 @@ bool	Configuration::readFileSyntax()
 			std::cerr << "Invalid syntax: " << this->_syntaxData.OCB - this->_syntaxData.CCB << " Close curly brace is missing" << std::endl;
 		return false;
 	}
-	std::cout << "CL = " << this->_syntaxData.CountLine << std::endl;
 	return true;
 }
 
@@ -178,7 +177,6 @@ bool	Configuration::launchServerConf(const std::string & confFileName)
 	// lancer la lecture de mot et si je trouve le mot server je lance la config d'un server
 	// 		(important: il faut que ce soit avec le meme fd pour etre sur la meme ligne)
 	while (getline(confFileFD, line)) {
-		std::cout << "line = " << line << " n line = " << countLine << std::endl;
 		if (line.empty() || isOnlyWithSpace(line)) {
 			countLine++;
 			continue;

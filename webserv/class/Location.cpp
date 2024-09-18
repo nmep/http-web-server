@@ -107,7 +107,6 @@ void	Location::setIndex(std::string const & indexFileName) {
 /* -------------------------------------------------------------------- */
 
 bool	Location::handleAutoIndex(std::vector<std::string> lineSplit, int countLine) {
-	std::cout << "handle autoindex" << std::endl;
 	if (lineSplit.size() != 2) {
 		std::cerr << "Invalid syntax: at line " << countLine << " Autoindex need a value (on or off)" << std::endl;
 		return false;
@@ -131,7 +130,6 @@ bool	Location::handleAutoIndex(std::vector<std::string> lineSplit, int countLine
 
 bool	Location::handleRoot(std::vector<std::string> lineSplit, int countLine)
 {
-	std::cout << "handle Root" << std::endl;
 	if (lineSplit.size() != 2) {
 		std::cerr << "Invalid Root syntax it must be root <root_path>, at line " << countLine << std::endl;
 		return false;
@@ -147,7 +145,6 @@ bool	Location::handleRoot(std::vector<std::string> lineSplit, int countLine)
 
 bool	Location::handleIndex(std::vector<std::string> lineSplit, int countLine)
 {
-	std::cout << "handle Index" << std::endl;
 	if (lineSplit.size() != 2) {
 		std::cerr << "Invalid index syntax it must be index <index_path>, at line " << countLine << std::endl;
 		return false;
@@ -162,7 +159,6 @@ bool	Location::handleIndex(std::vector<std::string> lineSplit, int countLine)
 
 bool	Location::handleAllowedMethods(std::vector<std::string> lineSplit, int countLine)
 {
-	std::cout << "handle AllowedMethods" << std::endl;
 	if (lineSplit.begin()->size() == 1) {
 		std::cerr << "Invalid Allowed methods syntax: no value associate, at line " << countLine << std::endl;
 		return false;
@@ -185,7 +181,6 @@ bool	Location::handleAllowedMethods(std::vector<std::string> lineSplit, int coun
 
 bool	Location::handleRedirection(std::vector<std::string> lineSplit, int countLine)
 {
-	std::cout << "handle Redirection" << std::endl;
 	if (lineSplit.begin()->size() == 1) {
 		std::cerr << "Invalid redirection syntax: no value associate, at line " << countLine << std::endl;
 		return false;
@@ -228,8 +223,6 @@ bool	Location::LocationParsing(std::ifstream & file, int *countLine) {
 	std::vector<std::string>	lineSplit;
 
 	while (getline(file, line)) {
-		// ligne vide?
-		// std::cout << "LOCATION line = " << line << " n line = " << *countLine << std::endl;
 
 		if (line.empty() || isOnlyWithSpace(line)) {
 			(*countLine)++;
