@@ -15,9 +15,17 @@ Socket::~Socket()
 
 // Socket& Socket::operator=(Socket const & rhs) {}
 
+
+
+/*
+	Si il y a deux serveur qui ecoute sur le meme port lors une seule socket sera cree
+	je creer un tableau de int avec ecrit un port qui est mit sur ecoute. 
+	Si je veux mettre un nouveau port sur ecoute je verfie avant si il ne l'est pas deja
+*/
 int	Socket::initAllSockets(Configuration const & conf) {
 	this->sockets = new t_socket [conf.getNbServer()];
 
+	// faire un tableau de max port dispo pour y mettre les ports
 	for (int i = 0; i < conf.getNbServer(); i++) {
 		if (!initOneSocket(&this->sockets[i], conf, i))
 			return 0;

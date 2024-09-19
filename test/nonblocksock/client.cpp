@@ -24,6 +24,25 @@ int	main()
 	if (connect(client_fd, (const sockaddr *) &addr, sizeof(addr)) == -1) {
 		std::cerr << "error on ip convertion " << std::endl;
 		close(client_fd);
+		return 1;
 	}
 	
+	char buffer[] = "hello from cllient !";
+	char msgFromServer[4096];
+
+
+	if (send(client_fd, buffer, 21, 0) == -1) {
+		std::cerr << "error on send " << std::endl;
+		close(client_fd);
+		return 1;
+	}
+
+	if (recv(client_fd, msgFromServer, 4096, 0) == -1) {
+		std::cerr << "error on send " << std::endl;
+		close(client_fd);
+		return 1;
+	}
+	printf("in client: [%s]\n", msgFromServer);
+
+	close(client_fd);
 }

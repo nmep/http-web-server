@@ -23,6 +23,15 @@ int	main()
 	int flag = fcntl(listen_fd, F_GETFL);
 	fcntl(listen_fd, F_SETFL, flag | O_NONBLOCK);
 
+
+	int	yes = 1;
+
+	if (setsockopt(listen_fd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1) {
+		printf("error bind: %s\n", strerror(errno));
+		close(listen_fd);
+		return 2;
+	}
+
 	if (bind(listen_fd, (const sockaddr *) &addr, sizeof(addr)) == -1) {
 		printf("error bind: %s\n", strerror(errno));
 		close(listen_fd);
@@ -38,7 +47,6 @@ int	main()
 	socklen_t addr_size = sizeof(addr);
 	int	cfd;
 
-
 	while (1) {
 		cfd = accept(listen_fd, (struct sockaddr *) &addr, &addr_size);
 		if (cfd == -1) {
@@ -48,6 +56,7 @@ int	main()
 			}
 			else {
 				close (listen_fd);
+				close(cfd);
 				perror("error on accepting connection\n");
 				return 1;
 			}
@@ -55,11 +64,21 @@ int	main()
 		else
 		{
 			printf("Connection receive !\n");
-			char msg[] = "hello";
-			send(cfd, msg, sizeof(msg), 0);
+			char msgToClient[] = "hello from Server";
+			char msgFromClient[4096];
+
+			if (recv(cfd, msgFromClient, 4096, 0) == -1) {
+				printf("error bind: %s\n", strerror(errno));
+				close(listen_fd);
+				close(cfd);
+				return 2;
+			}
+			printf("In server socket receive: [%s]\n", msgFromClient);
+			send(cfd, msgToClient, sizeof(msgToClient), 0);
 			close(cfd);
 			break ;
 		}
-
 	}
+	close(cfd);
+	close(listen_fd);
 }
