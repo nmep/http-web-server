@@ -15,7 +15,14 @@ Socket::~Socket()
 
 // Socket& Socket::operator=(Socket const & rhs) {}
 
-
+static bool	checkIfPortIsSet(int *SokcetPort, int value, int length) {
+	std::cout << "value = " << value << " lengt = " << length << std::endl;
+	for (int i = 0; i < length; i++) {
+		if (value == SokcetPort[i])
+			return true;
+	}
+	return false;
+}
 
 /*
 	Si il y a deux serveur qui ecoute sur le meme port lors une seule socket sera cree
@@ -26,9 +33,17 @@ int	Socket::initAllSockets(Configuration const & conf) {
 	this->sockets = new t_socket [conf.getNbServer()];
 
 	// faire un tableau de max port dispo pour y mettre les ports
+	int socketPort[conf.getNbServer()];
+	int socketPortindex = 0;
+
 	for (int i = 0; i < conf.getNbServer(); i++) {
-		if (!initOneSocket(&this->sockets[i], conf, i))
-			return 0;
+		if (!checkIfPortIsSet(socketPort, conf.getServer(i).GetPort(), socketPortindex)) {
+			socketPort[socketPortindex] = conf.getServer(i).GetPort();
+			socketPortindex++;
+		}
+	}
+	for (int i = 0; i < socketPortindex; i++) {
+		std::cout << socketPort[i] << std::endl;
 	}
 	return 1;
 }
