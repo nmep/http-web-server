@@ -32,6 +32,7 @@ int	main(int ac, char **av)
 
 	if (!socket.initAllSockets(conf))
 		return 2;
+	socket.launchEpoll();
 	// creation de la socket
 
 	return 0;

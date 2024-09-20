@@ -1,6 +1,7 @@
 #ifndef SOCKET_HPP
 	#define SOCKET_HPP
 
+#define KAA 1
 #include "library_needed.hpp"
 #include "configuration.hpp"
 
@@ -16,23 +17,27 @@
 
 typedef	struct	s_socket
 {
-	int	socketFd;
-	int	socketFlag;
+	int	listenFd;
+	int	clientFd;
+	int	socketFlag; // fcntl pour que la socket soit non bloquante
+	socklen_t addrLen;
 	struct sockaddr_in	addr;
 }				t_socket;
-
 
 	class Socket
 	{
 		private:
 			t_socket	*sockets;
+			int			*portListening;
+			int			portListeningLen;
 		public:
 			Socket();
 			// Socket(Socket const & copy);
 			~Socket();
 			// Socket&	operator=(Socket const & rhs);
 			int	initAllSockets(Configuration const & conf);
-			int	initOneSocket(t_socket *socketStruct, Configuration const & conf, int index);
+			int	initOneSocket(t_socket *socketStruct, int port);
+			int	launchEpoll();
 	};
 
 #endif
