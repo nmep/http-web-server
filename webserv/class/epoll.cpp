@@ -1,11 +1,12 @@
 #include "Socket.hpp"
 
 int Socket::launchEpoll() {
+	std::cout << "boucle infinie" << std::endl;
 	while (KAA) {
 		// verifier s'il y a une nouvelle connexion sur un des serveurs
-		
 		for (int i = 0; i < this->portListeningLen; i++) {
-			std::cout << "addr = " << this->sockets[i].addr.sin_zero << std::endl;
+			// this->sockets[i].addrLen = sizeof(this->sockets[i].addr);
+			std::cout << "addr = " << this->sockets[i].addrLen << std::endl;
 			this->sockets[i].clientFd = accept(this->sockets[i].listenFd,
 				(sockaddr *) &this->sockets[i].addr, &this->sockets[i].addrLen);
 			// connexion marche po

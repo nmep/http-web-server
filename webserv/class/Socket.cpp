@@ -45,7 +45,6 @@ int	Socket::initAllSockets(Configuration const & conf) {
 			this->portListeningLen++;
 		}
 	}
-	this->portListeningLen = this->portListeningLen;
 	for (int i = 0; i < this->portListeningLen; i++) {
 		std::cout << "dedans port = " << this->portListening[i] << std::endl;
 	}
@@ -72,7 +71,7 @@ int	Socket::initOneSocket(t_socket *socketStruct, int port)
 	socketStruct->addr.sin_addr.s_addr = INADDR_ANY;
 	socketStruct->addr.sin_port = htons(port);
 	
-	this->sockets->addrLen = (socklen_t) sizeof(socketStruct->addr);
+	socketStruct->addrLen = (socklen_t) sizeof(socketStruct->addr);
 
 	std::memset(socketStruct->addr.sin_zero, '\0', sizeof(socketStruct->addr.sin_zero));
 
@@ -111,6 +110,5 @@ int	Socket::initOneSocket(t_socket *socketStruct, int port)
 		close(socketStruct->listenFd);
 		return 0;
 	}
-
 	return 1;
 }
