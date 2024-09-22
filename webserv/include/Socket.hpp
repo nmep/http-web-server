@@ -2,6 +2,8 @@
 	#define SOCKET_HPP
 
 #define KAA 1
+#define MAX_EVENTS 64
+
 #include "library_needed.hpp"
 #include "configuration.hpp"
 
@@ -27,6 +29,8 @@ typedef	struct	s_socket
 	class Socket
 	{
 		private:
+			int			epfd;
+			int			nfd;
 			t_socket	*sockets;
 			int			*portListening;
 			int			portListeningLen;
