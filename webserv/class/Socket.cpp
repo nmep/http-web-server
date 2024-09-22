@@ -70,7 +70,7 @@ int	Socket::initOneSocket(t_socket *socketStruct, int port)
 	socketStruct->addr.sin_family = AF_INET;
 	socketStruct->addr.sin_addr.s_addr = INADDR_ANY;
 	socketStruct->addr.sin_port = htons(port);
-	
+
 	socketStruct->addrLen = (socklen_t) sizeof(socketStruct->addr);
 
 	std::memset(socketStruct->addr.sin_zero, '\0', sizeof(socketStruct->addr.sin_zero));
