@@ -3,8 +3,10 @@
 int Socket::launchEpoll() {
 	while (KAA) {
 		// verifier s'il y a une nouvelle connexion sur un des serveurs
+		
 		for (int i = 0; i < this->portListeningLen; i++) {
-			this->sockets[i].clientFd = accept(this->sockets[i].listenFd, \
+			std::cout << "addr = " << this->sockets[i].addr.sin_zero << std::endl;
+			this->sockets[i].clientFd = accept(this->sockets[i].listenFd,
 				(sockaddr *) &this->sockets[i].addr, &this->sockets[i].addrLen);
 			// connexion marche po
 			if (this->sockets[i].clientFd == -1) {

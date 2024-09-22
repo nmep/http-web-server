@@ -15,11 +15,14 @@ int	main(int ac, char **av)
 	{
 		const std::string confFileName(av[1]);
 
+		std::cout << "ici" << std::endl;
 		// lancer la config des serveur
 		if (!conf.launchServerConf(confFileName)) {
 			// conf.clearConfiguration();
+			std::cout << "la conf est pas ok" << std::endl;
 			return 2;
 		}
+		std::cout << "la conf est ok" << std::endl;
 	}
 	else
 	{

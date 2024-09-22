@@ -3,15 +3,15 @@
 Socket::Socket()
 {
 	this->portListening = NULL;
-	this->portListening = NULL;
-	this->portListeningLength = 0;
+	this->sockets = NULL;
+	this->portListeningLen = 0;
 }
 
 // Socket::Socket(Socket const & copy) {}
 
 Socket::~Socket()
 {
-	if (this->sockets)
+	if (this->sockets != NULL)
 		delete[] this->sockets;
 	if (this->portListening)
 		delete[] this->portListening;
@@ -40,7 +40,7 @@ int	Socket::initAllSockets(Configuration const & conf) {
 
 	// remplir un tableau de port a mettre sur ecoute
 	for (int i = 0; i < conf.getNbServer(); i++) {
-		if (!checkIfPortIsSet(this->portListening, conf.getServer(i).GetPort(), this->portListeningLength)) {
+		if (!checkIfPortIsSet(this->portListening, conf.getServer(i).GetPort(), this->portListeningLen)) {
 			this->portListening[this->portListeningLen] = conf.getServer(i).GetPort();
 			this->portListeningLen++;
 		}
