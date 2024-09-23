@@ -52,6 +52,11 @@ int	Socket::initAllSockets(Configuration const & conf) {
 	for (int i = 0; i < this->portListeningLen; i++) {
 		initOneSocket(&this->sockets[i], this->portListening[i]);
 	}
+
+	// debug
+	for (int i = 0; i < this->portListeningLen; i++) {
+		std::cout << "fd de port " << this->portListening[i] << " = " << this->sockets[i].listenFd << std::endl;
+	}
 	return 1;
 }
 
