@@ -21,6 +21,7 @@ int Socket::launchEpoll() {
 				std::cerr << "Epoll ctl failed: " << strerror(errno) << std::endl;
 				return 0;
 			}
+			std::cout << "ca bloque ici ?" << std::endl;
 			this->nfd = epoll_wait(this->epfd, events[i], MAX_EVENTS, -1); // timout voir fichier de configuration
 			std::cout << "EPOLL: nfd = " << this->nfd << std::endl;
 			sleep(2);
