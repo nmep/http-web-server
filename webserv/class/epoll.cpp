@@ -22,7 +22,7 @@ int Socket::launchEpoll() {
 				return 0;
 			}
 			std::cout << "ca bloque ici ?" << std::endl;
-			this->nfd = epoll_wait(this->epfd, events[i], MAX_EVENTS, -1); // timout voir fichier de configuration
+			this->nfd = epoll_wait(this->epfd, events[i], MAX_EVENTS, 0); // timout voir fichier de configuration
 			std::cout << "EPOLL: nfd = " << this->nfd << std::endl;
 			sleep(2);
 			for (int n = 0; n < this->nfd; n++) {
