@@ -1,0 +1,4 @@
+pourquoi un tab de struct socket et pas un tab de class ?
+quelle taille choisir pour le buffer de lecture de la socket ? 4096 ? pourquoi ?
+on gere le erreur avec des returns et pas des exeptions, pourquoi ? et le code d'erreur c'est 0 ? (certaines fonction return des erreures ou des succes mais on ne fait rien du return, cf init one socket)
+faut que les classes soient canonniques ??
