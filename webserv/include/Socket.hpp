@@ -34,6 +34,7 @@ typedef	struct	s_socket
 			t_socket	*sockets;
 			int			*portListening; // tableau qui definit les port qui doivent etre mit sur ecoute en evitant les doublons
 			int			portListeningLen; // taille de portListening
+
 		public:
 			Socket();
 			// Socket(Socket const & copy);

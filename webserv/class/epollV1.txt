@@ -15,7 +15,7 @@ int Socket::launchEpoll() {
 			return 0;
 		}
 		// epollin et epollet sont la pour indiquier a epollwaitr a quel moment renvoyer les fd pret
-		ev[i].events = EPOLLIN | EPOLLET;
+		ev[i].events = EPOLLIN | EPOLLET; // pas de epollet ici voir man epoll
 		ev[i].data.fd = this->sockets[i].listenFd;
 		if (epoll_ctl(this->epfd[i], EPOLL_CTL_ADD, this->sockets[i].listenFd, &ev[i]) == -1) {
 			std::cerr << "Epoll ctl failed: " << strerror(errno) << std::endl;
@@ -72,6 +72,7 @@ int Socket::launchEpoll() {
 					this->sockets[i].clientFd = accept(this->sockets[i].listenFd,
 						(sockaddr *) &this->sockets[i].addr, &this->sockets[i].addrLen);
 
+					
 					if (this->sockets[i].clientFd == -1) {
 						if (errno == EWOULDBLOCK) {
 							std::cout << RED << "on port " << this->portListening[i] << " no attemp of connexion..." << RESET << std::endl;
@@ -84,6 +85,7 @@ int Socket::launchEpoll() {
 						}
 					}
 
+					// il manque un epoll ctl et un conf de epollet a ajouter ici voir man epoll
 					else {
 						std::cout << GREEN << "port " << this->portListening[i]  << " connexion recue" << std::endl;
 						sleep(1);

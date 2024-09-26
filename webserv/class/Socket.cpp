@@ -8,6 +8,7 @@ Socket::Socket()
 	// this->portListeningLen = 0; sert a rien jsp pk
 	this->epfd = NULL;
 	this->nfd = NULL;
+	// this->n = 0;
 }
 
 // Socket::Socket(Socket const & copy) {}
