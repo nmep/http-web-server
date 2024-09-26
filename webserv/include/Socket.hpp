@@ -29,11 +29,11 @@ typedef	struct	s_socket
 	class Socket
 	{
 		private:
-			int			epfd;
-			int			nfd;
+			int			*epfd; // tableau de int  chaque case represente une instance epoll par serveur
+			int			*nfd; // valeur de retour de epoll wait pour chaque serveur de nombre de fd pret a etre ecrit 
 			t_socket	*sockets;
-			int			*portListening;
-			int			portListeningLen;
+			int			*portListening; // tableau qui definit les port qui doivent etre mit sur ecoute en evitant les doublons
+			int			portListeningLen; // taille de portListening
 		public:
 			Socket();
 			// Socket(Socket const & copy);

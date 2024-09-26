@@ -2,6 +2,7 @@
 
 Configuration::Configuration() : _nbServer(0)
 {
+	std::cout << RED << "Configuration Constructeur called" << RESET << std::endl;
 	_syntaxData.OCB = 0;
 	_syntaxData.CCB = 0;
 	_syntaxData.CountLine = 1;

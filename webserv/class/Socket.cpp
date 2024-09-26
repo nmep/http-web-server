@@ -2,25 +2,34 @@
 
 Socket::Socket()
 {
+	std::cout << YELLOW << "Socket Constructeur called" << RESET << std::endl;
 	this->portListening = NULL;
 	this->sockets = NULL;
-	this->portListeningLen = 0;
+	// this->portListeningLen = 0; sert a rien jsp pk
+	this->epfd = NULL;
+	this->nfd = NULL;
 }
 
 // Socket::Socket(Socket const & copy) {}
 
 Socket::~Socket()
 {
+	std::cout << YELLOW << "Socket Destructeur called" << RESET << std::endl;
 	if (this->sockets != NULL)
 		delete[] this->sockets;
 	if (this->portListening)
 		delete[] this->portListening;
+	if (this->epfd)
+		delete[] this->epfd;
+	if (this->nfd)
+		delete[] this->nfd;
 }
 
 // Socket& Socket::operator=(Socket const & rhs) {}
 
 static bool	checkIfPortIsSet(int *SokcetPort, int value, int length) {
 	for (int i = 0; i < length; i++) {
+		std::cout << value << " == " << SokcetPort[i] << std::endl;
 		if (value == SokcetPort[i])
 			return true;
 	}
@@ -38,6 +47,7 @@ int	Socket::initAllSockets(Configuration const & conf) {
 	// faire un tableau de max port dispo pour y mettre les ports
 	this->portListening = new int [conf.getNbServer()];
 
+	this->portListeningLen = 0;
 	// remplir un tableau de port a mettre sur ecoute
 	for (int i = 0; i < conf.getNbServer(); i++) {
 		if (!checkIfPortIsSet(this->portListening, conf.getServer(i).GetPort(), this->portListeningLen)) {
@@ -72,6 +82,9 @@ int	Socket::initOneSocket(t_socket *socketStruct, int port)
 		std::cerr << "Error while creating socket " << strerror(errno) << std::endl;
 		return 0;
 	}
+	// debug
+	std::cout << "dans socket port " << port << " fd = " << socketStruct->listenFd << std::endl;
+	//
 	socketStruct->addr.sin_family = AF_INET;
 	socketStruct->addr.sin_addr.s_addr = INADDR_ANY;
 	socketStruct->addr.sin_port = htons(port);
