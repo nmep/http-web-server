@@ -8,7 +8,7 @@ Socket::Socket()
 	// this->portListeningLen = 0; sert a rien jsp pk
 	this->epfd = NULL;
 	this->nfd = NULL;
-	// this->n = 0;
+	this->nfdReady = NULL;
 }
 
 // Socket::Socket(Socket const & copy) {}
@@ -24,6 +24,8 @@ Socket::~Socket()
 		delete[] this->epfd;
 	if (this->nfd)
 		delete[] this->nfd;
+	if (this->nfdReady)
+		delete[] this->nfdReady;
 }
 
 // Socket& Socket::operator=(Socket const & rhs) {}

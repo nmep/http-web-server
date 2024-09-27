@@ -9,6 +9,7 @@ int Socket::launchEpoll() {
 	this->nfd = new int[this->portListeningLen];
 	int n; // n sert un index sur l'instance epoll qui est utilise pour lire tout les premiers fd 
 	int nfd_i;
+	int	nfd_count; // sert a conter le nombre de epoll_wait qui a fonctionne pour alloue ensuite serverData
 	// de chaque serveur (le premier puis le deuxieme ect ect) c'est pour ca qu'il est cree en avance
 
 	// boucle sur tout les port qui ont ete mis sur ecoute pour leurs attribuer une instance epoll (le 1 ne sert a rien)
@@ -63,21 +64,43 @@ int Socket::launchEpoll() {
 	*/
 
 	// deuxieme version
+
+	// j'alloue une seule fois de taille max parce que je ne peux pas savoir a l'avance le nombre de serveur qui vont recevoir de la connexion
+	// je garderais nfd_count comme conteur
+	this->nfdReady = new t_nfd_ready[this->portListeningLen];
 	while (KAA) {
 
 		// apres un tour de boucle tout les fd on ete traite est ce que c'est necessaire de faire un memset a 0 ou epoll wait s'en charge ?
 		// ou encore le kernel mets tout a 0 ? jsp faut voir
+		nfd_count = 0;
+
 		for (int i = 0; i < this->portListeningLen; i++) {
 			// debug
-			std::cout << "epoll wait sur serv " << i << std::endl;
-			// nfd fonctionne comme un conteur d'evenement pres
+			std::cout << "socket[" << i << "] fd = " << this->sockets[i].listenFd << std::endl;
+			sleep(1);
 			this->nfd[i] = epoll_wait(this->epfd[i], events[i], MAX_EVENTS, 0); // timout voir fichier de configuration
+			// epollwait crash
 			if (this->nfd[i] == -1) {
 				std::cerr << "Epoll wait error: " << strerror(errno) << std::endl;
 				return 0;
 			}
+			// epoll wait a detecte des evenements sur events
+			if (this->nfd[i] > 0) {
+				this->nfdReady[nfd_count].nfd = this->nfd[i];
+				this->nfdReady[nfd_count].listenFD = this->sockets[i].listenFd;
+				
+				this->nfdReady[nfd_count].nfdReadyEvents;
+				nfd_count++;
+			}
+			std::cout << "this nfd[" << i << "] = " << this->nfd[i] << std::endl;
+			sleep(1);
 		}
 
+		if (nfd_count == 0) {
+			std::cout << "aucun serveur n'ont rien recu je recommence" << std::endl;
+			sleep(1);
+			continue ;
+		}
 		std::cout << "n = " << n << " < this->nfd[" << nfd_i << "] = " << this->nfd[nfd_i] << " ?" << std::endl;
 		// est ce que epoll wait a marcher ? epoll wait renvoyer des fd qui sont pret a l'ecoute mais en soit si j'ai 10 000 serveur et
 		// qu'il n'y a que le numero 5402 qui est pret ca vas trop boucler pour rien
@@ -92,16 +115,16 @@ int Socket::launchEpoll() {
 		this->nfd[1] = 2;
 		this->nfd[0] = 0;
 		nfd_i = 0;
-		while (n < this->nfd[nfd_i]) {
-			std::cout << "n = " << n << " < this->nfd[" << nfd_i << "] = " << this->nfd[nfd_i] << " ?" << std::endl;
+
+		// avoir un n qui sera incremente si il est egal a a MAX EVENTS il est remit a 0
+		// n passe au fd suivant
+		while (++n < nfd_count) {
+			std::cout << "n = " << n << " < this->nfd[" << nfd_i << "] = " << this->nfd[nfd_i] << " ca passe" << std::endl;
 			std::cout << "ca passe" << std::endl;
 
 			// ici il faut que je boucle sur la liste des fd de chaque serveur les un apres les autres
 			// tant que tout les fd de chaque serveur n'ont pas ete fait je continue
-			
-			// avoir un n qui sera incremente si il est egal a a MAX EVENTS il est remit a 0
-			n++;
-			// n passe au fd suivant
+
 			for (int j = 0; j < this->portListeningLen; j++) {
 
 				std::cout << "serv n " << j << " requete n " << n << std::endl;
