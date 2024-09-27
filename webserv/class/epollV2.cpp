@@ -8,8 +8,8 @@ int Socket::launchEpoll() {
 	struct epoll_event	ev[this->portListeningLen], events[this->portListeningLen][MAX_EVENTS];
 	this->nfd = new int[this->portListeningLen];
 	int n; // n sert un index sur l'instance epoll qui est utilise pour lire tout les premiers fd 
-	int nfd_i;
 	int	nfd_count; // sert a conter le nombre de epoll_wait qui a fonctionne pour alloue ensuite serverData
+	int nfd_i; // sert a indexer sur le serveur pour la distribution de fd
 	// de chaque serveur (le premier puis le deuxieme ect ect) c'est pour ca qu'il est cree en avance
 
 	// boucle sur tout les port qui ont ete mis sur ecoute pour leurs attribuer une instance epoll (le 1 ne sert a rien)
@@ -78,6 +78,7 @@ int Socket::launchEpoll() {
 			// debug
 			std::cout << "socket[" << i << "] fd = " << this->sockets[i].listenFd << std::endl;
 			sleep(1);
+			//
 			this->nfd[i] = epoll_wait(this->epfd[i], events[i], MAX_EVENTS, 0); // timout voir fichier de configuration
 			// epollwait crash
 			if (this->nfd[i] == -1) {
@@ -85,11 +86,12 @@ int Socket::launchEpoll() {
 				return 0;
 			}
 			// epoll wait a detecte des evenements sur events
+			// j'attribue les valeurs necessaires a une case de mon tableau nfdReady
 			if (this->nfd[i] > 0) {
 				this->nfdReady[nfd_count].nfd = this->nfd[i];
 				this->nfdReady[nfd_count].listenFD = this->sockets[i].listenFd;
 				
-				this->nfdReady[nfd_count].nfdReadyEvents;
+				this->nfdReady[nfd_count].nfdReadyEvents = events[i];
 				nfd_count++;
 			}
 			std::cout << "this nfd[" << i << "] = " << this->nfd[i] << std::endl;
@@ -114,38 +116,34 @@ int Socket::launchEpoll() {
 		this->nfd[2] = 5;
 		this->nfd[1] = 2;
 		this->nfd[0] = 0;
+
+		// ici je boucle sur la liste des fd des serveurs qui ont recu une connexion
 		nfd_i = 0;
+		while (++n < this->nfdReady[nfd_i].nfd) {
 
-		// avoir un n qui sera incremente si il est egal a a MAX EVENTS il est remit a 0
-		// n passe au fd suivant
-		while (++n < nfd_count) {
-			std::cout << "n = " << n << " < this->nfd[" << nfd_i << "] = " << this->nfd[nfd_i] << " ca passe" << std::endl;
-			std::cout << "ca passe" << std::endl;
+			// ici je boucle sur les serveurs
+			nfd_i = 0;
+			while (nfd_i <= nfd_count) {
 
-			// ici il faut que je boucle sur la liste des fd de chaque serveur les un apres les autres
-			// tant que tout les fd de chaque serveur n'ont pas ete fait je continue
-
-			for (int j = 0; j < this->portListeningLen; j++) {
-
-				std::cout << "serv n " << j << " requete n " << n << std::endl;
-				sleep(1);
+				// si l'index du fd que j'essaye de regarder est plus grand que le nombre de fd recu je passe au serveur suivant
+				if (n > this->nfdReady[nfd_i].nfd) {
+					nfd_i++;
+					continue;
+				}
 				// permet de savoir l'evennement recu correspond a quel serveur
-				// std::cout << events[j][n].data.fd << std::endl;
-				// std::cout << this->sockets[j].listenFd << std::endl;
-				if (events[j][n].data.fd == this->sockets[j].listenFd) {
+				if (events[nfd_i][n].data.fd == this->sockets[nfd].listenFd) { // PRENDRE LE NFD READY 
 					
-					this->sockets[j].clientFd = accept(this->sockets[j].listenFd,
-						(sockaddr *) &this->sockets[j].addr, &this->sockets[j].addrLen);
+					this->sockets[nfd_i].clientFd = accept(this->sockets[nfd_i].listenFd,
+						(sockaddr *) &this->sockets[nfd_i].addr, &this->sockets[nfd_i].addrLen);
 
-					
-					if (this->sockets[j].clientFd == -1) {
+					if (this->sockets[nfd_i].clientFd == -1) {
 						if (errno == EWOULDBLOCK) {
-							std::cout << RED << "on port " << this->portListening[j] << " no attemp of connexion..." << RESET << std::endl;
+							std::cout << RED << "on port " << this->portListening[nfd_i] << " no attemp of connexion..." << RESET << std::endl;
 							sleep(1);
 						}
 						else
 						{
-							std::cout << YELLOW << "accept sur port " << this->portListening[j] << " pas content" << RESET << std::endl;
+							std::cout << YELLOW << "accept sur port " << this->portListening[nfd_i] << " pas content" << RESET << std::endl;
 							sleep(1);
 						}
 					}
@@ -156,8 +154,8 @@ int Socket::launchEpoll() {
 						sleep(1);
 					}
 				}
+				nfd_i++;
 			}
-			nfd_i++;
 		}
 	}
 

@@ -21,7 +21,7 @@
 	{
 		int nfd;
 		int listenFD;
-		int	nfdReadyEvents[MAX_EVENTS];
+		struct epoll_event	*nfdReadyEvents;
 	}				t_nfd_ready;
 
 	typedef	struct	s_socket
