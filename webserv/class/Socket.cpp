@@ -6,9 +6,6 @@ Socket::Socket()
 	this->portListening = NULL;
 	this->sockets = NULL;
 	// this->portListeningLen = 0; sert a rien jsp pk
-	this->epfd = NULL;
-	this->nfd = NULL;
-	this->nfdReady = NULL;
 }
 
 // Socket::Socket(Socket const & copy) {}
@@ -20,12 +17,6 @@ Socket::~Socket()
 		delete[] this->sockets;
 	if (this->portListening)
 		delete[] this->portListening;
-	if (this->epfd)
-		delete[] this->epfd;
-	if (this->nfd)
-		delete[] this->nfd;
-	if (this->nfdReady)
-		delete[] this->nfdReady;
 }
 
 // Socket& Socket::operator=(Socket const & rhs) {}
@@ -63,7 +54,8 @@ int	Socket::initAllSockets(Configuration const & conf) {
 	}
 	// creer une socket pour chaque port
 	for (int i = 0; i < this->portListeningLen; i++) {
-		initOneSocket(&this->sockets[i], this->portListening[i]);
+		if (!initOneSocket(&this->sockets[i], this->portListening[i]))
+			return 0;
 	}
 
 	// debug

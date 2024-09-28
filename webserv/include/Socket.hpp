@@ -2,7 +2,7 @@
 	#define SOCKET_HPP
 
 	#define KAA 1
-	#define MAX_EVENTS 64
+	#define MAX_EVENTS 1024
 
 	#include "library_needed.hpp"
 	#include "configuration.hpp"
@@ -17,13 +17,6 @@
 			- un structure sockaddr_in
 	*/
 
-	typedef	struct	s_nfd_ready
-	{
-		int nfd;
-		int listenFD;
-		struct epoll_event	*nfdReadyEvents;
-	}				t_nfd_ready;
-
 	typedef	struct	s_socket
 	{
 		int	listenFd;
@@ -36,12 +29,11 @@
 		class Socket
 		{
 			private:
-				int					*epfd; // tableau de int  chaque case represente une instance epoll par serveur
-				int					*nfd; // valeur de retour de epoll wait pour chaque serveur de nombre de fd pret a etre ecrit 
+				int					epfd; // tableau de int  chaque case represente une instance epoll par serveur
+				int					nfd; // valeur de retour de epoll wait pour chaque serveur de nombre de fd pret a etre ecrit 
 				t_socket			*sockets;
 				int					*portListening; // tableau qui definit les port qui doivent etre mit sur ecoute en evitant les doublons
 				int					portListeningLen; // taille de portListening
-				t_nfd_ready			*nfdReady; // tableau qui contient les serveur qui ont recu une reponse d'epoll wait
 
 			public:
 				Socket();
