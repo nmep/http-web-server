@@ -51,6 +51,7 @@ int	Socket::initAllSockets(Configuration const & conf) {
 	// creer une socket pour chaque port
 	for (int i = 0; i < this->portListeningLen; i++) {
 		initOneSocket(&this->sockets[i], this->portListening[i]);
+		// TO DO METTRE LE CODE D'ERREUR SI CA MARCHE
 	}
 
 	// debug
