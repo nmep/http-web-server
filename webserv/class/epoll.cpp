@@ -1,5 +1,6 @@
 #include "Socket.hpp"
 #include "parse_http.hpp"
+#include "Server.hpp"
 
 int Socket::launchEpoll() {
 	this->epfd = epoll_create(1);
@@ -48,8 +49,9 @@ int Socket::launchEpoll() {
 					else {
 						std::cout << GREEN << "port " << this->portListening[i]  << " connexion recue" << std::endl;
 						sleep(1);
-						// parsing http force
-						Parse_http http;
+						
+						Server serv;// c'est temporaire le temps que tu me passe les vrais classes serveur
+						Parse_http http(serv);
 						http.HandleOneSocket(this->sockets[i]);
 					}
 				}

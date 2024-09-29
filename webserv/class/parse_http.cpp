@@ -1,8 +1,10 @@
 #include "parse_http.hpp"
-#include "Socket.hpp"
 
-Parse_http::Parse_http()
+Parse_http::Parse_http(Server serv)
 {
+    this->serv = serv;
+    this->code = 0;// juste une precaution
+
     this->mime[".html"] = "text/html";
     this->mime[".htm"] = "text/html";
     this->mime[".css"] = "text/css";
@@ -18,7 +20,58 @@ Parse_http::Parse_http()
     this->mime[".txt"] = "text/plain";
     this->mime[".mp3"] = "audio/mp3";
     this->mime[".pdf"] = "application/pdf";
-    this->mime["notfound"] = "text/html";
+        
+    this->code_map[100] = "Continue";
+    this->code_map[101] = "Switching Protocol";
+    this->code_map[200] = "OK";
+    this->code_map[201] = "Created";  
+    this->code_map[202] = "Accepted";
+    this->code_map[203] = "Non-Authoritative Information";
+    this->code_map[204] = "No Content";
+    this->code_map[205] = "Reset Content";
+    this->code_map[206] = "Partial Content";
+    this->code_map[300] = "Multiple Choice";
+    this->code_map[301] = "Moved Permanently";
+    this->code_map[302] = "Moved Temporarily";
+    this->code_map[303] = "See Other";
+    this->code_map[304] = "Not Modified";
+    this->code_map[307] = "Temporary Redirect";
+    this->code_map[308] = "Permanent Redirect";
+    this->code_map[400] = "Bad Request";
+    this->code_map[401] = "Unauthorized";
+    this->code_map[403] = "Forbidden";
+    this->code_map[404] = "Not Found";
+    this->code_map[405] = "Method Not Allowed";
+    this->code_map[406] = "Not Acceptable";
+    this->code_map[407] = "Proxy Authentication Required";
+    this->code_map[408] = "Request Timeout";
+    this->code_map[409] = "Conflict";
+    this->code_map[410] = "Gone";
+    this->code_map[411] = "Length Required";
+    this->code_map[412] = "Precondition Failed";
+    this->code_map[413] = "Payload Too Large";
+    this->code_map[414] = "URI Too Long";
+    this->code_map[415] = "Unsupported Media Type";
+    this->code_map[416] = "Requested Range Not Satisfiable";
+    this->code_map[417] = "Expectation Failed";
+    this->code_map[418] = "I'm a teapot";
+    this->code_map[421] = "Misdirected Request";
+    this->code_map[425] = "Too Early";
+    this->code_map[426] = "Upgrade Required";
+    this->code_map[428] = "Precondition Required";
+    this->code_map[429] = "Too Many Requests";
+    this->code_map[431] = "Request Header Fields Too Large";
+    this->code_map[451] = "Unavailable for Legal Reasons";
+    this->code_map[500] = "Internal Server Error";
+    this->code_map[501] = "Not Implemented";
+    this->code_map[502] = "Bad Gateway";
+    this->code_map[503] = "Service Unavailable";
+    this->code_map[504] = "Gateway Timeout";
+    this->code_map[505] = "HTTP Version Not Supported";
+    this->code_map[506] = "Variant Also Negotiates";
+    this->code_map[507] = "Insufficient Storage";
+    this->code_map[510] = "Not Extended";
+    this->code_map[511] = "Network Authentication Required";
 }
 
 Parse_http::~Parse_http()
@@ -73,7 +126,7 @@ int Parse_http::GetData()
     end = this->header.front().find(' ', 0);
     if (end == std::string::npos)
     {
-        this->code_and_sentence = "400 Bad Request";
+        this->code = 400;
         return 0;
     }
     this->methode = this->header.front().substr(start, end);
@@ -81,14 +134,14 @@ int Parse_http::GetData()
     end = this->header.front().find(' ', start);
     if (end == std::string::npos)
     {
-        this->code_and_sentence = "400 Bad Request";
+        this->code = 400;
         return 0;
     }
     this->ressource = this->header.front().substr(start, end - start);
     start = end + 1;
     if (this->header.front().substr(start) != "HTTP/1.1")
     {
-        this->code_and_sentence = "400 Bad Request";// 400 mauvais format ou version, selon ce que l'on fait quand c'est pas 1.1 faudra ajuster
+        this->code = 400;// 400 mauvais format ou version, selon ce que l'on fait quand c'est pas 1.1 faudra ajuster
         return 0;
     }
     this->http_version = "HTTP/1.1";
@@ -98,36 +151,45 @@ int Parse_http::GetData()
         std::cout << this->header[i].substr(0, colon) << std::endl << this->header[i].substr(colon + 2) << std::endl;
     }
     // verifier que la methode est reconnu et que la ressource soit accesible et exite
-    this->code_and_sentence = "200 OK";
+    this->code = 200;
     return 1;
 }
 
 void Parse_http::PrintData()
 {
     std::cout << std::endl << RED << this->request << WHITE << std::endl;
-    std::cout << BLUE;
-    std::cout << "|" << this->methode << "|" << std::endl << "|" << this->ressource << "|" << std::endl << "|" << this->http_version << "|" << std::endl;
-    std::cout << YELLOW;
-    for (size_t i = 0; i < this->header.size(); ++i) {
-        std::cout << this->header[i] << std::endl << std::endl;
-    }
-    std::cout << RED;
-    std::cout << this->body;
-    std::cout << BLUE;
+    // std::cout << BLUE;
+    // std::cout << "|" << this->methode << "|" << std::endl << "|" << this->ressource << "|" << std::endl << "|" << this->http_version << "|" << std::endl;
+    // // std::cout << BLUE;
+    // for (size_t i = 0; i < this->header.size(); ++i) {
+    //     std::cout << this->header[i] << std::endl << std::endl;
+    // }
+    // std::cout << RED;
+    // std::cout << this->body;
+    std::cout << GREEN;
     std::cout << answer << std::endl;
     std::cout << WHITE;
 }
 
 std::string Parse_http::GetMime(std::string extension)
 {
-    if (this->mime[extension].length())
+    if ( this->mime.find(extension) != this->mime.end())
         return (this->mime[extension]);
-     return (this->mime["notfound"]);
+    return ("text/html");// si on trouve pas on affiche quand meme sout format html ou on gere pas ?
+}
+
+std::string Parse_http::GetCodeSentence(int code)
+{
+    if ( this->code_map.find(code) != this->code_map.end())
+        return (this->code_map[code]);
+    return ("Undefined");// c'est pas senser arriver
 }
 
 void Parse_http::GenerateAnswer()
 {
-    this->answer.append(this->http_version + " " + this->code_and_sentence + "\r\n");
+    std::stringstream stream << // convertir le int et string
+    const std::string c = std::to_string(this->code);
+    this->answer.append(this->http_version + " " + c + "\r\n");// ne pas oublier de rajouter la phrase de raison todo
     this->contentType();
     this->connection();
     this->server();
@@ -141,7 +203,7 @@ void Parse_http::GenerateAnswer()
 
 void Parse_http::contentType()
 {
-    if(this->code_and_sentence != "200 OK")
+    if(this->code != 200)
         return;
     this->answer.append("Content-Type: ");
     size_t dot = this->ressource.find('.');
@@ -160,7 +222,7 @@ void Parse_http::connection()
 
 void Parse_http::server()// faut que j'ai acces au nom du serveur
 {
-
+    this->answer.append("Servname:" + this->serv.GetServerName() + "\r\n");
 }
 
 void Parse_http::location()// on le met que pour 201 (post) et les redirections (300+)
