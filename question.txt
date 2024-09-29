@@ -5,3 +5,4 @@ faut que les classes soient canonniques ??
 si pas http 1.1 on refuse ?
 le split a ete fait pour un cas en particulier ?
 t'avais parler du fait qu'on ai la taille du body en octet nan ? c'est que quand il y a un body ?
+il y a tourjours un servname ?
