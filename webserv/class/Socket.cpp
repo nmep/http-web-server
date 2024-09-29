@@ -49,18 +49,10 @@ int	Socket::initAllSockets(Configuration const & conf) {
 			this->portListeningLen++;
 		}
 	}
-	for (int i = 0; i < this->portListeningLen; i++) {
-		std::cout << "dedans port = " << this->portListening[i] << std::endl;
-	}
 	// creer une socket pour chaque port
 	for (int i = 0; i < this->portListeningLen; i++) {
 		if (!initOneSocket(&this->sockets[i], this->portListening[i]))
 			return 0;
-	}
-
-	// debug
-	for (int i = 0; i < this->portListeningLen; i++) {
-		std::cout << "fd de port " << this->portListening[i] << " = " << this->sockets[i].listenFd << std::endl;
 	}
 	return 1;
 }
@@ -77,9 +69,6 @@ int	Socket::initOneSocket(t_socket *socketStruct, int port)
 		std::cerr << "Error while creating socket " << strerror(errno) << std::endl;
 		return 0;
 	}
-	// debug
-	std::cout << "dans socket port " << port << " fd = " << socketStruct->listenFd << std::endl;
-	//
 	socketStruct->addr.sin_family = AF_INET;
 	socketStruct->addr.sin_addr.s_addr = INADDR_ANY;
 	socketStruct->addr.sin_port = htons(port);
@@ -90,7 +79,7 @@ int	Socket::initOneSocket(t_socket *socketStruct, int port)
 
 	// socket non bloquante
 	// 	je recupere le flag de la socket pour l'utiliser ensuite
-	socketStruct->socketFlag = fcntl(socketStruct->listenFd, F_GETFD, 0);
+	socketStruct->socketFlag = fcntl(socketStruct->listenFd, F_GETFL, 0);
 	if (socketStruct->socketFlag == -1) {
 		std::cerr << "Error while creating non blocking socket " << strerror(errno) << std::endl;
 		return 0;
@@ -124,4 +113,52 @@ int	Socket::initOneSocket(t_socket *socketStruct, int port)
 		return 0;
 	}
 	return 1;
+}
+
+int	Socket::accept_and_save_connexion(int epoll_event_fd) {
+	int	new_connexion;
+	struct epoll_event	ev;
+
+	for (int i = 0; i < this->portListeningLen; i++) {
+		if (epoll_event_fd == this->sockets[i].listenFd) {
+			new_connexion = accept(this->sockets[i].listenFd, \
+				(sockaddr *) &this->sockets[i].addr, &this->sockets[i].addrLen);
+			if (new_connexion == -1) {
+				std::cerr << "Accept failed on serveur n " << i << ": " << strerror(errno) << std::endl;
+				return 0;
+			}
+			setNonBlockSocket(new_connexion);
+			ev.events = EPOLLIN | EPOLLET;
+			ev.data.fd = new_connexion;
+			std::cout << "j'ajoute new connexion qui est a " << new_connexion << std::endl;
+			if (epoll_ctl(this->epfd, EPOLL_CTL_ADD, new_connexion, &ev) == -1) {
+				std::cerr << "Epoll ctl failed sur socket " << this->sockets[i].listenFd << ": " << strerror(errno) << std::endl;
+				return 0;
+			}
+		}
+	}
+	return 1;
+}
+
+int	Socket::setNonBlockSocket(int socket) {
+	int socketFlag;
+
+	socketFlag = fcntl(socket, F_GETFL, 0);
+	if (socketFlag == -1) {
+		std::cerr << "Error while creating non blocking socket " << strerror(errno) << std::endl;
+		return 0;
+	}
+	if (fcntl(socket, F_SETFL, socketFlag | O_NONBLOCK) == -1) {
+		std::cerr << "Error while creating non blocking socket " << strerror(errno) << std::endl;
+		return 0;
+	}
+	return 1;
+}
+
+bool	Socket::isAnServerFd(int fd) {
+	for (int i = 0; i < this->portListeningLen; i++) {
+		if (this->sockets[i].listenFd == fd)
+			return true;
+	}
+	return false;
 }

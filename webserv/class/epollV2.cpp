@@ -1,6 +1,6 @@
 #include "Socket.hpp"
 
-int Socket::launchEpoll() {
+int Socket::launchEpoll(Configuration const & conf) {
 	struct epoll_event	ev, events[MAX_EVENTS];
 
 	this->epfd = epoll_create(1);
@@ -9,48 +9,43 @@ int Socket::launchEpoll() {
 		return 0;
 	}
 	for (int i = 0; i < this->portListeningLen; i++) {
-		ev.events = EPOLLIN | EPOLLET;
+		ev.events = EPOLLIN;
 		ev.data.fd = this->sockets[i].listenFd;
-		std::cout << "serveur " << i << " fd = " << this->sockets[i].listenFd << std::endl;
 		if (epoll_ctl(this->epfd, EPOLL_CTL_ADD, this->sockets[i].listenFd, &ev) == -1) {
 			std::cerr << "Epoll ctl failed sur socket " << this->sockets[i].listenFd << ": " << strerror(errno) << std::endl;
 			return 0;
 		}
 	}
 
-	int serv_index;
+	// j'arrive pas a mettre des condition sur l'event de data pour directement savoir je dois en faire quoi
 	while (KAA) {
-		this->nfd = epoll_wait(this->epfd, events, MAX_EVENTS, 0); // timout voir fichier de configuration
-		// epollwait crash
+		this->nfd = epoll_wait(this->epfd, events, MAX_EVENTS, 100); // timout voir fichier de configuration
 		if (this->nfd == -1) {
 			std::cerr << "Epoll wait error: " << strerror(errno) << std::endl;
 			return 0;
 		}
 
+		std::cout << "nfd = " << nfd << std::endl;
+		sleep(1);
 		for (int i = 0; i < this->nfd; i++) {
-			// permet de savoir l'evennement recu correspond a quel serveur
-			serv_index = 0;
-			while (events[i].data.fd != this->sockets[serv_index].listenFd && serv_index < this->portListeningLen){
-				this->sockets[serv_index].clientFd = accept(this->sockets[serv_index].listenFd,
-					(sockaddr *) &this->sockets[serv_index].addr, &this->sockets[serv_index].addrLen);
+			// connexion a un serveur sinon c'est un connexion cliente
+			if (isAnServerFd(events[i].data.fd)) {
+			// if (events[i].events & EPOLLIN) {
+				std::cout << "evenements de connexion recu" << std::endl;
+				std::cout << "fd de connexion = " << events[i].data.fd << std::endl;
 
-				if (this->sockets[serv_index].clientFd == -1) {
-					if (errno == EWOULDBLOCK) {
-						std::cout << RED << "on port " << this->portListening[serv_index] << " no attemp of connexion..." << RESET << std::endl;
-						sleep(1);
-					}
-					if (serv_index == this->portListeningLen)
-						serv_index = 0;
-				}
-				serv_index++;
+				accept_and_save_connexion(events[i].data.fd);
 			}
-			// aucun serv renvoyer sur le premier serv
-			// il manque un epoll ctl et un conf de epollet a ajouter ici voir man epoll
-			ev.events = EPOLLIN | EPOLLET;
+			else
+			{
+				std::cout << "je dois repondre a la requete fd = " << events[i].data.fd << std::endl;
+				(void) conf;
+				if (epoll_ctl(this->epfd, EPOLL_CTL_DEL, events[i].data.fd, &ev) == -1) {
+					std::cerr << "Epoll ctl failed sur socket " << this->sockets[i].listenFd << ": " << strerror(errno) << std::endl;
+					return 0;
+				}
+			}
 
-			// je repond ici
-			std::cout << GREEN << "port " << this->portListening[serv_index]  << " connexion recue" << RESET << std::endl;
-			sleep(1);
 		}
 	}
 	return 1;

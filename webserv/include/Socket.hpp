@@ -20,7 +20,6 @@
 	typedef	struct	s_socket
 	{
 		int	listenFd;
-		int	clientFd;
 		int	socketFlag; // fcntl pour que la socket soit non bloquante
 		socklen_t addrLen;
 		struct sockaddr_in	addr;
@@ -42,7 +41,11 @@
 				// Socket&	operator=(Socket const & rhs);
 				int	initAllSockets(Configuration const & conf);
 				int	initOneSocket(t_socket *socketStruct, int port);
-				int	launchEpoll();
+				int	launchEpoll(Configuration const & conf);
+				int	accept_and_save_connexion(int epoll_event_fd);
+				int	setNonBlockSocket(int socket);
+				bool	isAnServerFd(int fd);
+
 		};
 
 #endif

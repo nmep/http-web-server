@@ -38,7 +38,7 @@ int	main(int ac, char **av)
 		std::cout << "MARCHE PAS" << std::endl;
 		return 2;
 	}
-	socket.launchEpoll();
+	socket.launchEpoll(conf);
 	// creation de la socket
 
 	return 0;
