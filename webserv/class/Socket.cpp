@@ -115,27 +115,24 @@ int	Socket::initOneSocket(t_socket *socketStruct, int port)
 	return 1;
 }
 
-int	Socket::accept_and_save_connexion(int epoll_event_fd) {
+int	Socket::accept_and_save_connexion(int servID) {
 	int	new_connexion;
 	struct epoll_event	ev;
 
-	for (int i = 0; i < this->portListeningLen; i++) {
-		if (epoll_event_fd == this->sockets[i].listenFd) {
-			new_connexion = accept(this->sockets[i].listenFd, \
-				(sockaddr *) &this->sockets[i].addr, &this->sockets[i].addrLen);
-			if (new_connexion == -1) {
-				std::cerr << "Accept failed on serveur n " << i << ": " << strerror(errno) << std::endl;
-				return 0;
-			}
-			setNonBlockSocket(new_connexion);
-			ev.events = EPOLLIN | EPOLLET;
-			ev.data.fd = new_connexion;
-			std::cout << "j'ajoute new connexion qui est a " << new_connexion << std::endl;
-			if (epoll_ctl(this->epfd, EPOLL_CTL_ADD, new_connexion, &ev) == -1) {
-				std::cerr << "Epoll ctl failed sur socket " << this->sockets[i].listenFd << ": " << strerror(errno) << std::endl;
-				return 0;
-			}
-		}
+	std::cout << "serv id = " << servID << std::endl;
+	new_connexion = accept(this->sockets[servID].listenFd, \
+		(sockaddr *) &this->sockets[servID].addr, &this->sockets[servID].addrLen);
+	if (new_connexion == -1) {
+		std::cerr << "Accept failed on serveur n " << servID << ": " << strerror(errno) << std::endl;
+		return 0;
+	}
+	setNonBlockSocket(new_connexion);
+	ev.events = EPOLLIN | EPOLLET | EPOLLRDHUP | EPOLLERR | EPOLLHUP;
+	ev.data.fd = new_connexion;
+	std::cout << "j'ajoute new connexion qui est a " << new_connexion << std::endl;
+	if (epoll_ctl(this->epfd, EPOLL_CTL_ADD, new_connexion, &ev) == -1) {
+		std::cerr << "Epoll ctl failed sur socket " << this->sockets[servID].listenFd << ": " << strerror(errno) << std::endl;
+		return 0;
 	}
 	return 1;
 }
@@ -155,10 +152,10 @@ int	Socket::setNonBlockSocket(int socket) {
 	return 1;
 }
 
-bool	Socket::isAnServerFd(int fd) {
+int	Socket::isAnServerFd(int fd) {
 	for (int i = 0; i < this->portListeningLen; i++) {
 		if (this->sockets[i].listenFd == fd)
-			return true;
+			return i;
 	}
-	return false;
+	return -1;
 }

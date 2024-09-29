@@ -42,9 +42,9 @@
 				int	initAllSockets(Configuration const & conf);
 				int	initOneSocket(t_socket *socketStruct, int port);
 				int	launchEpoll(Configuration const & conf);
-				int	accept_and_save_connexion(int epoll_event_fd);
+				int	accept_and_save_connexion(int servId);
 				int	setNonBlockSocket(int socket);
-				bool	isAnServerFd(int fd);
+				int	isAnServerFd(int fd);
 
 		};
 
