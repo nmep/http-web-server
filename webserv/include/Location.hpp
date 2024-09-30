@@ -61,6 +61,6 @@
 
 	};
 
-std::ostream & operator<<(std::ostream& o, Location location);
+std::ostream & operator<<(std::ostream& o, Location* location);
 
 #endif

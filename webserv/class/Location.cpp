@@ -11,6 +11,7 @@ Location::Location() : _autoIndex(false), _isUploadFileAccepted(false)
 
 Location::Location(Location const & copy) :_autoIndex(false), _isUploadFileAccepted(false)
 {
+	std::cout << "j'incremente location index" << std::endl;
 	_locationIndex++;
 	_locationID = _locationIndex;
 	*this = copy;
@@ -266,14 +267,18 @@ bool	Location::LocationParsing(std::ifstream & file, int *countLine) {
 // 	this->_allowedMethod.clear();
 // }
 
-std::ostream & operator<<(std::ostream & o, Location location) {
+std::ostream & operator<<(std::ostream & o, Location *location) {
+		if (!location) {
+			o << "Location est null (elle n'existe pas)" << std::endl;
+			return o;
+		}
 		o << "LOCATION PRINTING" << std::endl;
-		o << "Allowed Method = "; printVector(location.getAllowedMethodVector(), o);
-		o << "Redirection HTTP CODE = " << location.getRedirection("CODE") << " Redirection PATH = " << location.getRedirection("") << std::endl;
-		o << "Root = " << location.getRoot() << std::endl;
-		o << "Auto Index = " << location.getAutoInex() << std::endl;
-		o << "IsUploadFileAccepted = " << location.getIsUploadFileAccepted() << std::endl;
-		o << "Upload store = " << location.getUploadStore() << std::endl;
-		o << "location index = " << location.getLocationID() << std::endl;
+		o << "Allowed Method = "; printVector(location->getAllowedMethodVector(), o);
+		o << "Redirection HTTP CODE = " << location->getRedirection("CODE") << " Redirection PATH = " << location->getRedirection("") << std::endl;
+		o << "Root = " << location->getRoot() << std::endl;
+		o << "Auto Index = " << location->getAutoInex() << std::endl;
+		o << "IsUploadFileAccepted = " << location->getIsUploadFileAccepted() << std::endl;
+		o << "Upload store = " << location->getUploadStore() << std::endl;
+		o << "location index = " << location->getLocationID() << std::endl;
 	return o;
 }
