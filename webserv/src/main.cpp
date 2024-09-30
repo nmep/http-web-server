@@ -33,9 +33,12 @@ int	main(int ac, char **av)
 
 	std::cout << conf << std::endl;
 
-	if (!socket.initAllSockets(conf))
+	std::cout << "ici" << std::endl;
+	if (!socket.initAllSockets(conf)) {
+		std::cout << "MARCHE PAS" << std::endl;
 		return 2;
-	socket.launchEpoll();
+	}
+	socket.launchEpoll(conf);
 	// creation de la socket
 
 	return 0;

@@ -52,7 +52,7 @@ class Parse_http
         Parse_http(Server serv);
         ~Parse_http();
 
-        int HandleOneSocket(t_socket socket);
+        int HandleOneSocket(int fd);
 
 };
 
