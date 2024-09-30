@@ -23,7 +23,6 @@ Socket::~Socket()
 
 static bool	checkIfPortIsSet(int *SokcetPort, int value, int length) {
 	for (int i = 0; i < length; i++) {
-		std::cout << value << " == " << SokcetPort[i] << std::endl;
 		if (value == SokcetPort[i])
 			return true;
 	}
