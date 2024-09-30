@@ -187,9 +187,10 @@ std::string Parse_http::GetCodeSentence(int code)
 
 void Parse_http::GenerateAnswer()
 {
-    std::stringstream stream << // convertir le int et string
-    const std::string c = std::to_string(this->code);
-    this->answer.append(this->http_version + " " + c + "\r\n");// ne pas oublier de rajouter la phrase de raison todo
+    std::stringstream tmp;// juste pour convertir un int en string
+    tmp << this->code;
+
+    this->answer.append(this->http_version + " " + tmp.str() + " " + this->GetCodeSentence(this->code) + "\r\n");
     this->contentType();
     this->connection();
     this->server();
@@ -220,9 +221,9 @@ void Parse_http::connection()
         this->answer.append("Connection: keep-alive\r\n");
 }
 
-void Parse_http::server()// faut que j'ai acces au nom du serveur
+void Parse_http::server()
 {
-    this->answer.append("Servname:" + this->serv.GetServerName() + "\r\n");
+    this->answer.append("Server: " + this->serv.GetServerName() + "\r\n");
 }
 
 void Parse_http::location()// on le met que pour 201 (post) et les redirections (300+)
