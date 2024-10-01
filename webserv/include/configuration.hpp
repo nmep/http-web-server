@@ -32,7 +32,7 @@
 			std::string		getConfFileName() const;
 
 			void	setNBServer(int nbServer);
-			bool	syntaxParse(std::vector<std::string> const & v);
+			bool	syntaxParse(std::vector<std::string> v);
 			bool	readFileSyntax(); 
 			bool	launchServerConf(const std::string & confFileName);
 

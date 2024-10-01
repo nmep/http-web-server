@@ -9,13 +9,23 @@ bool	strIsNum(std::string str) {
 	return true;
 }
 
-bool isOnlyWithSpace(std::string const & line)
+bool	isOnlyWithSpace(std::string const & line)
 {
 	for (size_t i = 0; i < line.length(); i++) {
 		if ((line[i] < 9 || line[i] > 13) && line[i] != 32)
 			return false;
 	}
 	return true;
+}
+
+bool	isCommentary(std::string const & line) {
+	// saute les white space
+	size_t i = 0;
+	while (i < line.size() && ((line[i] >= 9 && line[i] <= 13) || line[i] == 32 || line[i] == 127)) {
+		i++;
+	}
+	return line[i] == '#' ? true : false;
+	// est ce qu'on est sur un # 
 }
 
 std::vector<std::string>	split(std::string & line) {

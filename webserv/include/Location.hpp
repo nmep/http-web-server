@@ -12,7 +12,7 @@
 			std::string					_redirection[2]; // return html if it ping the location name
 			std::string					_root;
 			std::string					_uploadStore;
-			std::string					_index;
+			std::vector<std::string>	_index;
 			bool						_autoIndex;
 			bool						_isUploadFileAccepted;
 			static int					_locationIndex;
@@ -26,6 +26,7 @@
 
 			// GETTEUR
 			std::vector<std::string>	getAllowedMethodVector() const;
+			std::vector<std::string>	getIndex() const;
 			std::string					getRedirection(std::string const & returnValue) const;
 			std::string					getRoot() const;
 			std::string					getUploadStore() const;
@@ -61,6 +62,6 @@
 
 	};
 
-std::ostream & operator<<(std::ostream& o, Location location);
+std::ostream & operator<<(std::ostream& o, Location* location);
 
 #endif

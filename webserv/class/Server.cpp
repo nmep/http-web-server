@@ -310,7 +310,7 @@ std::ostream & operator<<(std::ostream & o, Server const & server)
 		std::map<std::string, Location*>::iterator it = map.begin();
 		for (/**/; it != map.end(); it++) {
 			o << "first = " << it->first << std::endl;
-			o << "second = " << *it->second << std::endl;
+			o << "second = " << it->second << std::endl;
 		}
 	}
 	return o;

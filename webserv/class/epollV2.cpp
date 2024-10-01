@@ -4,6 +4,10 @@
 int Socket::launchEpoll(Configuration const & conf) {
 	struct epoll_event	ev, events[MAX_EVENTS];
 
+	(void)conf;
+	std::cout << "JE SUIS DANS EPOLL" << std::endl;
+	std::cout << conf.getServer(1).getLocation("qwer") << std::endl;
+
 	this->epfd = epoll_create(1);
 	if (this->epfd == -1) {
 		std::cerr << "Epoll create Error: " << strerror(errno) << std::endl;

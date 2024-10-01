@@ -10,12 +10,12 @@ int	main(int ac, char **av)
 	{
 		// faire le serveur web avec une config par defaut
 		std::cout << "default webserv" << std::endl;
+		return 0;
 	}
 	else if (ac == 2)
 	{
 		const std::string confFileName(av[1]);
 
-		std::cout << "ici" << std::endl;
 		// lancer la config des serveur
 		if (!conf.launchServerConf(confFileName)) {
 			// conf.clearConfiguration();
@@ -31,9 +31,9 @@ int	main(int ac, char **av)
 		return 2;
 	}
 
+
 	std::cout << conf << std::endl;
 
-	std::cout << "ici" << std::endl;
 	if (!socket.initAllSockets(conf)) {
 		std::cout << "MARCHE PAS" << std::endl;
 		return 2;
