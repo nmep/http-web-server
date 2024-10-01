@@ -6,7 +6,7 @@ int Socket::launchEpoll(Configuration const & conf) {
 
 	(void)conf;
 	std::cout << "JE SUIS DANS EPOLL" << std::endl;
-	std::cout << conf.getServer(1).getLocation("qwer") << std::endl;
+	// std::cout << conf.getServer(1).getLocation("qwer") << std::endl;        ca cree une location 
 
 	this->epfd = epoll_create(1);
 	if (this->epfd == -1) {
@@ -50,12 +50,15 @@ int Socket::launchEpoll(Configuration const & conf) {
 			{
 				std::cout << "EPOLLIN detecte je repond" << std::endl;
 
-				Server serv;// c'est temporaire le temps que tu me passe les vrais classes serveur
-				Parse_http http(serv);
-
+				Parse_http http(conf.getServer(1));
+				// std::cout << YELLOW << "nb find " << conf.getServer(1).getLocationMap().count("/blabla") << "\nnb tot " << conf.getServer(1).getLocationMap().size() << std::endl;
+				// for (std::map<std::string, Location*>::iterator it = conf.getServer(1).getLocationMap().begin(); it != conf.getServer(1).getLocationMap().end(); ++it) {
+				// 	std::cout << "Key: " << it->first << ", " << it->second << std::endl;
+				// 	std::cout << RED << 'a' << WHITE << std::endl;
+				// }
+				// std::cout << RED << "sort" << std::endl;
 				http.HandleOneSocket(events[i].data.fd);
 
-				(void) conf;
 				// if (epoll_ctl(this->epfd, EPOLL_CTL_DEL, events[i].data.fd, &ev) == -1) {
 				// 	std::cerr << "Epoll ctl failed sur socket " << this->sockets[i].listenFd << ": " << strerror(errno) << std::endl;
 				// 	return 0;

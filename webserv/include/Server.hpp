@@ -32,7 +32,7 @@ class Server
 		uint16_t							GetClientMaxBodySize(void) const;
 		std::map<std::string, std::string>	getErrorPageMap() const;
 
-		Location*							getLocation(std::string const & locationName);
+		Location*							getLocation(std::string const & locationName);// ca cree une loc en plus quand le location name n'exite pas encore
 		bool								isLocationExisting(std::string const & locationName) const;
 		std::map<std::string, Location*>		getLocationMap() const;
 

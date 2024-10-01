@@ -1,3 +1,14 @@
 quelle taille choisir pour le buffer de lecture de la socket ? 4096 ? pourquoi ?
 si pas http 1.1 on refuse ?
 si on ne reconnai pas l'extention on affiche quand meme sous format html ou on gere pas ?
+il y a toujours un upload store ? si il y en pas on peut juste pas upload ??
+pourquoi redirection dans location c'est un tab de 2 ?
+c'est quoi getsockopt
+si dans allowd methode on met head, tu refuses ?
+je crois qu'il y a toujours une loc en trop. quand je les affiche ca me met qu'il y en a deux mais la deuxieme seg fault et size dis qu'il y en a 2
+quand il tourne trop longtemps (2min) il fait ca :
+    Allowed Method:
+    terminate called after throwing an instance of 'std::bad_alloc'
+      what():  std::bad_alloc
+    [1]    354669 IOT instruction (core dumped)  ./webserv conf/webserv.conf
+c'est arriver plusieurs fois que mon recv marche pas : Error bind : Socket operation on non-socket

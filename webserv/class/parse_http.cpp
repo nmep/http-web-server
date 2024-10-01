@@ -1,6 +1,6 @@
 #include "parse_http.hpp"
 
-Parse_http::Parse_http(Server serv)
+Parse_http::Parse_http(Server &serv)
 {
     this->serv = serv;
     this->code = 0;// juste une precaution
@@ -78,6 +78,7 @@ Parse_http::~Parse_http()
 {
 }
 
+int glob_idx = 0;
 int Parse_http::HandleOneSocket(int fd)
 {
     if (recv(fd, this->request, 4096, 0) == -1) {
@@ -92,11 +93,15 @@ int Parse_http::HandleOneSocket(int fd)
 
 
 
-
     // on repond
-    const char *hello = "HTTP/1.1 200 OK\nContent-Type: text/html; charset=UTF-8\nContent-Length: 1234\nConnection: keep-alive\nDate: Wed, 26 Sep 2024 12:00:00 GMT\n\n<!DOCTYPE html>\n<html lang=\"fr\">\n<head>\n<meta charset=\"UTF-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n<title>Bienvenue</title>\n</head>\n<body>\n<h1>Bienvenue sur notre site !</h1>\n<p>Ceci est la page d'accueil.</p>\n</body>\n</html>";
-	const char *hello2 = "HTTP/1.1 200 OK\nContent-Type: text/html; charset=UTF-8\nContent-Length: 1234\nConnection: keep-alive\nDate: Wed, 26 Sep 2024 12:00:00 GMT\n\n<!DOCTYPE html>\n<html lang=\"fr\">\n<head>\n<meta charset=\"UTF-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n<title>Bienvenue</title>\n</head>\n<body>\n<h1>Bienvenue sur notre site !</h1>\n<p>Ceci est la page d'accueil.</p>\n</body>\n</html>";
-    send(fd, hello2, strlen(hello), 0);
+	const char *hello = "HTTP/1.1 200 OK\nContent-Type: text/html; charset=UTF-8\nContent-Length: 1234\nConnection: keep-alive\nDate: Wed, 26 Sep 2024 12:00:00 GMT\n\n<!DOCTYPE html>\n<html lang=\"fr\">\n<head>\n<meta charset=\"UTF-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n<title>Bienvenue</title>\n</head>\n<body>\n<h1>Bienvenue sur notre site !</h1>\n<p>Ceci est la page d'accueil.</p>\n<p>Vous serez redirigé vers la <a href=\"blabla/page2.html\">Page 2</a> dans 5 secondes.</p>\n</body>\n</html>";
+    // const char *redir = "HTTP/1.1 301 Moved Permanently\nContent-Type: text/html; charset=UTF-8\nConnection: keep-alive\nLocation: /page.html\nDate: Wed, 26 Sep 2024 12:00:00 GMT\n\n";
+    // if (glob_idx == 0)
+    //     send(socket.clientFd, hello, strlen(hello), 0);
+    // else
+    //     send(socket.clientFd, redir, strlen(redir), 0);
+    send(fd, hello, strlen(hello), 0);
+    glob_idx++;
     close(fd);
 	return 1;
 }
@@ -186,6 +191,20 @@ std::string Parse_http::GetCodeSentence(int code)
 
 void Parse_http::GenerateAnswer()
 {
+    this->ressource_path();
+    std::cout << "le path: " << this->actual_path_ressource << std::endl;
+    if (this->is_that_a_directory() == 1)
+    {
+        std::cout << "here 1" << std::endl;
+        this->find_good_index_or_autoindex();
+    }
+    std::cout << "here 2" << std::endl;
+    if (this->autoindex != true)// si il est encore active c'est qu'on a fait l'auto index et que j'ai deja un body
+    {
+        std::cout << "here 3" << std::endl;
+        this->read_file();
+    }
+    std::cout << "here 4" << std::endl;
     std::stringstream tmp;// juste pour convertir un int en string
     tmp << this->code;
 
@@ -237,4 +256,130 @@ void Parse_http::date()
     struct tm tm = *gmtime(&now);
     strftime(date, sizeof(date), "%a, %d %b %Y %H:%M:%S %Z", &tm);
     this->answer.append("Date: " + std::string(date) + "\r\n");
+}
+
+void Parse_http::ressource_path()
+{
+    std::cout << YELLOW << "nbn find " << this->serv.getLocationMap().count("/blabla") << "\nnb tot " << this->serv.getLocationMap().size() << std::endl;
+    std::cout << this->ressource << std::endl;
+    size_t idx = 0;
+    int depth = -1;
+    std::map<std::string, Location*>::iterator it = this->serv.getLocationMap().begin();
+    while (idx++ < this->serv.getLocationMap().size()){
+        this->autoindex = it->second->getAutoInex();
+        if (idx != 1)
+            it++;
+        std::cout << this->serv.getLocationMap().size() << "Key: " << it->first << " 2eme: " << this->ressource.substr(0, it->first.size()) << " size: " << it->first.size() << " " << this->ressource.size() << std::endl;
+        if (it->first.size() <= this->ressource.size() && it->first == this->ressource.substr(0, it->first.size()))
+        {
+            int count = 0;
+            for (size_t i = 0; i < it->first.size(); i++)
+            {
+                if (it->first[i] == '/')
+                    count++;
+            }
+            if (it->first[it->first.size() - 1] == '/')
+                count--;
+            if (count > depth)
+            {
+                depth = count;
+                this->actual_path_ressource = it->second->getRoot() + this->ressource.substr(it->first.size());
+                this->match_location = it->first;
+            }
+        }
+    }
+    std::cout << "sort" << std::endl;
+    if (depth == -1)
+    {
+        this->actual_path_ressource = this->ressource;
+        this->match_location = "None";
+    }
+    return ;
+}
+
+int Parse_http::is_that_a_directory()
+{
+    struct stat info;
+
+    if (stat(this->actual_path_ressource.c_str(), &info) != 0)
+    {
+        std::cerr << "Erreur lors de l'accès au chemin." << std::endl;
+        return 2;
+    }
+    if (S_ISREG(info.st_mode))
+        return 0;//fichier
+    else if (S_ISDIR(info.st_mode))
+        return 1;//dossier
+    return 2;// ni l'un ni l'autre, j'ai pas bien compris a quoi ca correspond
+}
+
+void Parse_http::find_good_index_or_autoindex()
+{
+    int end_slash = 0;
+    std::string fake_path = this->actual_path_ressource;// une copy du path avec la quelle on va essayer les index
+    std::cout << "find 1\n";
+    if (this->actual_path_ressource[this->actual_path_ressource.size() - 1] == '/')
+        end_slash = 1;
+    else
+        fake_path.append("/");
+    std::cout << "find 2\n";
+    if (this->match_location != "None")
+    {   
+        size_t idx = 0;
+        std::cout << "find 3  " << this->serv.getLocation(this->match_location)->getIndex().size() << "\n";
+        for (std::vector<std::string>::iterator it = this->serv.getLocation(this->match_location)->getIndex().begin(); it != this->serv.getLocation(this->match_location)->getIndex().end(); ++idx)
+        {
+            if (idx != 1)
+                it++;
+            std::cout << "find 3.1\n";
+            std::string tmp = fake_path + *it;
+            std::cout << "find 3.2\n";
+            if (access(tmp.c_str(), F_OK) != -1)
+            {
+                std::cout << "find 3.3\n";
+                this->actual_path_ressource = tmp;
+                return ;
+            }
+            std::cout << "find 3.4\n";
+        }
+        std::cout << "find 4\n";
+    }
+    if (end_slash && this->autoindex)
+    {
+        //c'est ici que tu pourras gere l'auto index, dans l'ideal tu me renvois le contenu de la page html sous une string
+        //this->answer_body = fonction_garfi_auto_index(this->serv);
+    }
+    else
+        this->autoindex = false;// si on le fait pas je le desactive ca m'est utile plus tard
+    std::cout << "find 5\n";
+}
+
+void Parse_http::read_file()
+{
+    if (access(this->actual_path_ressource.c_str(), F_OK) == -1)
+    {
+        this->code = 404;//not found
+        return ;
+    }
+    if (access(this->actual_path_ressource.c_str(), F_OK | R_OK) == -1)
+    {
+        this->code = 403;//forbidden
+        return ;
+    }
+
+    
+    int fd = open(this->actual_path_ressource.c_str(), O_RDONLY);
+    if (fd == -1)
+    {
+        std::cerr << "Erreur lors de l'ouverture du fichier : " << strerror(errno) << std::endl;
+        return ;
+    }
+    const size_t BUFFER_SIZE = 1024;
+    char buffer[BUFFER_SIZE];
+    size_t bytesRead;
+
+    while ((bytesRead = read(fd, buffer, sizeof(buffer))) > 0)
+        this->answer_body.append(buffer);
+    close(fd);
+    std::cout << YELLOW << this->answer_body << WHITE << std::endl;
 }

@@ -31,6 +31,9 @@ Server & Server::operator=(Server const & rhs)
 	_hostName = rhs._hostName;
 	_error_page = rhs._error_page;
 	_client_max_body_size = rhs._client_max_body_size;
+
+	// la loc etait pas copiee, je rajoute ca ducoup
+	this->_location = rhs._location; 
 	return *this;
 }
 
