@@ -12,3 +12,4 @@ quand il tourne trop longtemps (2min) il fait ca :
       what():  std::bad_alloc
     [1]    354669 IOT instruction (core dumped)  ./webserv conf/webserv.conf
 c'est arriver plusieurs fois que mon recv marche pas : Error bind : Socket operation on non-socket
+faut lock la team

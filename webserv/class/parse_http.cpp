@@ -327,11 +327,14 @@ void Parse_http::find_good_index_or_autoindex()
     {   
         size_t idx = 0;
         std::cout << "find 3  " << this->serv.getLocation(this->match_location)->getIndex().size() << "\n";
+        std::vector<std::string>::iterator its = this->serv.getLocation(this->match_location)->getIndex().end();
+        std::cout << *its;
         for (std::vector<std::string>::iterator it = this->serv.getLocation(this->match_location)->getIndex().begin(); it != this->serv.getLocation(this->match_location)->getIndex().end(); ++idx)
         {
             if (idx != 1)
                 it++;
             std::cout << "find 3.1\n";
+            std::cout << *it << std::endl;
             std::string tmp = fake_path + *it;
             std::cout << "find 3.2\n";
             if (access(tmp.c_str(), F_OK) != -1)
