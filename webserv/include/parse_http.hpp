@@ -49,6 +49,7 @@ class Parse_http
         void server();
         void location();// on precise on location dans les cas 201 et 3xx
         void date();
+        void taille();
 
         void ressource_path();// on obtient l'emplacement de la ressource sur notre machine ex: pour une loc /blabla , un root theRoot et une requete /blabla/fichier.html on renvoit theRoot/fichier.html
         int is_that_a_directory();// renvoie 1 si le vrai chemin de la ressource meme a un dossier, 0 si c'est un file

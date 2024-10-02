@@ -13,3 +13,4 @@ quand il tourne trop longtemps (2min) il fait ca :
     [1]    354669 IOT instruction (core dumped)  ./webserv conf/webserv.conf
 c'est arriver plusieurs fois que mon recv marche pas : Error bind : Socket operation on non-socket
 faut lock la team
+peut etre faire un sorte de lire un par un juste pour mesurer ce qu'on veut lire puis on lit pil la taille du truc
