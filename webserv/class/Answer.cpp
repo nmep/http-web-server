@@ -1,9 +1,10 @@
-#include "parse_http.hpp"
+#include "Answer.hpp"
 
-Parse_http::Parse_http(Server &serv)
+Answer::Answer(Server &serv)
 {
     this->serv = serv;
     this->code = 0;// juste une precaution
+    this->status = 0;
 
     this->mime[".html"] = "text/html";
     this->mime[".htm"] = "text/html";
@@ -74,12 +75,12 @@ Parse_http::Parse_http(Server &serv)
     this->code_map[511] = "Network Authentication Required";
 }
 
-Parse_http::~Parse_http()
+Answer::~Answer()
 {
 }
 
 int glob_idx = 0;
-int Parse_http::HandleOneSocket(int fd)
+int Answer::HandleOneSocket(int fd)
 {
     std::cout << "je demarre le traitement de la requete\n";
     if (recv(fd, this->request, 4096, 0) == -1) {
@@ -101,7 +102,7 @@ int Parse_http::HandleOneSocket(int fd)
 	return 1;
 }
 
-int Parse_http::GetData()
+int Answer::GetData()
 {
     size_t start = 0;
 	size_t end = 0;
@@ -154,7 +155,7 @@ int Parse_http::GetData()
     return 1;
 }
 
-void Parse_http::PrintData()
+void Answer::PrintData()
 {
     std::cout << std::endl << RED << this->request << WHITE << std::endl;
     // std::cout << BLUE;
@@ -170,23 +171,23 @@ void Parse_http::PrintData()
     std::cout << WHITE;
 }
 
-std::string Parse_http::GetMime(std::string extension)
+std::string Answer::GetMime(std::string extension)
 {
     if ( this->mime.find(extension) != this->mime.end())
         return (this->mime[extension]);
     return ("text/html");// si on trouve pas on affiche quand meme sout format html ou on gere pas ?
 }
 
-std::string Parse_http::GetCodeSentence(int code)
+std::string Answer::GetCodeSentence(int code)
 {
     if ( this->code_map.find(code) != this->code_map.end())
         return (this->code_map[code]);
     return ("Undefined");// c'est pas senser arriver
 }
 
-void Parse_http::GenerateAnswer()
+void Answer::GenerateAnswer()
 {
-    this->ressource_path();
+    this->ressource_path();//
     std::cout << "le path: " << this->actual_path_ressource << std::endl;
     if (this->is_that_a_directory() == 1)
     {
@@ -196,9 +197,11 @@ void Parse_http::GenerateAnswer()
     }
     if (this->autoindex != true)// si il est encore active c'est qu'on a fait l'auto index et que j'ai deja un body
     {
-        this->read_file();
+        this->read_file(this->actual_path_ressource);
     }
-    std::stringstream tmp;// juste pour convertir un int en string
+    if (this->code >= 400)
+        this->get_content_error_page();// si on a une erreur complete le body ici
+    std::stringstream tmp;
     tmp << this->code;
 
     this->answer.append(this->http_version + " " + tmp.str() + " " + this->GetCodeSentence(this->code) + "\r\n");
@@ -214,7 +217,7 @@ void Parse_http::GenerateAnswer()
         this->answer.append(this->answer_body);
 }
 
-void Parse_http::contentType()
+void Answer::contentType()
 {
     if(this->code != 200)
         return;
@@ -227,23 +230,23 @@ void Parse_http::contentType()
     this->answer.append("\r\n");
 }
 
-void Parse_http::connection()
+void Answer::connection()
 {
     if(this->header_map.find("Connection") != this->header_map.end() && this->header_map["Connection"] == "keep-alive")
         this->answer.append("Connection: keep-alive\r\n");
 }
 
-void Parse_http::server()
+void Answer::server()
 {
     this->answer.append("Server: " + this->serv.GetServerName() + "\r\n");
 }
 
-void Parse_http::location()// on le met que pour 201 (post) et les redirections (300+)
+void Answer::location()// on le met que pour 201 (post) et les redirections (300+)
 {
     //pour post on creer un nouveau file sauf si il existe deja et on genere son nom aleatoirement cf uuid ou alors incrementation
 }
 
-void Parse_http::date()
+void Answer::date()
 {
     char date[1000];
     time_t now = time(0) + 7200;//7200 ca vaut 2h en secondes
@@ -252,7 +255,7 @@ void Parse_http::date()
     this->answer.append("Date: " + std::string(date) + "\r\n");
 }
 
-void Parse_http::taille()
+void Answer::taille()
 {
     if (this->answer_body.size() > 0)// peut etre initialiser le answerbody a "" au debut
     {
@@ -261,8 +264,9 @@ void Parse_http::taille()
         this->answer.append("Content-Length: " + tmp.str() + "\r\n");
     }
 }
-
-void Parse_http::ressource_path()
+// on obtient l'emplacement de la ressource sur notre machine
+// ex: pour une loc /blabla, un root theRoot et une requete /blabla/fichier.html -> on renvoit theRoot/fichier.html
+void Answer::ressource_path()
 {
     size_t idx = 0;
     int depth = -1;
@@ -301,7 +305,8 @@ void Parse_http::ressource_path()
     return ;
 }
 
-int Parse_http::is_that_a_directory()
+// renvoie 1 si le vrai chemin de la ressource mene a un dossier, 0 si c'est un file et sinon 2 (si le path existe pas par example)
+int Answer::is_that_a_directory()
 {
     struct stat info;
 
@@ -317,10 +322,10 @@ int Parse_http::is_that_a_directory()
     return 2;// ni l'un ni l'autre, j'ai pas bien compris a quoi ca correspond
 }
 
-void Parse_http::find_good_index_or_autoindex()
+void Answer::find_good_index_or_autoindex()
 {
     int end_slash = 0;
-    std::string fake_path = this->actual_path_ressource;// une copy du path avec la quelle on va essayer les index (on lui rajoute le / si necessaire)
+    std::string fake_path = this->actual_path_ressource;
     if (this->actual_path_ressource[this->actual_path_ressource.size() - 1] == '/')
         end_slash = 1;
     else
@@ -329,6 +334,8 @@ void Parse_http::find_good_index_or_autoindex()
     {   
         size_t idx = 0;
         std::cout << "size du vector index: " << this->serv.getLocation(this->match_location)->getIndex().size() << "\n";
+        if (this->serv.getLocation(this->match_location) == NULL)
+            std::cout << "llllll\n";
         std::vector<std::string>::iterator its = this->serv.getLocation(this->match_location)->getIndex().end();
         std::cout << *its;
         for (std::vector<std::string>::iterator it = this->serv.getLocation(this->match_location)->getIndex().begin(); it != this->serv.getLocation(this->match_location)->getIndex().end(); ++idx)
@@ -357,30 +364,60 @@ void Parse_http::find_good_index_or_autoindex()
         this->autoindex = false;// si on le fait pas je le desactive ca m'est utile plus tard
 }
 
-void Parse_http::read_file()
+// on lit le fichier passe en parametre et on l'ecrit dans notre body (celui de la reponse)
+void Answer::read_file(std::string file)
 {
-    if (access(this->actual_path_ressource.c_str(), F_OK) == -1)
+    if (access(file.c_str(), F_OK) == -1)// ils ne sont pas censes arriver pour les fichiers d'erreurs
     {
         this->code = 404;//not found
         return ;
     }
-    if (access(this->actual_path_ressource.c_str(), F_OK | R_OK) == -1)
+    if (access(file.c_str(), F_OK | R_OK) == -1)
     {
         this->code = 403;//forbidden
         return ;
     }
-    int fd = open(this->actual_path_ressource.c_str(), O_RDONLY);
+    int fd = open(file.c_str(), O_RDONLY);
     if (fd == -1)
     {
         std::cerr << "Erreur lors de l'ouverture du fichier : " << strerror(errno) << std::endl;
+        this->code = 500;// a voir quelle code on met quand le fichier ne s'ouvre pas  todo
         return ;
     }
-    const size_t BUFFER_SIZE = 1024;
+    const size_t BUFFER_SIZE = 1024;// test avec 1024
     char buffer[BUFFER_SIZE];
     size_t bytesRead;
+    size_t sum = 0;
 
-    while ((bytesRead = read(fd, buffer, sizeof(buffer))) > 0)
+    while ((bytesRead = read(fd, buffer, BUFFER_SIZE)) > 0)
+    {
+        sum += bytesRead;
+        buffer[sum] = '\0';
         this->answer_body.append(buffer);
+    }
     close(fd);
     std::cout << YELLOW << this->answer_body << WHITE << std::endl;
+}
+
+
+// juste apres avoir traite la requete et juste avant d'ecrire notre reponse
+// on cherche si notre code d'etat correspond a une errore page, si oui on met le contenu de la page dans le body de la reponse
+void Answer::get_content_error_page()
+{
+    std::stringstream tmp;
+    tmp << this->code;
+    for (std::map<std::string, std::string>::iterator it = this->serv.getErrorPageMap().begin(); it != this->serv.getErrorPageMap().end(); it++)
+    {
+		if (tmp.str() == it->first)
+        {
+            this->read_file(it->second);
+            return ;
+        }
+	}
+    // le code ne correspond a rien de nos page, a voir ce qu'on fait todo
+}
+
+int Answer::GetStatus() const
+{
+    return this->status;
 }

@@ -1,5 +1,5 @@
-#ifndef PARSE_HTTP_HPP
-#define PARSE_HTTP_HPP
+#ifndef ANSWER_HPP
+#define ANSWER_HPP
 
 #include "library_needed.hpp"
 #include "configuration.hpp"
@@ -11,9 +11,16 @@
 // on cree cette classe a chaque fois que l'on veut repondre a une requete
 // la fonction principal (handleonesocket) prend la socket en parametre, la lit, genere une reponse, et l'envoie. 
 // Apres ca plus besoin de cette instance de la classe. On en creera une nouvelle des que la fonction launchEpoll (epoll.cpp) nous indique une nouvelle socket a gerer
-class Parse_http
+class Answer
 {
     private:
+        int status;             // de longeur nb_serv,              // peut etre le mettre dans la class Answer directement
+                                // 0 pour un nouveau,
+                                // 1 pour en cours de lecture de la requete,
+                                // 2 pour en cours de lecture d'un file demande,
+                                // 3 pour en cours de lecture d'un file d'erreur
+                                // 4 pour en cours d'ecriture du body
+                                // 5 pour termine
         // elements de la requete
         char request[4096];// quelle taille choisir ?
         std::vector<std::string> header;// le header ligne par ligne + la ligne d'etat
@@ -51,16 +58,20 @@ class Parse_http
         void date();
         void taille();
 
-        void ressource_path();// on obtient l'emplacement de la ressource sur notre machine ex: pour une loc /blabla , un root theRoot et une requete /blabla/fichier.html on renvoit theRoot/fichier.html
-        int is_that_a_directory();// renvoie 1 si le vrai chemin de la ressource meme a un dossier, 0 si c'est un file
+        void ressource_path();
+        int is_that_a_directory();
         void find_good_index_or_autoindex();
-        void read_file();
+        void read_file(std::string file);
+
+        void get_content_error_page();
         // utiles
         void PrintData();
 
     public:
-        Parse_http(Server &serv);
-        ~Parse_http();
+        Answer(Server &serv);
+        ~Answer();
+
+        int GetStatus() const;
 
         int HandleOneSocket(int fd);
 

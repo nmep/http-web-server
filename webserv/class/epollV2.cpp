@@ -1,8 +1,10 @@
 #include "Socket.hpp"
-#include "parse_http.hpp"
+#include "Answer.hpp"
+#include "Asynchrone.hpp"
 
 int Socket::launchEpoll(Configuration const & conf) {
 	struct epoll_event	ev, events[MAX_EVENTS];
+	Asynchrone asynch;
 
 	(void)conf;
 	std::cout << "JE SUIS DANS EPOLL" << std::endl;
@@ -50,7 +52,7 @@ int Socket::launchEpoll(Configuration const & conf) {
 			{
 				std::cout << "EPOLLIN detecte je repond" << std::endl;
 
-				Parse_http http(conf.getServer(1));
+				Answer http(conf.getServer(1));
 				// std::cout << YELLOW << "nb find " << conf.getServer(1).getLocationMap().count("/blabla") << "\nnb tot " << conf.getServer(1).getLocationMap().size() << std::endl;
 				// for (std::map<std::string, Location*>::iterator it = conf.getServer(1).getLocationMap().begin(); it != conf.getServer(1).getLocationMap().end(); ++it) {
 				// 	std::cout << "Key: " << it->first << ", " << it->second << std::endl;

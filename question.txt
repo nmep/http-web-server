@@ -5,12 +5,10 @@ il y a toujours un upload store ? si il y en pas on peut juste pas upload ??
 pourquoi redirection dans location c'est un tab de 2 ?
 c'est quoi getsockopt
 si dans allowd methode on met head, tu refuses ?
-je crois qu'il y a toujours une loc en trop. quand je les affiche ca me met qu'il y en a deux mais la deuxieme seg fault et size dis qu'il y en a 2
-quand il tourne trop longtemps (2min) il fait ca :
-    Allowed Method:
-    terminate called after throwing an instance of 'std::bad_alloc'
-      what():  std::bad_alloc
-    [1]    354669 IOT instruction (core dumped)  ./webserv conf/webserv.conf
 c'est arriver plusieurs fois que mon recv marche pas : Error bind : Socket operation on non-socket
 faut lock la team
-peut etre faire un sorte de lire un par un juste pour mesurer ce qu'on veut lire puis on lit pil la taille du truc
+(pierre) rajoute le \0 pour la lecture de la requete
+(garfi)  il faut que j'ai acces a l'index du server de la socket, pour l'instant je met 1
+ca segfault apres ma ou mes reponses
+il faut lire les pages d'erreurs
+pourquoi il y a avait theRoota/blabla
