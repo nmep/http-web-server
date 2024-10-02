@@ -68,6 +68,8 @@ std::map<std::string, std::string> Server::getErrorPageMap() const
 
 Location* Server::getLocation(std::string const & locationName)
 {
+	if (this->_location.size() == 0)
+		return NULL;
 	return this->_location[locationName	];
 }
 
