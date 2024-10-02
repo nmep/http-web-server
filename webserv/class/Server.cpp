@@ -33,6 +33,17 @@ Server & Server::operator=(Server const & rhs)
 	_hostName = rhs._hostName;
 	_error_page = rhs._error_page;
 	_client_max_body_size = rhs._client_max_body_size;
+	// check si loc de rhs est vide 
+	if (rhs._location.size() > 0) {
+		std::cout << "rhs a une location" << std::endl;
+		std::map<std::string, Location*>::const_iterator it_rhs = rhs._location.begin();
+		std::map<std::string, Location*>::const_iterator ite_rhs = rhs._location.end();
+		for (/**/; it_rhs != ite_rhs; it_rhs++) {
+			this->_location[it_rhs->first] = new Location;
+			*this->_location[it_rhs->first] = *it_rhs->second;
+			// std::cout << "it_rhs->second" << &it_rhs->second << std::endl;
+		}
+	}
 	return *this;
 }
 

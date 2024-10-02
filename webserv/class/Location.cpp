@@ -6,6 +6,7 @@ Location::Location() : _autoIndex(false), _isUploadFileAccepted(false)
 {
 	_locationIndex++;
 	_locationID = _locationIndex;
+	_allowedMethod = std::vector<std::string>(1);
 	std::cout << GREEN << "location default constructor de location id " << _locationIndex << " called" << RESET << std::endl;
 }
 
@@ -19,7 +20,8 @@ Location::Location(Location const & copy) :_autoIndex(false), _isUploadFileAccep
 
 Location & Location::operator=(Location const & rhs)
 {
-	_allowedMethod = rhs._allowedMethod;
+	if (rhs._allowedMethod.size())
+		_allowedMethod.insert(_allowedMethod.begin(), rhs._allowedMethod.begin(), rhs._allowedMethod.end());
 	if (!rhs._redirection->empty()) {
 		_redirection[0] = rhs._redirection[0];
 	}

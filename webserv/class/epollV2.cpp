@@ -19,20 +19,18 @@ int Socket::launchEpoll(Configuration const & conf) {
 		std::cout << "location / n'existe pas" << std::endl;
 	}
 
-
-
-
 	std::cout << "affichage avec test\n\n\n" << std::endl;
 	std::cout << "1" << std::endl;
-	// ;
-	// std::cout << "2" << std::endl;
-	Server test(conf.getServer(i));
+	// Server test = conf.getServer(i);
+	Server *test = new Server();
+	*test = conf.getServer(i);
+	std::cout << "2" << std::endl;
 
 	std::cout << "serv 1" << std::endl;
 	std::cout << conf.getServer(i) << std::endl;
 	
 	std::cout << "test" << std::endl;
-	std::cout << test << std::endl;
+	std::cout << *test << std::endl;
 
 
 
