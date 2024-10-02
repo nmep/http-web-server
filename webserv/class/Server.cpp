@@ -20,11 +20,13 @@ Server::~Server() {
 
 Server::Server(Server const & copy)
 {
+	std::cout << "Server copy constructor called" << std::endl;
 	*this = copy;
 }
 
 Server & Server::operator=(Server const & rhs)
 {
+	std::cout << "Server overload = constructor called" << std::endl;
 	_default_server = rhs._default_server;
 	_port = rhs._port;
 	_serverName = rhs._serverName;
@@ -66,8 +68,11 @@ std::map<std::string, std::string> Server::getErrorPageMap() const
 	return _error_page;
 }
 
+// return NULL si la location demande est inexistante
 Location* Server::getLocation(std::string const & locationName)
 {
+	if (this->_location.size() == 0)
+		return NULL;
 	return this->_location[locationName	];
 }
 

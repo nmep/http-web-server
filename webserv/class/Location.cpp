@@ -70,11 +70,27 @@ std::string Location::getUploadStore() const {
 	return _uploadStore;
 }
 
+
+// renvoie une vector empty si allowedMethods est vide
 std::vector<std::string> Location::getAllowedMethodVector() const {
+	std::vector<std::string> empty;
+
+	if (this->_allowedMethod.empty()) {
+		std::cout << "allowed est vide je renvoie un vector empty" << std::endl;
+		return empty;
+	}
 	return _allowedMethod;
 }
 
+// renvoie une vector empty si index est vide
+// our eviter tout segfault, sil vous plait utiliser d'abord getlocation pour etre sur que ca existe
 std::vector<std::string> Location::getIndex() const {
+	std::vector<std::string> empty;
+
+	if (this->_index.empty()) {
+		std::cout << "index est vide je renvoie un vector empty" << std::endl;
+		return empty;
+	}
 	return _index;
 }
 
