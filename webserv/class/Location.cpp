@@ -85,7 +85,7 @@ std::vector<std::string> Location::getAllowedMethodVector() const {
 }
 
 // renvoie une vector empty si index est vide
-// our eviter tout segfault, sil vous plait utiliser d'abord getlocation pour etre sur que ca existe
+// pour eviter tout segfault, sil vous plait utiliser d'abord getlocation pour etre sur que ca existe
 std::vector<std::string> Location::getIndex() const {
 	std::vector<std::string> empty;
 

@@ -12,12 +12,6 @@ int Socket::launchEpoll(Configuration const & conf) {
 	{
 		std::cout << "location / n'existe pas" << std::endl;
 	}
-	if (conf.getServer(i).getLocation("/blabla"))
-		printVector(conf.getServer(i).getLocation("/blabla")->getIndex(), std::cout);
-	else
-	{
-		std::cout << "location / n'existe pas" << std::endl;
-	}
 
 	std::cout << "affichage avec test\n\n\n" << std::endl;
 	std::cout << "1" << std::endl;
@@ -33,7 +27,7 @@ int Socket::launchEpoll(Configuration const & conf) {
 	std::cout << *test << std::endl;
 
 
-
+	// delete test;
 	// struct epoll_event	ev, events[MAX_EVENTS];
 
 	// (void)conf;

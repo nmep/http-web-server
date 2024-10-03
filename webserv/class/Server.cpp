@@ -84,7 +84,7 @@ Location* Server::getLocation(std::string const & locationName)
 {
 	if (this->_location.size() == 0)
 		return NULL;
-	return this->_location[locationName	];
+	return this->_location[locationName];
 }
 
 std::map<std::string, Location*> Server::getLocationMap() const
