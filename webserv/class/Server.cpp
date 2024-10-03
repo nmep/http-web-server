@@ -4,7 +4,7 @@
 
 Server::Server() : _default_server(0), _port(8080), _serverName("server_name"), _hostName("localhost"), _client_max_body_size(0)
 {
-	std::cout << BLUE << "Server COnstructor called" << RESET << std::endl;
+	std::cout << BLUE << "Server default COnstructor called" << RESET << std::endl;
 }
 
 Server::~Server() {
@@ -34,11 +34,12 @@ Server & Server::operator=(Server const & rhs)
 	_error_page = rhs._error_page;
 	_client_max_body_size = rhs._client_max_body_size;
 	// check si loc de rhs est vide 
+	std::cout << "rhs location size = " << rhs._location.size() << std::endl;
 	if (rhs._location.size() > 0) {
-		std::cout << "rhs a une location" << std::endl;
 		std::map<std::string, Location*>::const_iterator it_rhs = rhs._location.begin();
 		std::map<std::string, Location*>::const_iterator ite_rhs = rhs._location.end();
 		for (/**/; it_rhs != ite_rhs; it_rhs++) {
+			std::cout << "je copie la location " << it_rhs->first << std::endl;
 			this->_location[it_rhs->first] = new Location;
 			*this->_location[it_rhs->first] = *it_rhs->second;
 			// std::cout << "it_rhs->second" << &it_rhs->second << std::endl;

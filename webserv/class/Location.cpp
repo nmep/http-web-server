@@ -20,8 +20,10 @@ Location::Location(Location const & copy) :_autoIndex(false), _isUploadFileAccep
 
 Location & Location::operator=(Location const & rhs)
 {
-	if (rhs._allowedMethod.size())
+	if (rhs._allowedMethod.size()) {
 		_allowedMethod.insert(_allowedMethod.begin(), rhs._allowedMethod.begin(), rhs._allowedMethod.end());
+		_allowedMethod.resize(rhs._allowedMethod.size());
+	}
 	if (!rhs._redirection->empty()) {
 		_redirection[0] = rhs._redirection[0];
 	}
@@ -30,6 +32,7 @@ Location & Location::operator=(Location const & rhs)
 	_autoIndex = rhs._autoIndex;
 	_isUploadFileAccepted = rhs._isUploadFileAccepted;
 	_uploadStore = rhs._uploadStore;
+	_index = rhs._index;
 	return *this;
 }
 

@@ -3,8 +3,6 @@
 int Socket::launchEpoll(Configuration const & conf) {
 	int i = 1;
 	std::cout << "dans epoll sur le serveur a l'index " << i << std::endl;
-	if (!conf.getServer(i).getLocation("/"))
-		std::cout << "y'a pas" << std::endl;
 	std::cout << "affichage" << std::endl;
 	if (conf.getServer(i).getLocation("/"))
 		printVector(conf.getServer(i).getLocation("/")->getIndex(), std::cout);
@@ -15,19 +13,19 @@ int Socket::launchEpoll(Configuration const & conf) {
 
 	std::cout << "affichage avec test\n\n\n" << std::endl;
 	std::cout << "1" << std::endl;
-	// Server test = conf.getServer(i);
-	Server *test = new Server();
-	*test = conf.getServer(i);
+	Server test = Server(conf.getServer(i));
 	std::cout << "2" << std::endl;
+	// *test = conf.getServer(i);
+	std::cout << "3" << std::endl;
 
 	std::cout << "serv 1" << std::endl;
 	std::cout << conf.getServer(i) << std::endl;
 	
 	std::cout << "test" << std::endl;
-	std::cout << *test << std::endl;
+	std::cout << test << std::endl;
 
+	// delete test; // si c'est un pointeur
 
-	// delete test;
 	// struct epoll_event	ev, events[MAX_EVENTS];
 
 	// (void)conf;
@@ -62,7 +60,6 @@ int Socket::launchEpoll(Configuration const & conf) {
 	// 	for (int i = 0; i < this->nfd; i++) {
 	// 		// connexion a un serveur sinon c'est un connexion cliente
 	// 		serverConnxionReceivedId = isAnServerFd(events[i].data.fd);
-	// 		std::cout << serverConnxionReceivedId << " ?" << std::endl;
 	// 		if (serverConnxionReceivedId != -1) {
 	// 			std::cout << "j'accepte et j'ajoute" << std::endl;
 	// 			accept_and_save_connexion(serverConnxionReceivedId);
