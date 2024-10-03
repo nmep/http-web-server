@@ -277,7 +277,7 @@ bool	Server::parseConfFile(std::ifstream & confFileFD, int *countLine) {
 
 	while (getline(confFileFD, line))
 	{
-		if (line.empty() || isOnlyWithSpace(line)) {
+		if (line.empty() || isOnlyWithSpace(line) || isCommentary(line)) {
 			(*countLine)++;
 			continue ;
 		}
