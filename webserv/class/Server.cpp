@@ -25,15 +25,20 @@ Server::Server(Server const & copy)
 
 Server & Server::operator=(Server const & rhs)
 {
+	std::cout << "ici 1\n";
 	_default_server = rhs._default_server;
 	_port = rhs._port;
 	_serverName = rhs._serverName;
+	std::cout << "ici 2\n";
 	_hostName = rhs._hostName;
 	_error_page = rhs._error_page;
+	std::cout << "ici 3\n";
 	_client_max_body_size = rhs._client_max_body_size;
 
+	std::cout << "ici 4\n";
 	// la loc etait pas copiee, je rajoute ca ducoup
 	this->_location = rhs._location; 
+	std::cout << "ici 5\n";
 	return *this;
 }
 

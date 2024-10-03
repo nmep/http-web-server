@@ -4,7 +4,11 @@
 
 int Socket::launchEpoll(Configuration const & conf) {
 	struct epoll_event	ev, events[MAX_EVENTS];
+
+	std::cout << "test\n";
 	Asynchrone asynch(conf, this->portListeningLen);
+	std::cout << "test\n";
+
 
 	(void)conf;
 	std::cout << "JE SUIS DANS EPOLL" << std::endl;
@@ -52,19 +56,7 @@ int Socket::launchEpoll(Configuration const & conf) {
 			{
 				std::cout << "EPOLLIN detecte je repond" << std::endl;
 
-				Answer http(conf.getServer(1));
-				// std::cout << YELLOW << "nb find " << conf.getServer(1).getLocationMap().count("/blabla") << "\nnb tot " << conf.getServer(1).getLocationMap().size() << std::endl;
-				// for (std::map<std::string, Location*>::iterator it = conf.getServer(1).getLocationMap().begin(); it != conf.getServer(1).getLocationMap().end(); ++it) {
-				// 	std::cout << "Key: " << it->first << ", " << it->second << std::endl;
-				// 	std::cout << RED << 'a' << WHITE << std::endl;
-				// }
-				// std::cout << RED << "sort" << std::endl;
-				http.HandleOneSocket(events[i].data.fd);
-
-				// if (epoll_ctl(this->epfd, EPOLL_CTL_DEL, events[i].data.fd, &ev) == -1) {
-				// 	std::cerr << "Epoll ctl failed sur socket " << this->sockets[i].listenFd << ": " << strerror(errno) << std::endl;
-				// 	return 0;
-				// }
+				asynch.Server_action(1, 1);// pour l'instant je prend 1 en parametre mais il me faudrait l'index du server dont viens la requete
 			}
 			else if (events[i].events & (EPOLLRDHUP | EPOLLHUP)) {
 				std::cout << "EPOLLRHDUP detecte" << std::endl;
