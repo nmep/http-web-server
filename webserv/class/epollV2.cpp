@@ -4,7 +4,7 @@
 
 int Socket::launchEpoll(Configuration const & conf) {
 	struct epoll_event	ev, events[MAX_EVENTS];
-	Asynchrone asynch;
+	Asynchrone asynch(conf, this->portListeningLen);
 
 	(void)conf;
 	std::cout << "JE SUIS DANS EPOLL" << std::endl;

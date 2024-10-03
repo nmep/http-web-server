@@ -15,7 +15,7 @@ class Asynchrone
                                 // 1 pour en cours de lecture de la requete,
                                 // 2 pour en cours de lecture d'un file demande,
                                 // 3 pour en cours de lecture d'un file d'erreur
-                                // 4 pour en cours d'ecriture du body
+                                // 4 pour en cours d'ecriture de la reponse
         std::vector<Answer> Answers_instances;// de longeur nb_serv
                                               // regroupe toutes les instances de la class Answer
         Configuration conf;// les parametres du serveur web
