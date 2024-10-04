@@ -126,7 +126,7 @@ int	Socket::accept_and_save_connexion(int servID) {
 		return 0;
 	}
 	setNonBlockSocket(new_connexion);
-	ev.events = EPOLLIN | EPOLLET | EPOLLRDHUP | EPOLLERR | EPOLLHUP;
+	ev.events = EPOLLIN;
 	ev.data.fd = new_connexion;
 	std::cout << "j'ajoute new connexion qui est a " << new_connexion << std::endl;
 	if (epoll_ctl(this->epfd, EPOLL_CTL_ADD, new_connexion, &ev) == -1) {
