@@ -1,16 +1,11 @@
 quelle taille choisir pour le buffer de lecture de la socket ? 4096 ? pourquoi ?
 si pas http 1.1 on refuse ?
 si on ne reconnai pas l'extention on affiche quand meme sous format html ou on gere pas ?
-il y a toujours un upload store ? si il y en pas on peut juste pas upload ??
-pourquoi redirection dans location c'est un tab de 2 ?
-c'est quoi getsockopt
+
+
+
 si dans allowd methode on met head, tu refuses ?
-c'est arriver plusieurs fois que mon recv marche pas : Error bind : Socket operation on non-socket
-faut lock la team
-(pierre) rajoute le \0 pour la lecture de la requete
-(garfi)  il faut que j'ai acces a l'index du server de la socket, pour l'instant je met 1
 ca segfault apres ma ou mes reponses
 il faut lire les pages d'erreurs
 pourquoi il y a avait theRoota/blabla
 on peut se connecter au port 8080 de quelqu'un d'autre ??
-c'est quoi switch sur garfi
