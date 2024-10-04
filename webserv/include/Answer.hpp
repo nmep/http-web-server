@@ -14,12 +14,12 @@
 class Answer
 {
     private:
-        Server serv; // les parametres de ce serveur
+        int server_idx;
         int status; // de longeur nb_serv,
                     // 0 pour en cours de lecture de la requete,
-                    // 1 pour en cours de lecture d'un file demande,
-                    // 2 pour en cours de lecture d'un file d'erreur
-                    // 3 pour en cours d'ecriture de la reponse
+                    // 1 pour en cours de lecture d'un file,
+                    // 2 pour en cours d'ecriture d'un file,
+                    // 3 pour en cours d'envoie de la reponse
                     // 4 pour en attente de reset
         
         // elements pour la response
@@ -42,29 +42,28 @@ class Answer
         std::string match_location;
         int fd;// utiliser pour la ressource a lire ou le fichier d'erreures
 
-        void DoneWithRequest();
-        void find_ressource_path(std::string ressource);
+        void DoneWithRequest(Configuration const &conf);
+        void find_ressource_path(Configuration const &conf, std::string ressource);
         int is_that_a_directory();
 
         std::string GetMime(std::string extansion);// prend l'extension du fichier en parametre et renvoie le type
         std::string GetCodeSentence(int code);// on renvoie la phrase de raison associe au code d etat
         void contentType();
         void connection();// uniquement quand c'est preciser keep alive dans la requete
-        void server();
         void location();// on precise on location dans les cas 201 et 3xx
         void date();
         void taille();
 
     public:
-        Answer(Server &serv);
+        Answer(int server_idx);
         ~Answer();
 
         int GetStatus() const;
 
-        void ReadRequest(int socket_fd);
-        void ReadAskedFile();
-        void ReadErrorFile();
-        void WriteAnswer(int socket_fd);
+        void ReadRequest(Configuration const &conf, int socket_fd);
+        void ReadFile();
+        void WriteFile();
+        void SendAnswer(Configuration const &conf, int socket_fd);
 
 };
 

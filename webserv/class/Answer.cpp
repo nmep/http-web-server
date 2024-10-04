@@ -1,8 +1,8 @@
 #include "Answer.hpp"
 
-Answer::Answer(Server &serv)
+Answer::Answer(int server_idx)
 {
-    this->serv = serv;
+    this->server_idx = server_idx;
     this->status = 0;
     this->code = 200;
 
@@ -117,12 +117,12 @@ int Answer::is_that_a_directory()
 
 // on obtient l'emplacement de la ressource sur notre machine
 // ex: pour une loc /blabla, un root theRoot et une requete /blabla/fichier.html -> on renvoit theRoot/fichier.html
-void Answer::find_ressource_path(std::string ressource)
+void Answer::find_ressource_path(Configuration const &conf, std::string ressource)
 {
     size_t idx = 0;
     int depth = -1;
-    std::map<std::string, Location*>::iterator it = this->serv.getLocationMap().begin();
-    while (idx++ < this->serv.getLocationMap().size()) {
+    std::map<std::string, Location*>::iterator it = conf.getServer(this->server_idx).getLocationMap().begin();
+    while (idx++ < conf.getServer(this->server_idx).getLocationMap().size()) {
         this->autoindex = it->second->getAutoInex();
         if (idx != 1)
             it++;
@@ -157,7 +157,7 @@ void Answer::find_ressource_path(std::string ressource)
 }
 
 // quand on an fini de lire la request, on la parse et on indique quelle sera la prochaine etape
-void Answer::DoneWithRequest()
+void Answer::DoneWithRequest(Configuration const &conf)
 {
     size_t start = 0;
 	size_t end = 0;
@@ -203,7 +203,7 @@ void Answer::DoneWithRequest()
         std::cout << header[i].substr(0, colon) << std::endl << header[i].substr(colon + 2) << std::endl;
     }
     // verifier que la methode est reconnu todo
-    this->find_ressource_path(ressource);
+    this->find_ressource_path(conf, ressource);
     if (this->is_that_a_directory() == 1)
     {
         // this->find_good_index_or_autoindex();
@@ -211,17 +211,17 @@ void Answer::DoneWithRequest()
         this->autoindex = false;//temporaire
     }
     if (this->autoindex != true)// si il est encore active c'est qu'on a fait l'auto index et que j'ai deja un body
-        this->status = 2;
+        this->status = 3;
     else if (this->code >= 400)
     {
         this->status = 1;
         std::stringstream tmp;
         tmp << this->code;
-        for (std::map<std::string, std::string>::iterator it = this->serv.getErrorPageMap().begin(); it != this->serv.getErrorPageMap().end(); it++)
+        for (std::map<std::string, std::string>::iterator it = conf.getServer(this->server_idx).getErrorPageMap().begin(); it != conf.getServer(this->server_idx).getErrorPageMap().end(); it++)
         {
             if (tmp.str() == it->first)
             {
-                this->fd == open(it->second.c_str(), O_RDONLY);
+                this->fd = open(it->second.c_str(), O_RDONLY);
                 if (this->fd == -1)
                 {
                     std::cerr << "Erreur lors de l'ouverture du fichier" << std::endl;
@@ -258,9 +258,9 @@ void Answer::DoneWithRequest()
 }
 
 // on lit la requete par tranche de READ_SIZE et quand on a fini on la parse avec DoneWithRequest
-void Answer::ReadRequest(int socket_fd)
+void Answer::ReadRequest(Configuration const &conf, int socket_fd)
 {
-    std::cout << "j'entre dans ReadRequest" << std::endl;
+    std::cout << RED << "Debut de ReadRequest" << WHITE << std::endl;
 
     char buffer[READ_SIZE];
     ssize_t bytesRead = recv(socket_fd, buffer, READ_SIZE, 0);
@@ -272,15 +272,16 @@ void Answer::ReadRequest(int socket_fd)
     buffer[bytesRead] = '\0';
     this->request.append(buffer);
     if (bytesRead < READ_SIZE)
-        this->DoneWithRequest();
-    std::cout << "je sort de ReadRequest" << std::endl;
+        this->DoneWithRequest(conf);
+    std::cout << RED << "Fin de ReadRequest" << WHITE << std::endl;
 }
 
 // on lit le fichier demander, que ce soit la ressource ou un fichier d'erreur
-void Answer::ReadAskedFile()
+void Answer::ReadFile()
 {
+    std::cout << RED << "Debut de ReadFile" << WHITE << std::endl;
     char buffer[READ_SIZE];
-    size_t bytesRead;
+    int bytesRead;
 
     bytesRead = read(fd, buffer, READ_SIZE);
     if (bytesRead == -1) {
@@ -293,20 +294,28 @@ void Answer::ReadAskedFile()
     if (bytesRead < READ_SIZE)
     {
         close(fd);
-        this->status = 2;
+        this->status = 3;
     }
+    std::cout << RED << "Fin de ReadFile" << WHITE << std::endl;
 }
 
-
-void Answer::WriteAnswer(int socket_fd)
+void Answer::WriteFile()
 {
+    std::cout << RED << "Debut de WriteFile" << WHITE << std::endl;
+
+    std::cout << RED << "Fin de WriteFile" << WHITE << std::endl;
+}
+
+void Answer::SendAnswer(Configuration const &conf, int socket_fd)
+{
+    std::cout << RED << "Debut de SendAnswer" << WHITE << std::endl;
     std::stringstream tmp;
     tmp << this->code;
 
     this->answer.append("HTTP/1.1 " + tmp.str() + " " + this->GetCodeSentence(this->code) + "\r\n");
     this->contentType();
     this->connection();
-    this->server();
+    this->answer.append("Server: " + conf.getServer(server_idx).GetServerName() + "\r\n");
     this->location();
     this->date();
     this->taille();
@@ -316,6 +325,9 @@ void Answer::WriteAnswer(int socket_fd)
         this->answer.append(this->answer_body);
 
     // on send todo
+    send(socket_fd, this->answer.c_str(), strlen(this->answer.c_str()), 0);
+    close(socket_fd);
+    std::cout << RED << "Fin de SendAnswer" << WHITE << std::endl;
     // on reset todo
 }
 
@@ -336,11 +348,6 @@ void Answer::connection()
 {
     if(this->header_map.find("Connection") != this->header_map.end() && this->header_map["Connection"] == "keep-alive")
         this->answer.append("Connection: keep-alive\r\n");
-}
-
-void Answer::server()
-{
-    this->answer.append("Server: " + this->serv.GetServerName() + "\r\n");
 }
 
 void Answer::location()// on le met que pour 201 (post) et les redirections (300+)

@@ -12,13 +12,12 @@ class Asynchrone
     private:
         std::vector<Answer> Answers_instances;// de longeur nb_serv
                                               // regroupe toutes les instances de la class Answer
-        Configuration conf;// les parametres du serveur web
 
     public:
-        Asynchrone(Configuration const &conf, size_t nb_serv);
+        Asynchrone(size_t nb_serv);
         ~Asynchrone();
 
-        void Server_action(int server_idx, int socket_fd);
+        void Server_action(Configuration const &conf, int server_idx, int socket_fd);
 };
 
 #endif

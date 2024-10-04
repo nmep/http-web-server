@@ -6,7 +6,7 @@ int Socket::launchEpoll(Configuration const & conf) {
 	struct epoll_event	ev, events[MAX_EVENTS];
 
 	std::cout << "test\n";
-	Asynchrone asynch(conf, this->portListeningLen);
+	Asynchrone asynch(this->portListeningLen);
 	std::cout << "test\n";
 
 
@@ -55,8 +55,8 @@ int Socket::launchEpoll(Configuration const & conf) {
 			else if (events[i].events & EPOLLIN)
 			{
 				std::cout << "EPOLLIN detecte je repond" << std::endl;
-
-				asynch.Server_action(1, 1);// pour l'instant je prend 1 en parametre mais il me faudrait l'index du server dont viens la requete
+				
+				asynch.Server_action(conf, 1, events[i].data.fd);// pour l'instant je prend 1 en parametre mais il me faudrait l'index du server dont viens la requete
 			}
 			else if (events[i].events & (EPOLLRDHUP | EPOLLHUP)) {
 				std::cout << "EPOLLRHDUP detecte" << std::endl;

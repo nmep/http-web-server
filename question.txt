@@ -13,3 +13,4 @@ ca segfault apres ma ou mes reponses
 il faut lire les pages d'erreurs
 pourquoi il y a avait theRoota/blabla
 on peut se connecter au port 8080 de quelqu'un d'autre ??
+c'est quoi switch sur garfi
