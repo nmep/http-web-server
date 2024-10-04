@@ -5,4 +5,15 @@ faire un fichier de log de serveur (log.txt ou croissant.txt) et rediriger les e
 
 
 to do 
-	les commentaires dans le scop de location (et peut etre serveur)
+
+	1 Server: si je recoit une requette epollin elle ne repasse pas sur epollwait a voir si c'est a cause du epoll wait
+
+	2 Server: arrive a avoir l'index du serveur qui a recu une requete (A QUOI SERT LE SERVERCONNEXIONRECEIVEDID ?)
+	l'auto index est situe dans location est dans la config il est dans serveur
+	normalement il y a un auto index par location ou pas a voir sur inception
+
+	class:
+	constructeur de copy de conf (OPTIONNEL)
+
+	Dans le parsing :
+		allowed methods doit accepte DELETE aussi et refuse tout les autres.
