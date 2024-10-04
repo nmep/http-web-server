@@ -86,8 +86,8 @@ int Answer::GetStatus() const
 
 std::string Answer::GetMime(std::string extension)
 {
-    if ( this->mime.find(extension) != this->mime.end())
-        return (this->mime[extension]);
+    if ( this->mime_map.find(extension) != this->mime_map.end())
+        return (this->mime_map[extension]);
     return ("text/html");// si on trouve pas on affiche quand meme sout format html ou on gere pas ?
 }
 
@@ -314,6 +314,9 @@ void Answer::WriteAnswer(int socket_fd)
     // on remplit le body
     if (this->answer_body.size() != 0)
         this->answer.append(this->answer_body);
+
+    // on send todo
+    // on reset todo
 }
 
 void Answer::contentType()
