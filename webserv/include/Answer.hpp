@@ -40,7 +40,7 @@ class Answer
 
         bool autoindex; // faut que tu le mette dans la class serv pas dans location
         std::string match_location;
-        int fd;// utiliser pour la ressource a lire ou le fichier d'erreures
+        int fd_read;// utiliser pour la ressource a lire ou le fichier d'erreure a lire aussi
 
         void DoneWithRequest(Configuration const &conf);
         void find_ressource_path(Configuration const &conf, std::string ressource);
@@ -50,9 +50,11 @@ class Answer
         std::string GetCodeSentence(int code);// on renvoie la phrase de raison associe au code d etat
         void contentType();
         void connection();// uniquement quand c'est preciser keep alive dans la requete
+        void server(Configuration const &conf);
         void location();// on precise on location dans les cas 201 et 3xx
         void date();
         void taille();
+        void Reset();
 
     public:
         Answer(int server_idx);

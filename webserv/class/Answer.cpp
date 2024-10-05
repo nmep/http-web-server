@@ -139,14 +139,14 @@ void Answer::find_ressource_path(Configuration const &conf, std::string ressourc
             if (count > depth)
             {
                 depth = count;
-                if (ressource[0] == '/')
-                    this->ressource_path = it->second->getRoot() + this->ressource_path.substr(it->first.size() - 1);
-                // else
-                //     this->actual_path_ressource = it->second->getRoot() + "/" + this->ressource.substr(it->first.size());
+                if (it->first[it->first.size() - 1] == '/')
+                    this->ressource_path = it->second->getRoot() + "/" + ressource.substr(it->first.size());
+                else
+                    this->ressource_path = it->second->getRoot() + ressource.substr(it->first.size());
                 this->match_location = it->first;
             }
         }
-        std::cout << YELLOW << this->ressource_path << " " << this->ressource_path << WHITE << std::endl;
+        // std::cout << YELLOW << ressource << " " << this->match_location << " " << this->ressource_path << " " << this->ressource_path << WHITE << std::endl;
     }
     if (depth == -1)
     {
@@ -200,7 +200,6 @@ void Answer::DoneWithRequest(Configuration const &conf)
     {
         size_t colon = header[i].find(":");
         this->header_map[header[i].substr(0, colon)] = header[i].substr(colon + 2);
-        std::cout << header[i].substr(0, colon) << std::endl << header[i].substr(colon + 2) << std::endl;
     }
     // verifier que la methode est reconnu todo
     this->find_ressource_path(conf, ressource);
@@ -208,9 +207,10 @@ void Answer::DoneWithRequest(Configuration const &conf)
     {
         // this->find_good_index_or_autoindex();
         // pour l'instant je fait rien, on verra pour le vector index
-        this->autoindex = false;//temporaire
+        // a voir ou je prend auto index, si il est propre a chaque location ou si c'est le meme pour tout le server
     }
-    if (this->autoindex != true)// si il est encore active c'est qu'on a fait l'auto index et que j'ai deja un body
+    this->autoindex = true;//temporaire
+    if (this->autoindex != true)// si il est encore active c'est qu'on a fait l'auto index et que j'ai deja un body, on peut envoyer
         this->status = 3;
     else if (this->code >= 400)
     {
@@ -221,8 +221,8 @@ void Answer::DoneWithRequest(Configuration const &conf)
         {
             if (tmp.str() == it->first)
             {
-                this->fd = open(it->second.c_str(), O_RDONLY);
-                if (this->fd == -1)
+                this->fd_read = open(it->second.c_str(), O_RDONLY);
+                if (this->fd_read == -1)
                 {
                     std::cerr << "Erreur lors de l'ouverture du fichier" << std::endl;
                     this->code = 500;// a voir quelle code on met quand le fichier ne s'ouvre pas  todo
@@ -230,8 +230,8 @@ void Answer::DoneWithRequest(Configuration const &conf)
                 }
                 return ;
             }
-	}
-    // le code ne correspond a rien de nos page, a voir ce qu'on fait todo
+	    }
+        // le code ne correspond a rien de nos page, a voir ce qu'on fait todo
     }
     else
     {
@@ -246,8 +246,8 @@ void Answer::DoneWithRequest(Configuration const &conf)
             this->code = 403;//forbidden
             return ;
         }
-        this->fd = open(this->ressource_path.c_str(), O_RDONLY);
-        if (this->fd == -1)
+        this->fd_read = open(this->ressource_path.c_str(), O_RDONLY);
+        if (this->fd_read == -1)
         {
             std::cerr << "Erreur lors de l'ouverture du fichier" << std::endl;
             this->code = 500;// a voir quelle code on met quand le fichier ne s'ouvre pas  todo
@@ -273,6 +273,11 @@ void Answer::ReadRequest(Configuration const &conf, int socket_fd)
     this->request.append(buffer);
     if (bytesRead < READ_SIZE)
         this->DoneWithRequest(conf);
+
+    if (bytesRead < READ_SIZE)// juste pour l'affichage
+        std::cout << YELLOW << "Complete," << std::endl << this->request << WHITE;
+    else
+        std::cout << YELLOW << "Uncomplete," << WHITE << std::endl;
     std::cout << RED << "Fin de ReadRequest" << WHITE << std::endl;
 }
 
@@ -283,19 +288,24 @@ void Answer::ReadFile()
     char buffer[READ_SIZE];
     int bytesRead;
 
-    bytesRead = read(fd, buffer, READ_SIZE);
+    bytesRead = read(this->fd_read, buffer, READ_SIZE);
     if (bytesRead == -1) {
 		std::cerr << "Error with read" << std::endl;// peut etre renvoyer une erreur cote client ou server
-        close(this->fd);
+        close(this->fd_read);
         return ;
     }
     buffer[bytesRead] = '\0';
     this->answer_body.append(buffer);
     if (bytesRead < READ_SIZE)
     {
-        close(fd);
+        close(this->fd_read);
         this->status = 3;
     }
+
+    if (bytesRead < READ_SIZE)// juste pour l'affichage
+        std::cout << YELLOW << "Complete," << this->answer_body << WHITE << std::endl;
+    else
+        std::cout << YELLOW << "Uncomplete," << WHITE << std::endl;
     std::cout << RED << "Fin de ReadFile" << WHITE << std::endl;
 }
 
@@ -315,20 +325,21 @@ void Answer::SendAnswer(Configuration const &conf, int socket_fd)
     this->answer.append("HTTP/1.1 " + tmp.str() + " " + this->GetCodeSentence(this->code) + "\r\n");
     this->contentType();
     this->connection();
-    this->answer.append("Server: " + conf.getServer(server_idx).GetServerName() + "\r\n");
+    this->server(conf);
     this->location();
     this->date();
     this->taille();
     this->answer.append("\r\n");
+
     // on remplit le body
     if (this->answer_body.size() != 0)
         this->answer.append(this->answer_body);
 
-    // on send todo
     send(socket_fd, this->answer.c_str(), strlen(this->answer.c_str()), 0);
     close(socket_fd);
+    std::cout << YELLOW << this->answer << WHITE << std::endl;
     std::cout << RED << "Fin de SendAnswer" << WHITE << std::endl;
-    // on reset todo
+    this->Reset();
 }
 
 void Answer::contentType()
@@ -348,6 +359,11 @@ void Answer::connection()
 {
     if(this->header_map.find("Connection") != this->header_map.end() && this->header_map["Connection"] == "keep-alive")
         this->answer.append("Connection: keep-alive\r\n");
+}
+
+void Answer::server(Configuration const &conf)
+{
+    this->answer.append("Server: " + conf.getServer(server_idx).GetServerName() + "\r\n");
 }
 
 void Answer::location()// on le met que pour 201 (post) et les redirections (300+)
@@ -372,4 +388,21 @@ void Answer::taille()
         tmp << this->answer_body.size();
         this->answer.append("Content-Length: " + tmp.str() + "\r\n");
     }
+}
+
+void Answer::Reset()
+{
+    this->status = 0;
+    this->code = 200;
+    this->answer.clear();
+    this->answer_body.clear();
+
+    this->request.clear();
+    this->methode.clear();
+    this->ressource_path.clear();
+    this->header_map.clear();
+    this->request_body.clear();
+
+    // peut etre qu'on reset aussi l'auto index
+    this->match_location.clear();
 }

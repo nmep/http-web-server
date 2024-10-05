@@ -6,6 +6,7 @@ Location::Location() : _autoIndex(false), _isUploadFileAccepted(false)
 {
 	_locationIndex++;
 	_locationID = _locationIndex;
+	_allowedMethod = std::vector<std::string>(1);
 	std::cout << GREEN << "location default constructor de location id " << _locationIndex << " called" << RESET << std::endl;
 }
 
@@ -19,7 +20,10 @@ Location::Location(Location const & copy) :_autoIndex(false), _isUploadFileAccep
 
 Location & Location::operator=(Location const & rhs)
 {
-	_allowedMethod = rhs._allowedMethod;
+	if (rhs._allowedMethod.size()) {
+		_allowedMethod.insert(_allowedMethod.begin(), rhs._allowedMethod.begin(), rhs._allowedMethod.end());
+		_allowedMethod.resize(rhs._allowedMethod.size());
+	}
 	if (!rhs._redirection->empty()) {
 		_redirection[0] = rhs._redirection[0];
 	}
@@ -28,6 +32,7 @@ Location & Location::operator=(Location const & rhs)
 	_autoIndex = rhs._autoIndex;
 	_isUploadFileAccepted = rhs._isUploadFileAccepted;
 	_uploadStore = rhs._uploadStore;
+	_index = rhs._index;
 	return *this;
 }
 
@@ -70,11 +75,27 @@ std::string Location::getUploadStore() const {
 	return _uploadStore;
 }
 
+
+// renvoie une vector empty si allowedMethods est vide
 std::vector<std::string> Location::getAllowedMethodVector() const {
+	std::vector<std::string> empty;
+
+	if (this->_allowedMethod.empty()) {
+		std::cout << "allowed est vide je renvoie un vector empty" << std::endl;
+		return empty;
+	}
 	return _allowedMethod;
 }
 
+// renvoie une vector empty si index est vide
+// pour eviter tout segfault, sil vous plait utiliser d'abord getlocation pour etre sur que ca existe
 std::vector<std::string> Location::getIndex() const {
+	std::vector<std::string> empty;
+
+	if (this->_index.empty()) {
+		std::cout << "index est vide je renvoie un vector empty" << std::endl;
+		return empty;
+	}
 	return _index;
 }
 
@@ -224,7 +245,7 @@ bool	Location::LocationParsing(std::ifstream & file, int *countLine) {
 
 	while (getline(file, line)) {
 
-		if (line.empty() || isOnlyWithSpace(line)) {
+		if (line.empty() || isOnlyWithSpace(line) || isCommentary(line)) {
 			(*countLine)++;
 			continue ;
 		}

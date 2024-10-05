@@ -1,5 +1,0 @@
-IDEE FUTURE A AJOUTER OU PAS A WEBSERV
-
-
-faire un fichier de log de serveur (log.txt ou croissant.txt) et rediriger les erreurs dans ce fichier
-

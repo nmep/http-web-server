@@ -3,11 +3,10 @@
 #include "Asynchrone.hpp"
 
 int Socket::launchEpoll(Configuration const & conf) {
+
 	struct epoll_event	ev, events[MAX_EVENTS];
 
-	std::cout << "test\n";
 	Asynchrone asynch(this->portListeningLen);
-	std::cout << "test\n";
 
 
 	(void)conf;
@@ -20,7 +19,7 @@ int Socket::launchEpoll(Configuration const & conf) {
 		return 0;
 	}
 	for (int i = 0; i < this->portListeningLen; i++) {
-		ev.events = EPOLLIN | EPOLLRDHUP | EPOLLERR | EPOLLHUP;
+		ev.events = EPOLLIN | EPOLLET | EPOLLRDHUP | EPOLLERR | EPOLLHUP;
 		ev.data.fd = this->sockets[i].listenFd;
 		if (epoll_ctl(this->epfd, EPOLL_CTL_ADD, this->sockets[i].listenFd, &ev) == -1) {
 			std::cerr << "Epoll ctl failed sur socket " << this->sockets[i].listenFd << ": " << strerror(errno) << std::endl;
@@ -28,11 +27,13 @@ int Socket::launchEpoll(Configuration const & conf) {
 		}
 	}
 
-	int	serverConnxionReceivedId;
+	int	serverConnxionReceivedId; // il sert a avoir l'index du serv qui a recu une connexion
 	// j'arrive pas a mettre des condition sur l'event de data pour directement savoir je dois en faire quoi
 
 	// 
 	while (KAA) {
+		std::cout << "epollwait" << std::endl;
+		sleep(1);
 		this->nfd = epoll_wait(this->epfd, events, MAX_EVENTS, 0); // timout voir fichier de configuration
 		if (this->nfd == -1) {
 			std::cerr << "Epoll wait error: " << strerror(errno) << std::endl;
@@ -42,7 +43,6 @@ int Socket::launchEpoll(Configuration const & conf) {
 		for (int i = 0; i < this->nfd; i++) {
 			// connexion a un serveur sinon c'est un connexion cliente
 			serverConnxionReceivedId = isAnServerFd(events[i].data.fd);
-			std::cout << serverConnxionReceivedId << " ?" << std::endl;
 			if (serverConnxionReceivedId != -1) {
 				std::cout << "j'accepte et j'ajoute" << std::endl;
 				accept_and_save_connexion(serverConnxionReceivedId);
@@ -57,6 +57,12 @@ int Socket::launchEpoll(Configuration const & conf) {
 				std::cout << "EPOLLIN detecte je repond" << std::endl;
 				
 				asynch.Server_action(conf, 1, events[i].data.fd);// pour l'instant je prend 1 en parametre mais il me faudrait l'index du server dont viens la requete
+
+				// (void) conf;
+				// if (epoll_ctl(this->epfd, EPOLL_CTL_DEL, events[i].data.fd, &ev) == -1) {
+				// 	std::cerr << "Epoll ctl failed sur socket " << this->sockets[i].listenFd << ": " << strerror(errno) << std::endl;
+				// 	return 0;
+				// }
 			}
 			else if (events[i].events & (EPOLLRDHUP | EPOLLHUP)) {
 				std::cout << "EPOLLRHDUP detecte" << std::endl;

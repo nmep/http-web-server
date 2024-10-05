@@ -4,7 +4,7 @@
 
 Server::Server() : _default_server(0), _port(8080), _serverName("server_name"), _hostName("localhost"), _client_max_body_size(0)
 {
-	std::cout << BLUE << "Server COnstructor called" << RESET << std::endl;
+	std::cout << BLUE << "Server default COnstructor called" << RESET << std::endl;
 }
 
 Server::~Server() {
@@ -20,25 +20,31 @@ Server::~Server() {
 
 Server::Server(Server const & copy)
 {
+	std::cout << "Server copy constructor called" << std::endl;
 	*this = copy;
 }
 
 Server & Server::operator=(Server const & rhs)
 {
-	std::cout << "ici 1\n";
+	std::cout << "Server overload = constructor called" << std::endl;
 	_default_server = rhs._default_server;
 	_port = rhs._port;
 	_serverName = rhs._serverName;
-	std::cout << "ici 2\n";
 	_hostName = rhs._hostName;
 	_error_page = rhs._error_page;
-	std::cout << "ici 3\n";
 	_client_max_body_size = rhs._client_max_body_size;
-
-	std::cout << "ici 4\n";
-	// la loc etait pas copiee, je rajoute ca ducoup
-	this->_location = rhs._location; 
-	std::cout << "ici 5\n";
+	// check si loc de rhs est vide 
+	std::cout << "rhs location size = " << rhs._location.size() << std::endl;
+	if (rhs._location.size() > 0) {
+		std::map<std::string, Location*>::const_iterator it_rhs = rhs._location.begin();
+		std::map<std::string, Location*>::const_iterator ite_rhs = rhs._location.end();
+		for (/**/; it_rhs != ite_rhs; it_rhs++) {
+			std::cout << "je copie la location " << it_rhs->first << std::endl;
+			this->_location[it_rhs->first] = new Location;
+			*this->_location[it_rhs->first] = *it_rhs->second;
+			// std::cout << "it_rhs->second" << &it_rhs->second << std::endl;
+		}
+	}
 	return *this;
 }
 
@@ -74,9 +80,12 @@ std::map<std::string, std::string> Server::getErrorPageMap() const
 	return _error_page;
 }
 
+// return NULL si la location demande est inexistante
 Location* Server::getLocation(std::string const & locationName)
 {
-	return this->_location[locationName	];
+	if (this->_location.size() == 0)
+		return NULL;
+	return this->_location[locationName];
 }
 
 std::map<std::string, Location*> Server::getLocationMap() const
@@ -268,7 +277,7 @@ bool	Server::parseConfFile(std::ifstream & confFileFD, int *countLine) {
 
 	while (getline(confFileFD, line))
 	{
-		if (line.empty() || isOnlyWithSpace(line)) {
+		if (line.empty() || isOnlyWithSpace(line) || isCommentary(line)) {
 			(*countLine)++;
 			continue ;
 		}

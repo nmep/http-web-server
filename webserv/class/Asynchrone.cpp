@@ -13,7 +13,7 @@ Asynchrone::~Asynchrone()
 // on agit en fonction de l'avancee de la reponse concernant ce server
 void Asynchrone::Server_action(Configuration const &conf, int server_idx, int socket_fd)
 {
-    std::cout << BLUE << "Debut de Server_action" << WHITE << std::endl;
+    std::cout << BLUE << "Debut de Server_action, serv numero " << server_idx << ", socket_fd " << socket_fd << std::endl;
     switch (this->Answers_instances[server_idx].GetStatus())
     {
         case 0:
@@ -29,6 +29,6 @@ void Asynchrone::Server_action(Configuration const &conf, int server_idx, int so
             this->Answers_instances[server_idx].SendAnswer(conf, socket_fd);
             break;
     }
-    std::cout << BLUE << "Fin de Server_action" << WHITE << std::endl;
+    std::cout << BLUE << "Fin de Server_action, serv numero " << server_idx << ", nouveau status " << this->Answers_instances[server_idx].GetStatus() << WHITE << std::endl;
     // si le status est mit a 4 apres ca, ca veut dire qu'on a fini avec cette reponse et qu'on doit la reset
 }

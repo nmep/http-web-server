@@ -191,7 +191,7 @@ bool	Configuration::launchServerConf(const std::string & confFileName)
 	// lancer la lecture de mot et si je trouve le mot server je lance la config d'un server
 	// 		(important: il faut que ce soit avec le meme fd pour etre sur la meme ligne)
 	while (getline(confFileFD, line)) {
-		if (line.empty() || isOnlyWithSpace(line)) {
+		if (line.empty() || isOnlyWithSpace(line) || isCommentary(line)) {
 			countLine++;
 			continue;
 		}
