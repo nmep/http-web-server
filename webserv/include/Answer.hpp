@@ -59,6 +59,10 @@ class Answer
         void taille();
         void Reset();
 
+        void GET(Configuration const &conf);
+        void POST();
+        void DELETE();
+
     public:
         Answer(int server_idx);
         ~Answer();

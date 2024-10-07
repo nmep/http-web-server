@@ -254,6 +254,15 @@ void Answer::DoneWithRequest(Configuration const &conf)
     this->ParseRequest();
     this->find_ressource_path(conf);
 
+
+    // if (this->methode == "GET")
+    //     this->GET(conf);
+    // else if (this->methode == "POST")
+    //     this->POST();
+    // else if (this->methode == "DELETE")
+    //     this->DELETE();
+
+
     if (this->is_that_a_directory() == 1)
     {
         this->find_good_index_or_autoindex(conf);
@@ -302,7 +311,7 @@ void Answer::ReadRequest(Configuration const &conf, int socket_fd)
     }
     buffer[bytesRead] = '\0';
     this->request.append(buffer);
-    if (bytesRead < READ_SIZE)
+    if (bytesRead < READ_SIZE)// si on a fini de lire la requete
     {
         this->DoneWithRequest(conf);
         if (this->code >= 400)
@@ -461,4 +470,45 @@ void Answer::Reset()
 
     // peut etre qu'on reset aussi l'auto index
     this->match_location.clear();
+}
+
+void Answer::GET(Configuration const &conf)
+{
+    if (this->is_that_a_directory() == 1)
+    {
+        this->find_good_index_or_autoindex(conf);
+        if (this->status == 3)
+            return ;
+    }
+    else
+    {
+        this->status = 1;
+        if (access(this->ressource_path.c_str(), F_OK) == -1)
+        {
+            this->code = 404;//not found
+            return ;
+        }
+        if (access(this->ressource_path.c_str(), F_OK | R_OK) == -1)
+        {
+            this->code = 403;
+            return ;
+        }
+        this->fd_read = open(this->ressource_path.c_str(), O_RDONLY);
+        if (this->fd_read == -1)
+        {
+            std::cerr << "Erreur lors de l'ouverture du fichier" << std::endl;
+            this->code = 500;// a voir quelle code on met quand le fichier ne s'ouvre pas  todo
+            return ;
+        }
+    }
+}
+
+void Answer::POST()
+{
+
+}
+
+void Answer::DELETE()
+{
+
 }
