@@ -2,7 +2,7 @@
 
 int Location::_locationIndex = 0;
 
-Location::Location() : _isUploadFileAccepted(false)
+Location::Location() : _autoIndex(false), _isUploadFileAccepted(false)
 {
 	_locationIndex++;
 	_locationID = _locationIndex;
@@ -61,7 +61,7 @@ std::string Location::getRoot() const {
 	return _root;
 }
 
-bool Location::getAutoInex() const {
+bool Location::getAutoIndex() const {
 	return _autoIndex;
 }
 
@@ -237,11 +237,18 @@ bool Location::handleUploadStore(std::vector<std::string> lineSplit, int countLi
 
 bool	Location::LocationParsing(std::ifstream & file, int *countLine) {
 
-	std::string LocationKeyWord[] = {"root", "auto_index", "index", "allowedMethods", "return", "upload_store"};
+	std::string LocationKeyWord[] = {"root", "autoindex", "index", "allowedMethods",\
+							 "return", "upload_store"};
 	bool	(Location::*FuncPtr[]) (std::vector<std::string>, int) = {&Location::handleRoot, &Location::handleAutoIndex, \
 				&Location::handleIndex, &Location::handleAllowedMethods, &Location::handleRedirection, &Location::handleUploadStore};
 	std::string 				line;
 	std::vector<std::string>	lineSplit;
+
+	if (this->getAutoIndex()) {
+		std::cout << "auto index de location = 1" <<std::endl;
+	}
+	else
+		std::cout << "auto index de location = 0" <<std::endl;
 
 	while (getline(file, line)) {
 
@@ -297,7 +304,7 @@ std::ostream & operator<<(std::ostream & o, Location *location) {
 		o << "Index:" << std::endl; printVector(location->getIndex(), o);
 		o << "Redirection HTTP CODE = " << location->getRedirection("CODE") << " Redirection PATH = " << location->getRedirection("") << std::endl;
 		o << "Root = " << location->getRoot() << std::endl;
-		o << "Auto Index = " << location->getAutoInex() << std::endl;
+		o << "Auto Index = " << location->getAutoIndex() << std::endl;
 		o << "IsUploadFileAccepted = " << location->getIsUploadFileAccepted() << std::endl;
 		o << "Upload store = " << location->getUploadStore() << std::endl;
 		o << "location index = " << location->getLocationID() << std::endl;

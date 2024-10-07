@@ -123,7 +123,7 @@ void Answer::find_ressource_path(Configuration const &conf)
     int depth = -1;
     std::map<std::string, Location*>::iterator it = conf.getServer(this->server_idx).getLocationMap().begin();
     while (idx++ < conf.getServer(this->server_idx).getLocationMap().size()) {
-        this->autoindex = it->second->getAutoInex();
+        this->autoindex = it->second->getAutoIndex();
         if (idx != 1)
             it++;
         if (it->first.size() <= this->ressource.size() && it->first == this->ressource.substr(0, it->first.size()))

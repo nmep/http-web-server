@@ -160,7 +160,6 @@ bool	Configuration::readFileSyntax()
 		}
 	}
 
-	std::cout << "CCB " << this->_syntaxData.CCB << " OCB " << _syntaxData.OCB << std::endl;
 	if (this->_syntaxData.OCB != this->_syntaxData.CCB) {
 		if (this->_syntaxData.OCB < this->_syntaxData.CCB)
 			std::cerr << "Invalid syntax: " << this->_syntaxData.CCB - this->_syntaxData.OCB << " Open curly brace is missing" << std::endl;
@@ -200,7 +199,7 @@ bool	Configuration::launchServerConf(const std::string & confFileName)
 		if (*(lineSplit.begin()) == "server") {
 			// mettre le premier serveur rencontre comme serveur par defaut
 			if (serverToConf == 0) {
-				_servTab[serverToConf].SetDefaultServer();
+				_servTab[serverToConf].SetDefaultServer(); // TO DO enlever ca
 			}
 			// lancer la conf du serveur
 			countLine++;
