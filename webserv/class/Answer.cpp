@@ -86,7 +86,7 @@ int Answer::GetStatus() const
 
 std::string Answer::GetMime(std::string extension)
 {
-    if ( this->mime_map.find(extension) != this->mime_map.end())
+    if (this->mime_map.find(extension) != this->mime_map.end())
         return (this->mime_map[extension]);
     return ("text/html");// si on trouve pas on affiche quand meme sout format html ou on gere pas ?
 }
@@ -103,10 +103,10 @@ int Answer::is_that_a_directory()
 {
     struct stat info;
 
-    if (stat(this->ressource_path.c_str(), &info) != 0)
+    if (stat(this->ressource_path.c_str(), &info) == -1)
     {
-        std::cerr << "Erreur lors de l'accès au chemin." << std::endl;
-        return 2;
+        std::cerr << "Erreur lors de l'accès au chemin. " << this->ressource_path.c_str() << std::endl;
+        // return 2;
     }
     if (S_ISREG(info.st_mode))
         return 0;//fichier
@@ -117,7 +117,7 @@ int Answer::is_that_a_directory()
 
 // on obtient l'emplacement de la ressource sur notre machine
 // ex: pour une loc /blabla, un root theRoot et une requete /blabla/fichier.html -> on renvoit theRoot/fichier.html
-void Answer::find_ressource_path(Configuration const &conf, std::string ressource)
+void Answer::find_ressource_path(Configuration const &conf)
 {
     size_t idx = 0;
     int depth = -1;
@@ -126,7 +126,7 @@ void Answer::find_ressource_path(Configuration const &conf, std::string ressourc
         this->autoindex = it->second->getAutoInex();
         if (idx != 1)
             it++;
-        if (it->first.size() <= ressource.size() && it->first == ressource.substr(0, it->first.size()))
+        if (it->first.size() <= this->ressource.size() && it->first == this->ressource.substr(0, it->first.size()))
         {
             int count = 0;
             for (size_t i = 0; i < it->first.size(); i++)
@@ -140,9 +140,9 @@ void Answer::find_ressource_path(Configuration const &conf, std::string ressourc
             {
                 depth = count;
                 if (it->first[it->first.size() - 1] == '/')
-                    this->ressource_path = it->second->getRoot() + "/" + ressource.substr(it->first.size());
+                    this->ressource_path = it->second->getRoot() + "/" + this->ressource.substr(it->first.size());
                 else
-                    this->ressource_path = it->second->getRoot() + ressource.substr(it->first.size());
+                    this->ressource_path = it->second->getRoot() + this->ressource.substr(it->first.size());
                 this->match_location = it->first;
             }
         }
@@ -150,14 +150,28 @@ void Answer::find_ressource_path(Configuration const &conf, std::string ressourc
     }
     if (depth == -1)
     {
-        this->ressource_path = ressource;
+        this->ressource_path = this->ressource;
         this->match_location = "None";
+        this->code = 404; 
+        return ;
     }
+    // on verifie que la methode soit bien autorisee
+    bool find = false;
+    std::vector<std::string> vec = conf.getServer(server_idx).getLocationMap()[match_location]->getAllowedMethodVector();
+    for (std::vector<std::string>::iterator it = vec.begin() ;it != vec.end(); it++)
+    {
+        if (*it == this->methode)
+        {
+            find = true;
+            break;
+        }
+    }
+    if (find == false)
+        this->code = 405;//methode not allowed
     return ;
 }
 
-// quand on an fini de lire la request, on la parse et on indique quelle sera la prochaine etape
-void Answer::DoneWithRequest(Configuration const &conf)
+void Answer::ParseRequest()
 {
     size_t start = 0;
 	size_t end = 0;
@@ -192,7 +206,7 @@ void Answer::DoneWithRequest(Configuration const &conf)
         this->code = 400;
         return ;
     }
-    std::string ressource = header.front().substr(start, end - start);
+    this->ressource = header.front().substr(start, end - start);
     start = end + 1;
     if (header.front().substr(start) != "HTTP/1.1")
         this->code = 400;// 400 mauvais format ou version, selon ce que l'on fait quand c'est pas 1.1 faudra ajuster
@@ -201,8 +215,14 @@ void Answer::DoneWithRequest(Configuration const &conf)
         size_t colon = header[i].find(":");
         this->header_map[header[i].substr(0, colon)] = header[i].substr(colon + 2);
     }
-    // verifier que la methode est reconnu todo
-    this->find_ressource_path(conf, ressource);
+}
+
+// quand on an fini de lire la request, on la parse et on indique quelle sera la prochaine etape
+void Answer::DoneWithRequest(Configuration const &conf)
+{
+    this->ParseRequest();
+    this->find_ressource_path(conf);
+    
     if (this->is_that_a_directory() == 1)
     {
         // this->find_good_index_or_autoindex();
@@ -215,22 +235,6 @@ void Answer::DoneWithRequest(Configuration const &conf)
     else if (this->code >= 400)
     {
         this->status = 1;
-        std::stringstream tmp;
-        tmp << this->code;
-        for (std::map<std::string, std::string>::iterator it = conf.getServer(this->server_idx).getErrorPageMap().begin(); it != conf.getServer(this->server_idx).getErrorPageMap().end(); it++)
-        {
-            if (tmp.str() == it->first)
-            {
-                this->fd_read = open(it->second.c_str(), O_RDONLY);
-                if (this->fd_read == -1)
-                {
-                    std::cerr << "Erreur lors de l'ouverture du fichier" << std::endl;
-                    this->code = 500;// a voir quelle code on met quand le fichier ne s'ouvre pas  todo
-                    return ;
-                }
-                return ;
-            }
-	    }
         // le code ne correspond a rien de nos page, a voir ce qu'on fait todo
     }
     else
@@ -238,6 +242,7 @@ void Answer::DoneWithRequest(Configuration const &conf)
         this->status = 1;// attention, quand c'est pas get on gere differement
         if (access(this->ressource_path.c_str(), F_OK) == -1)
         {
+            std::cout << "herre\n" << this->ressource_path;
             this->code = 404;//not found
             return ;
         }
@@ -272,8 +277,32 @@ void Answer::ReadRequest(Configuration const &conf, int socket_fd)
     buffer[bytesRead] = '\0';
     this->request.append(buffer);
     if (bytesRead < READ_SIZE)
+    {
         this->DoneWithRequest(conf);
-
+        if (this->code >= 400)
+        {
+            this->status = 1;
+            std::stringstream tmp;
+            tmp << this->code;
+            std::map<std::string, std::string> map = conf.getServer(this->server_idx).getErrorPageMap();
+            if (map.find(tmp.str()) != map.end())
+            {
+                std::cout << map.size() << " et " <<  map[tmp.str()].c_str() << " et " << tmp.str() << std::endl;
+                this->fd_read = open(map[tmp.str()].c_str(), R_OK);
+                if (this->fd_read == -1)
+                    this->code = 500;// peut etre
+            }
+            else
+            {
+                // si on a pas la page dans la config
+                this->status = 3;
+                std::stringstream tmp;
+                tmp << this->code;
+                this->answer_body = "<!DOCTYPE html>\n<html lang=\"fr\">\n<head>\n<meta charset=\"UTF-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n<title>Error " + tmp.str() + "</title>\n</head>\n<body>\n<h1>Error " + tmp.str() + "</h1>\n</body>\n</html>\n";
+            }
+        }
+    }
+    std::cout << this->code << " " << this->status << std::endl;
     if (bytesRead < READ_SIZE)// juste pour l'affichage
         std::cout << YELLOW << "Complete," << std::endl << this->request << WHITE;
     else
@@ -285,6 +314,7 @@ void Answer::ReadRequest(Configuration const &conf, int socket_fd)
 void Answer::ReadFile()
 {
     std::cout << RED << "Debut de ReadFile" << WHITE << std::endl;
+    std::cout << this->code << " " << this->fd_read << std::endl;
     char buffer[READ_SIZE];
     int bytesRead;
 
@@ -303,7 +333,7 @@ void Answer::ReadFile()
     }
 
     if (bytesRead < READ_SIZE)// juste pour l'affichage
-        std::cout << YELLOW << "Complete," << this->answer_body << WHITE << std::endl;
+        std::cout << YELLOW << "Complete," << std::endl << this->answer_body << WHITE << std::endl;
     else
         std::cout << YELLOW << "Uncomplete," << WHITE << std::endl;
     std::cout << RED << "Fin de ReadFile" << WHITE << std::endl;

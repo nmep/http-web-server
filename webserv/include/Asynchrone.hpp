@@ -10,14 +10,16 @@
 class Asynchrone
 {
     private:
-        std::vector<Answer> Answers_instances;// de longeur nb_serv
-                                              // regroupe toutes les instances de la class Answer
 
     public:
         Asynchrone(size_t nb_serv);
         ~Asynchrone();
 
         void Server_action(Configuration const &conf, int server_idx, int socket_fd);
+        
+        std::vector<Answer> Answers_instances;// de longeur nb_serv
+                                              // regroupe toutes les instances de la class Answer
+                                              // doit etre en private mais la c'est temporaire todo
 };
 
 #endif

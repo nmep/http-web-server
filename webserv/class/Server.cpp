@@ -63,7 +63,7 @@ std::string Server::GetServerName() const {
 	return _serverName;
 }
 
-std::string	Server::GetErrorPage(std::string const & httpCode) { // meme soucis que pour getlocation, si on envoie un truc qui existe pas encore ca le cree
+std::string	Server::GetErrorPage(std::string const & httpCode) { // meme soucis que pour getlocation, si on envoie un truc qui existe pas encore ca le cree faut proteger to do
 	return _error_page[httpCode];
 }
 

@@ -49,15 +49,17 @@ int Socket::launchEpoll(Configuration const & conf) {
 
 
 
-				
+	
 				serverConnxionReceivedId = -1;
 			}
 			else if (events[i].events & EPOLLIN)
 			{
 				std::cout << "EPOLLIN detecte je repond" << std::endl;
-				
-				asynch.Server_action(conf, 1, events[i].data.fd);// pour l'instant je prend 1 en parametre mais il me faudrait l'index du server dont viens la requete
 
+				asynch.Server_action(conf, serverConnxionReceivedId, events[i].data.fd);// pour l'instant je prend 1 en parametre mais il me faudrait l'index du server dont viens la requete
+				asynch.Server_action(conf, 1, events[i].data.fd);
+				if (asynch.Answers_instances[1].GetStatus() != 0)
+					asynch.Server_action(conf, 1, events[i].data.fd);
 				// (void) conf;
 				// if (epoll_ctl(this->epfd, EPOLL_CTL_DEL, events[i].data.fd, &ev) == -1) {
 				// 	std::cerr << "Epoll ctl failed sur socket " << this->sockets[i].listenFd << ": " << strerror(errno) << std::endl;

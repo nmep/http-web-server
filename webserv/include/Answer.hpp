@@ -30,6 +30,7 @@ class Answer
         // elements de la requete
         std::string request;
         std::string methode;
+        std::string ressource;// la ressource tel que dans la requete
         std::string ressource_path;// le chemin de la ressource sur notre machine
         std::map<std::string, std::string> header_map;// les elements du header associes a leur valeur
         std::string request_body;
@@ -43,7 +44,8 @@ class Answer
         int fd_read;// utiliser pour la ressource a lire ou le fichier d'erreure a lire aussi
 
         void DoneWithRequest(Configuration const &conf);
-        void find_ressource_path(Configuration const &conf, std::string ressource);
+        void ParseRequest();
+        void find_ressource_path(Configuration const &conf);
         int is_that_a_directory();
 
         std::string GetMime(std::string extansion);// prend l'extension du fichier en parametre et renvoie le type
