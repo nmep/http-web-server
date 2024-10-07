@@ -229,7 +229,7 @@ void Answer::DoneWithRequest(Configuration const &conf)
         // pour l'instant je fait rien, on verra pour le vector index
         // a voir ou je prend auto index, si il est propre a chaque location ou si c'est le meme pour tout le server
     }
-    this->autoindex = true;//temporaire
+    this->autoindex = true;//temporaire TO DO enlever
     if (this->autoindex != true)// si il est encore active c'est qu'on a fait l'auto index et que j'ai deja un body, on peut envoyer
         this->status = 3;
     else if (this->code >= 400)
@@ -268,14 +268,18 @@ void Answer::ReadRequest(Configuration const &conf, int socket_fd)
     std::cout << RED << "Debut de ReadRequest" << WHITE << std::endl;
 
     char buffer[READ_SIZE];
+    // ssize_t bytesRead = 1;
+	// (void)socket_fd;
     ssize_t bytesRead = recv(socket_fd, buffer, READ_SIZE, 0);
     if (bytesRead == -1) {
 		std::cerr << "Error with recv" << std::endl;// peut etre renvoyer une erreur cote client ou server
         close(socket_fd);
         return ;
     }
+
     buffer[bytesRead] = '\0';
     this->request.append(buffer);
+	std::cout << "bytes read = " << bytesRead << " < " << READ_SIZE << " ?" << std::endl;
     if (bytesRead < READ_SIZE)
     {
         this->DoneWithRequest(conf);

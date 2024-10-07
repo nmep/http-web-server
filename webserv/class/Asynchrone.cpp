@@ -13,7 +13,10 @@ Asynchrone::~Asynchrone()
 // on agit en fonction de l'avancee de la reponse concernant ce server
 void Asynchrone::Server_action(Configuration const &conf, int server_idx, int socket_fd)
 {
+	server_idx = 1;
     std::cout << BLUE << "Debut de Server_action, serv numero " << server_idx << ", socket_fd " << socket_fd << std::endl;
+	std::cout << "case " << this->Answers_instances[server_idx].GetStatus() << std::endl;
+	sleep(1);
     switch (this->Answers_instances[server_idx].GetStatus())
     {
         case 0:
