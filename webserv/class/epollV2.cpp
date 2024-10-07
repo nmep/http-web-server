@@ -48,7 +48,7 @@ int Socket::launchEpoll(Configuration const & conf) {
 				accept_and_save_connexion(serverConnxionReceivedId);
 
 
-
+				std::cout << "bonjour" << std::endl;
 	
 				serverConnxionReceivedId = -1;
 			}
