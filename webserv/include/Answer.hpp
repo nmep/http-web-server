@@ -47,6 +47,7 @@ class Answer
         void ParseRequest();
         void find_ressource_path(Configuration const &conf);
         int is_that_a_directory();
+        void find_good_index_or_autoindex(Configuration const &conf);
 
         std::string GetMime(std::string extansion);// prend l'extension du fichier en parametre et renvoie le type
         std::string GetCodeSentence(int code);// on renvoie la phrase de raison associe au code d etat

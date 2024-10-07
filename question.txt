@@ -8,9 +8,9 @@ si dans allowd methode on met head, tu refuses ?
 ca segfault apres ma ou mes reponses
 il faut lire les pages d'erreurs
 on peut se connecter au port 8080 de quelqu'un d'autre ??
+si root = theRoot et index = index.html il faut forcement que theRoot/index.html existe ? imo non index.html peux etre n'importe ou
 
 proteger la fonction geterrorpage
 me donne l'index du server
-fix la boucle
 accepter la methode delete
-fix la configuration sans location
+accepter l'auto index dans les locations, ils ecrassent l auto index moins precis

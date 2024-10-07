@@ -106,7 +106,7 @@ int Answer::is_that_a_directory()
     if (stat(this->ressource_path.c_str(), &info) == -1)
     {
         std::cerr << "Erreur lors de l'accès au chemin. " << this->ressource_path.c_str() << std::endl;
-        // return 2;
+        return 2;
     }
     if (S_ISREG(info.st_mode))
         return 0;//fichier
@@ -123,7 +123,6 @@ void Answer::find_ressource_path(Configuration const &conf)
     int depth = -1;
     std::map<std::string, Location*>::iterator it = conf.getServer(this->server_idx).getLocationMap().begin();
     while (idx++ < conf.getServer(this->server_idx).getLocationMap().size()) {
-        this->autoindex = it->second->getAutoInex();
         if (idx != 1)
             it++;
         if (it->first.size() <= this->ressource.size() && it->first == this->ressource.substr(0, it->first.size()))
@@ -217,32 +216,59 @@ void Answer::ParseRequest()
     }
 }
 
+void Answer::find_good_index_or_autoindex(Configuration const &conf)
+{
+    std::string fake_path = this->ressource_path;
+    if (this->ressource_path[this->ressource_path.size() - 1] != '/')
+        fake_path.append("/");
+    if (this->match_location != "None")
+    {   
+        std::cout << conf.getServer(1);
+        this->autoindex = conf.getServer(this->server_idx).getLocation(this->match_location)->getAutoInex();
+        this->autoindex = true;// temporaire
+        std::vector<std::string> vec = conf.getServer(this->server_idx).getLocation(this->match_location)->getIndex();
+        for (std::vector<std::string>::iterator it = vec.begin(); it != vec.end(); it++)
+        {
+            std::string tmp = fake_path + *it;
+            if (access(tmp.c_str(), F_OK) != -1)
+            {
+                this->ressource_path = tmp;
+                return ;
+            }
+        }
+    }
+    if (this->autoindex == true)
+    {
+        //c'est ici que tu pourras gere l'auto index, dans l'ideal tu me renvois le contenu de la page html sous une string
+        //this->answer_body = fonction_garfi_auto_index();
+        this->answer_body = "<!DOCTYPE html>\n<html lang=\"fr\">\n<head>\n<meta charset=\"UTF-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n<title>autoindex</title>\n</head>\n<body>\n<h1>example</h1>\n<h1>de</h1>\n<h1>dossier</h1>\n</body>\n</html>\n";
+        this->status = 3;
+    }
+    else
+        this->code = 404;
+}
+
 // quand on an fini de lire la request, on la parse et on indique quelle sera la prochaine etape
 void Answer::DoneWithRequest(Configuration const &conf)
 {
     this->ParseRequest();
     this->find_ressource_path(conf);
-    
+
     if (this->is_that_a_directory() == 1)
     {
-        // this->find_good_index_or_autoindex();
-        // pour l'instant je fait rien, on verra pour le vector index
-        // a voir ou je prend auto index, si il est propre a chaque location ou si c'est le meme pour tout le server
+        this->find_good_index_or_autoindex(conf);
+        if (this->status == 3)
+            return ;
     }
-    this->autoindex = true;//temporaire
-    if (this->autoindex != true)// si il est encore active c'est qu'on a fait l'auto index et que j'ai deja un body, on peut envoyer
-        this->status = 3;
-    else if (this->code >= 400)
+    if (this->code >= 400)
     {
         this->status = 1;
-        // le code ne correspond a rien de nos page, a voir ce qu'on fait todo
     }
     else
     {
         this->status = 1;// attention, quand c'est pas get on gere differement
         if (access(this->ressource_path.c_str(), F_OK) == -1)
         {
-            std::cout << "herre\n" << this->ressource_path;
             this->code = 404;//not found
             return ;
         }
@@ -287,7 +313,6 @@ void Answer::ReadRequest(Configuration const &conf, int socket_fd)
             std::map<std::string, std::string> map = conf.getServer(this->server_idx).getErrorPageMap();
             if (map.find(tmp.str()) != map.end())
             {
-                std::cout << map.size() << " et " <<  map[tmp.str()].c_str() << " et " << tmp.str() << std::endl;
                 this->fd_read = open(map[tmp.str()].c_str(), R_OK);
                 if (this->fd_read == -1)
                     this->code = 500;// peut etre
@@ -298,6 +323,7 @@ void Answer::ReadRequest(Configuration const &conf, int socket_fd)
                 this->status = 3;
                 std::stringstream tmp;
                 tmp << this->code;
+                // on genere une page d'erreur par default , a voir comment on gere ca todo
                 this->answer_body = "<!DOCTYPE html>\n<html lang=\"fr\">\n<head>\n<meta charset=\"UTF-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n<title>Error " + tmp.str() + "</title>\n</head>\n<body>\n<h1>Error " + tmp.str() + "</h1>\n</body>\n</html>\n";
             }
         }
@@ -314,7 +340,7 @@ void Answer::ReadRequest(Configuration const &conf, int socket_fd)
 void Answer::ReadFile()
 {
     std::cout << RED << "Debut de ReadFile" << WHITE << std::endl;
-    std::cout << this->code << " " << this->fd_read << std::endl;
+    std::cout << this->code << " " << this->fd_read << this->ressource_path << std::endl;
     char buffer[READ_SIZE];
     int bytesRead;
 
