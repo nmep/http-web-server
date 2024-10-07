@@ -17,6 +17,15 @@ Socket::~Socket()
 		delete[] this->sockets;
 	if (this->portListening)
 		delete[] this->portListening;
+	std::cout << "finish" << std::endl;
+}
+
+
+// renvoie le fd su serveur associe a "fd" sinon renvoie -1
+int	Socket::getFdAndServer(int fd) {
+	if (this->fdAndServer.find(fd) != this->fdAndServer.end())
+		return this->fdAndServer[fd];
+	return -1;
 }
 
 // Socket& Socket::operator=(Socket const & rhs) {}
@@ -125,6 +134,7 @@ int	Socket::accept_and_save_connexion(int servID) {
 		std::cerr << "Accept failed on serveur n " << servID << ": " << strerror(errno) << std::endl;
 		return 0;
 	}
+	this->fdAndServer[new_connexion] = servID;
 	setNonBlockSocket(new_connexion);
 	ev.events = EPOLLIN | EPOLLOUT;
 	ev.data.fd = new_connexion;

@@ -294,6 +294,7 @@ bool	Server::parseConfFile(std::ifstream & confFileFD, int *countLine) {
 			// Location &location = _location[*(lineSplit.begin() + 1)];
 			(*countLine)++;
 			_location[*(lineSplit.begin() + 1)] = new Location();
+			// ici
 			if (!_location[*(lineSplit.begin() + 1)]->LocationParsing(confFileFD, countLine))
 				return false;
 		}

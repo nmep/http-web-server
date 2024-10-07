@@ -3,10 +3,10 @@
 Configuration::Configuration() : _nbServer(0)
 {
 	std::cout << RED << "Configuration Constructeur called" << RESET << std::endl;
-	_syntaxData.OCB = 0;
-	_syntaxData.CCB = 0;
-	_syntaxData.CountLine = 1;
-	_servTab = NULL;
+	this->_syntaxData.OCB = 0;
+	this->_syntaxData.CCB = 0;
+	this->_syntaxData.CountLine = 1;
+	this->_servTab = NULL;
 }
 
 Configuration::~Configuration()
@@ -160,6 +160,7 @@ bool	Configuration::readFileSyntax()
 		}
 	}
 
+	std::cout << "CCB " << this->_syntaxData.CCB << " OCB " << _syntaxData.OCB << std::endl;
 	if (this->_syntaxData.OCB != this->_syntaxData.CCB) {
 		if (this->_syntaxData.OCB < this->_syntaxData.CCB)
 			std::cerr << "Invalid syntax: " << this->_syntaxData.CCB - this->_syntaxData.OCB << " Open curly brace is missing" << std::endl;

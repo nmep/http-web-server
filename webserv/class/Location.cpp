@@ -2,7 +2,7 @@
 
 int Location::_locationIndex = 0;
 
-Location::Location() : _autoIndex(false), _isUploadFileAccepted(false)
+Location::Location() : _isUploadFileAccepted(false)
 {
 	_locationIndex++;
 	_locationID = _locationIndex;
@@ -187,7 +187,7 @@ bool	Location::handleAllowedMethods(std::vector<std::string> lineSplit, int coun
 	// erase le point virgule
 	(lineSplit.end() - 1)->erase((lineSplit.end() - 1)->end() - 1);
 	for (std::vector<std::string>::iterator it = (lineSplit.begin() + 1); it != lineSplit.end(); ++it) {
-		if (*it != "GET" && *it != "POST") {
+		if (*it != "GET" && *it != "POST" && *it != "DELETE") {
 			std::cerr << "Invalid Allowed methods syntax: [" << *it << "] isn't accepted it must be GET or POST, at line " << countLine << std::endl;
 			return false;
 		}

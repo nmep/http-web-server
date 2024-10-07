@@ -17,6 +17,7 @@
 			bool						_isUploadFileAccepted;
 			static int					_locationIndex;
 			int							_locationID;
+			bool						autoindex;
 
 		public:
 			Location();
