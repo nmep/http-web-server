@@ -62,8 +62,11 @@ std::string Server::GetServerName() const {
 	return _serverName;
 }
 
+// si httpCode n'est pas dans la map errorPage alors le getteur renvoie une empty string
 std::string	Server::GetErrorPage(std::string const & httpCode) { // meme soucis que pour getlocation, si on envoie un truc qui existe pas encore ca le cree faut proteger to do
-	return _error_page[httpCode];
+	if (this->_error_page.find(httpCode) != this->_error_page.end())
+		return _error_page[httpCode];
+	return std::string();
 }
 
 uint16_t	Server::GetClientMaxBodySize(void) const {

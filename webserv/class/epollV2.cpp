@@ -2,8 +2,6 @@
 #include "Answer.hpp"
 #include "Asynchrone.hpp"
 
-
-
 int Socket::launchEpoll(Configuration const & conf) {
 	struct epoll_event	ev, events[MAX_EVENTS];
 	Asynchrone asynch(this->portListeningLen);
