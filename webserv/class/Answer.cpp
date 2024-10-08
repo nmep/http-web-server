@@ -223,8 +223,8 @@ void Answer::find_good_index_or_autoindex(Configuration const &conf)
         fake_path.append("/");
     if (this->match_location != "None")
     {   
-        std::cout << conf.getServer(1);
-        this->autoindex = conf.getServer(this->server_idx).getLocation(this->match_location)->getAutoInex();
+        // std::cout << conf.getServer(1);
+        this->autoindex = conf.getServer(this->server_idx).getLocation(this->match_location)->getAutoIndex();
         this->autoindex = true;// temporaire
         std::vector<std::string> vec = conf.getServer(this->server_idx).getLocation(this->match_location)->getIndex();
         for (std::vector<std::string>::iterator it = vec.begin(); it != vec.end(); it++)
@@ -248,11 +248,28 @@ void Answer::find_good_index_or_autoindex(Configuration const &conf)
         this->code = 404;
 }
 
+
+bool Answer::isBinary()
+{
+    std::vector<std::string> tab;
+    tab.push_back(".html");
+    tab.push_back(".htm");
+    tab.push_back(".txt");
+    tab.push_back(".css");
+    size_t dot = this->ressource_path.find_last_of('.');
+    if (dot != std::string::npos && dot < this->ressource_path.size() && this->mime_map.find(this->ressource_path.substr(dot)) != this->mime_map.end())
+    {
+        if (std::find(tab.begin(), tab.end(), this->ressource_path.substr(dot)) == tab.end())
+            return true;
+    }
+    return false;
+}
 // quand on an fini de lire la request, on la parse et on indique quelle sera la prochaine etape
 void Answer::DoneWithRequest(Configuration const &conf)
 {
     this->ParseRequest();
     this->find_ressource_path(conf);
+    // verifier que la ressource est bien dans la liste todo
 
 
     // if (this->methode == "GET")
@@ -286,11 +303,18 @@ void Answer::DoneWithRequest(Configuration const &conf)
             this->code = 403;//forbidden
             return ;
         }
-        this->fd_read = open(this->ressource_path.c_str(), O_RDONLY);
-        if (this->fd_read == -1)
+        if (this->isBinary() == true)// si on a besoin de le lire en binaire
         {
-            std::cerr << "Erreur lors de l'ouverture du fichier" << std::endl;
-            this->code = 500;// a voir quelle code on met quand le fichier ne s'ouvre pas  todo
+            this->read_file = new std::ifstream(this->ressource_path.c_str(), std::ios::binary);
+            if (!(*read_file) || !this->read_file->is_open())
+                this->code = 500;// a voir quelle code on met quand le fichier ne s'ouvre pas  todo
+            return ;
+        }
+        else
+        {
+            this->read_file = new std::ifstream(this->ressource_path.c_str());
+            if (!(*read_file) || !this->read_file->is_open())
+                this->code = 500;// a voir quelle code on met quand le fichier ne s'ouvre pas  todo
             return ;
         }
     }
@@ -303,12 +327,15 @@ void Answer::ReadRequest(Configuration const &conf, int socket_fd)
     std::cout << RED << "Debut de ReadRequest" << WHITE << std::endl;
 
     char buffer[READ_SIZE];
+    // ssize_t bytesRead = 1;
+	// (void)socket_fd;
     ssize_t bytesRead = recv(socket_fd, buffer, READ_SIZE, 0);
     if (bytesRead == -1) {
-		std::cerr << "Error with recv" << std::endl;// peut etre renvoyer une erreur cote client ou server
+		std::cerr << "Error with recv: " <<  std::endl;// peut etre renvoyer une erreur cote client ou server
         close(socket_fd);
         return ;
     }
+
     buffer[bytesRead] = '\0';
     this->request.append(buffer);
     if (bytesRead < READ_SIZE)// si on a fini de lire la requete
@@ -322,8 +349,8 @@ void Answer::ReadRequest(Configuration const &conf, int socket_fd)
             std::map<std::string, std::string> map = conf.getServer(this->server_idx).getErrorPageMap();
             if (map.find(tmp.str()) != map.end())
             {
-                this->fd_read = open(map[tmp.str()].c_str(), R_OK);
-                if (this->fd_read == -1)
+                this->read_file = new std::ifstream(map[tmp.str()].c_str());
+                if (!(*read_file) || !this->read_file->is_open())
                     this->code = 500;// peut etre
             }
             else
@@ -350,24 +377,24 @@ void Answer::ReadFile()
 {
     std::cout << RED << "Debut de ReadFile" << WHITE << std::endl;
     std::cout << this->code << " " << this->fd_read << this->ressource_path << std::endl;
-    char buffer[READ_SIZE];
-    int bytesRead;
+    char buffer[READ_SIZE + 1];
 
-    bytesRead = read(this->fd_read, buffer, READ_SIZE);
-    if (bytesRead == -1) {
-		std::cerr << "Error with read" << std::endl;// peut etre renvoyer une erreur cote client ou server
-        close(this->fd_read);
-        return ;
-    }
-    buffer[bytesRead] = '\0';
+    this->read_file->read(buffer, READ_SIZE);
+    // if (this->read_file->fail()) {
+	// 	std::cerr << "Error with read" << std::endl;// peut etre renvoyer une erreur cote client ou server
+    //     this->read_file->close();
+    //     return ;
+    // }
+    size_t bytes_read = this->read_file->gcount();
+    buffer[bytes_read] = '\0';
     this->answer_body.append(buffer);
-    if (bytesRead < READ_SIZE)
+    if (this->read_file->eof())
     {
-        close(this->fd_read);
+        this->read_file->close();
         this->status = 3;
     }
 
-    if (bytesRead < READ_SIZE)// juste pour l'affichage
+    if (this->read_file->eof())// juste pour l'affichage
         std::cout << YELLOW << "Complete," << std::endl << this->answer_body << WHITE << std::endl;
     else
         std::cout << YELLOW << "Uncomplete," << WHITE << std::endl;
@@ -412,7 +439,7 @@ void Answer::contentType()
     if(this->code != 200)
         return;
     this->answer.append("Content-Type: ");
-    size_t dot = this->ressource_path.find('.');
+    size_t dot = this->ressource_path.find_last_of('.');
     if (dot != std::string::npos && dot < this->ressource_path.size() && this->mime_map.find(this->ressource_path.substr(dot)) != this->mime_map.end())
         this->answer.append(this->GetMime(this->ressource_path.substr(dot)));
     else

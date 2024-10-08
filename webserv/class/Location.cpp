@@ -61,7 +61,7 @@ std::string Location::getRoot() const {
 	return _root;
 }
 
-bool Location::getAutoInex() const {
+bool Location::getAutoIndex() const {
 	return _autoIndex;
 }
 
@@ -138,9 +138,9 @@ bool	Location::handleAutoIndex(std::vector<std::string> lineSplit, int countLine
 		return false;
 	}
 
-	std::cout << "line begin = " << *(lineSplit.begin() + 1) << " avant" << std::endl;
+	// std::cout << "line begin = " << *(lineSplit.begin() + 1) << " avant" << std::endl;
 	*(lineSplit.begin() + 1)->erase((lineSplit.begin() + 1)->end() - 1);
-	std::cout << "line begin = " << *(lineSplit.begin() + 1) << " apres" << std::endl;
+	// std::cout << "line begin = " << *(lineSplit.begin() + 1) << " apres" << std::endl;
 
 	if (*(lineSplit.begin() + 1) != "on" && *(lineSplit.begin() + 1) != "off") {
 		std::cerr << "Invalid AutoIndex Value at line " << countLine << " it must be on or off" << std::endl;
@@ -187,7 +187,7 @@ bool	Location::handleAllowedMethods(std::vector<std::string> lineSplit, int coun
 	// erase le point virgule
 	(lineSplit.end() - 1)->erase((lineSplit.end() - 1)->end() - 1);
 	for (std::vector<std::string>::iterator it = (lineSplit.begin() + 1); it != lineSplit.end(); ++it) {
-		if (*it != "GET" && *it != "POST") {
+		if (*it != "GET" && *it != "POST" && *it != "DELETE") {
 			std::cerr << "Invalid Allowed methods syntax: [" << *it << "] isn't accepted it must be GET or POST, at line " << countLine << std::endl;
 			return false;
 		}
@@ -237,11 +237,18 @@ bool Location::handleUploadStore(std::vector<std::string> lineSplit, int countLi
 
 bool	Location::LocationParsing(std::ifstream & file, int *countLine) {
 
-	std::string LocationKeyWord[] = {"root", "auto_index", "index", "allowedMethods", "return", "upload_store"};
+	std::string LocationKeyWord[] = {"root", "autoindex", "index", "allowedMethods",\
+							 "return", "upload_store"};
 	bool	(Location::*FuncPtr[]) (std::vector<std::string>, int) = {&Location::handleRoot, &Location::handleAutoIndex, \
 				&Location::handleIndex, &Location::handleAllowedMethods, &Location::handleRedirection, &Location::handleUploadStore};
 	std::string 				line;
 	std::vector<std::string>	lineSplit;
+
+	if (this->getAutoIndex()) {
+		std::cout << "auto index de location = 1" <<std::endl;
+	}
+	else
+		std::cout << "auto index de location = 0" <<std::endl;
 
 	while (getline(file, line)) {
 
@@ -297,7 +304,7 @@ std::ostream & operator<<(std::ostream & o, Location *location) {
 		o << "Index:" << std::endl; printVector(location->getIndex(), o);
 		o << "Redirection HTTP CODE = " << location->getRedirection("CODE") << " Redirection PATH = " << location->getRedirection("") << std::endl;
 		o << "Root = " << location->getRoot() << std::endl;
-		o << "Auto Index = " << location->getAutoInex() << std::endl;
+		o << "Auto Index = " << location->getAutoIndex() << std::endl;
 		o << "IsUploadFileAccepted = " << location->getIsUploadFileAccepted() << std::endl;
 		o << "Upload store = " << location->getUploadStore() << std::endl;
 		o << "location index = " << location->getLocationID() << std::endl;

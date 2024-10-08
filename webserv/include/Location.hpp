@@ -31,7 +31,7 @@
 			std::string					getRoot() const;
 			std::string					getUploadStore() const;
 			bool						getAllowedMethod(std::string const & method) const;
-			bool						getAutoInex() const;
+			bool						getAutoIndex() const;
 			bool						getIsUploadFileAccepted() const;
 			int							getLocationID() const {
 				return _locationID;

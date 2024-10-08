@@ -7,6 +7,9 @@
 #include "Server.hpp"
 #include <sys/stat.h> // pour stat
 #include <iostream> // les bools
+#include <string>
+#include <algorithm>
+#include <fstream>
 
 
 #define READ_SIZE 1024 // pour l'instant choisi arbitrairement, on verra si on le change pour plus de performance
@@ -42,12 +45,14 @@ class Answer
         bool autoindex; // faut que tu le mette dans la class serv pas dans location
         std::string match_location;
         int fd_read;// utiliser pour la ressource a lire ou le fichier d'erreure a lire aussi
+        std::ifstream *read_file;
 
         void DoneWithRequest(Configuration const &conf);
         void ParseRequest();
         void find_ressource_path(Configuration const &conf);
         int is_that_a_directory();
         void find_good_index_or_autoindex(Configuration const &conf);
+        bool isBinary();
 
         std::string GetMime(std::string extansion);// prend l'extension du fichier en parametre et renvoie le type
         std::string GetCodeSentence(int code);// on renvoie la phrase de raison associe au code d etat

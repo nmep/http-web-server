@@ -2,8 +2,10 @@
 
 /* ----------------------------------------------------------------- */
 
-Server::Server() : _default_server(0), _port(8080), _serverName("server_name"), _hostName("localhost"), _client_max_body_size(0)
+Server::Server() : _default_server(0), _port(8080), _serverName("server_name"),\
+	 _hostName("localhost"), _client_max_body_size(0), _autoIndex(false)
 {
+	std::cout << "def constructor autoindex = " << _autoIndex << std::endl;
 	std::cout << BLUE << "Server default COnstructor called" << RESET << std::endl;
 }
 
@@ -34,15 +36,12 @@ Server & Server::operator=(Server const & rhs)
 	_error_page = rhs._error_page;
 	_client_max_body_size = rhs._client_max_body_size;
 	// check si loc de rhs est vide 
-	std::cout << "rhs location size = " << rhs._location.size() << std::endl;
 	if (rhs._location.size() > 0) {
 		std::map<std::string, Location*>::const_iterator it_rhs = rhs._location.begin();
 		std::map<std::string, Location*>::const_iterator ite_rhs = rhs._location.end();
 		for (/**/; it_rhs != ite_rhs; it_rhs++) {
-			std::cout << "je copie la location " << it_rhs->first << std::endl;
 			this->_location[it_rhs->first] = new Location;
 			*this->_location[it_rhs->first] = *it_rhs->second;
-			// std::cout << "it_rhs->second" << &it_rhs->second << std::endl;
 		}
 	}
 	return *this;
@@ -92,6 +91,11 @@ std::map<std::string, Location*> Server::getLocationMap() const
 {
 	return _location;
 }
+
+bool Server::getAutoIndex() const {
+	return _autoIndex;
+}
+
 
 /* ----------------------------------------------------------------- */
 
@@ -150,7 +154,6 @@ void Server::SetHostName(std::string const & hostName) {
 
 bool	Server::isLocationExisting(std::string const & locationName) const
 {
-	std::cout << "loca name = [" << locationName << "]" << std::endl;
 	if (_location.find(locationName) != _location.end())
 		return true;
 	return false;
@@ -242,7 +245,7 @@ bool	Server::handleClientMaxBodySizeParsing(std::vector<std::string> lineSplit, 
 bool	Server::handleHostName(std::vector<std::string> lineSplit, int countLine)
 {
 	if (lineSplit.size() != 2) {
-		// std::cerr << "Error host name syntax: at line " << countLine << " must be only one value for the hostName" <<std::endl;
+		std::cerr << "Error host name syntax: at line " << countLine << " must be only one value for the hostName" <<std::endl;
 		std::cout << countLine << std::endl;
 		return false;
 	}
@@ -250,13 +253,42 @@ bool	Server::handleHostName(std::vector<std::string> lineSplit, int countLine)
 	return true;
 }
 
+void	Server::setAutoIndex(bool value) {
+	_autoIndex = value;
+}
+
+/* --------------------------- PARSING -------------------------------------- */
+
+bool	Server::handleAutoIndex(std::vector<std::string> lineSplit, int countLine) {
+	if (lineSplit.size() != 2) {
+		std::cerr << "Invalid syntax: at line " << countLine << " Autoindex need a value (on or off)" << std::endl;
+		return false;
+	}
+
+	// std::cout << "line begin = " << *(lineSplit.begin() + 1) << " avant" << std::endl;
+	*(lineSplit.begin() + 1)->erase((lineSplit.begin() + 1)->end() - 1);
+	// std::cout << "line begin = " << *(lineSplit.begin() + 1) << " apres" << std::endl;
+
+	if (*(lineSplit.begin() + 1) != "on" && *(lineSplit.begin() + 1) != "off") {
+		std::cerr << "Invalid AutoIndex Value at line " << countLine << " it must be on or off" << std::endl;
+		return false;
+	}
+
+	std::cout << "je set autoindex dans serveur" << std::endl;
+	if (*(lineSplit.begin() + 1) == "on")
+		setAutoIndex(1);
+	else
+		setAutoIndex(0);
+	return true;
+}
+
 bool Server::AssignToken(std::vector<std::string> lineSplit, int countLine) {
 	const std::string fTokens[] = {"listen", "server_name", "error_page"\
-							, "client_max_body_size", "hostName"}; // pour location apelle directement getline dans
+							, "client_max_body_size", "autoindex"}; // pour location apelle directement getline dans
 							// la fonction de location parse et voir si ca marche
 
 	bool	(Server::*FuncPtr[]) (std::vector<std::string>, int) = {&Server::handleListenParsing, &Server::handleServerNameParsing\
-		, &Server::handleErrorPageParsing, &Server::handleClientMaxBodySizeParsing}; // manque  hostname
+		, &Server::handleErrorPageParsing, &Server::handleClientMaxBodySizeParsing, &Server::handleAutoIndex}; //TO DO manque  hostname
 
 	// si une segment de directive et finit on return true et on passe au suivant
 	if (*(lineSplit.begin()) == "}")
@@ -264,11 +296,13 @@ bool Server::AssignToken(std::vector<std::string> lineSplit, int countLine) {
 
 	// si une directive est trouve faire sa fonction associe
 	for (size_t i = 0; i < sizeof(fTokens) / sizeof(fTokens[0]); i++) {
+		// std::cout << "ls = [" << *(lineSplit.begin()) << "]  ftoken[i] = " << fTokens[i] << std::endl;
 		if (*(lineSplit.begin()) == fTokens[i]) {
 			return (this->*FuncPtr[i])(lineSplit, countLine);
 		}
 	}
-	return true;
+		std::cerr << "Invalid syntax: Server Invalid token [" << *(lineSplit.begin()) << ']' << " at line " << countLine  << std::endl;
+	return false;
 }
 
 bool	Server::parseConfFile(std::ifstream & confFileFD, int *countLine) {
@@ -286,18 +320,21 @@ bool	Server::parseConfFile(std::ifstream & confFileFD, int *countLine) {
 		if (*(lineSplit.begin()) == "}")
 			return true;
 
-		if (*(lineSplit.begin()) == "location") {
+		else if (*(lineSplit.begin()) == "location") {
 			if (lineSplit.size() != 3) {
 				std::cerr << "Invalid Syntax: location need a match at line " << *countLine << std::endl;
-				return false; 
+				return false;
 			}
 			// Location &location = _location[*(lineSplit.begin() + 1)];
 			(*countLine)++;
 			_location[*(lineSplit.begin() + 1)] = new Location();
+			// init autoindex de location de la meme valeur que celle d'autoindex de server
+			if (this->_autoIndex)
+				_location[*(lineSplit.begin() + 1)]->setAutoIndex(true);
 			if (!_location[*(lineSplit.begin() + 1)]->LocationParsing(confFileFD, countLine))
 				return false;
 		}
-		if (!AssignToken(lineSplit, (*countLine)))
+		else if (!AssignToken(lineSplit, (*countLine)))
 			return false;
 		(*countLine)++;
 	}
@@ -311,6 +348,7 @@ std::ostream & operator<<(std::ostream & o, Server const & server)
     o << "Port = " << server.GetPort() << std::endl;
     o << "serverName = " << server.GetServerName() << std::endl;
     o << "hostName = " << server.GetHostName() << std::endl;
+	o << "auto index = " << server.getAutoIndex() << std::endl;
 
     o << "Error page:" << std::endl;
 	printMap(server.getErrorPageMap(), o);

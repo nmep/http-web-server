@@ -33,6 +33,7 @@
 				t_socket			*sockets;
 				int					*portListening; // tableau qui definit les port qui doivent etre mit sur ecoute en evitant les doublons
 				int					portListeningLen; // taille de portListening
+				std::map<int, int>	fdAndServer; // first fd de requete, second index du serveur associe a la requete
 
 			public:
 				Socket();
@@ -45,6 +46,8 @@
 				int	accept_and_save_connexion(int servId);
 				int	setNonBlockSocket(int socket);
 				int	isAnServerFd(int fd);
+
+				int	getFdAndServer(int fd);
 
 		};
 

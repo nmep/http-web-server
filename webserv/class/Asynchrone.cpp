@@ -14,6 +14,11 @@ Asynchrone::~Asynchrone()
 void Asynchrone::Server_action(Configuration const &conf, int server_idx, int socket_fd)
 {
     std::cout << BLUE << "Debut de Server_action, serv numero " << server_idx << ", socket_fd " << socket_fd << std::endl;
+	// std::cout << "case " << this->Answers_instances[server_idx].GetStatus() << std::endl;
+	// sleep(1);
+	// // server_idx = 105;
+	if (server_idx == -1)// pour un test ??
+		return ;
     switch (this->Answers_instances[server_idx].GetStatus())
     {
         case 0:

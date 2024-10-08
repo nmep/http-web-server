@@ -15,7 +15,9 @@ class Server
 		std::string								_hostName;
 		std::map<std::string, std::string>		_error_page;
 		uint16_t								_client_max_body_size;
-		std::map<std::string, Location*>			_location;
+		std::map<std::string, Location*>		_location;
+		bool									_autoIndex;
+
 
 	public:
 		Server();
@@ -31,6 +33,7 @@ class Server
 		std::string							GetErrorPage(std::string const & httpCode);
 		uint16_t							GetClientMaxBodySize(void) const;
 		std::map<std::string, std::string>	getErrorPageMap() const;
+		bool								getAutoIndex() const;
 
 		Location*							getLocation(std::string const & locationName);// ca cree une loc en plus quand le location name n'exite pas encore
 		bool								isLocationExisting(std::string const & locationName) const;
@@ -43,6 +46,7 @@ class Server
 		void			SetHostName(std::string const & val);
 		void			SetClientMaxBodySize(uint16_t & val);
 		bool			SetErrorPage(std::vector<std::string> lineSplit, int countLine);
+		void			setAutoIndex(bool value);
 
 		// FONCTIONS DE GESTION DES MOTS CLES
 		bool	handleListenParsing(std::vector<std::string> lineSplit, int countLine);
@@ -50,6 +54,7 @@ class Server
 		bool	handleErrorPageParsing(std::vector<std::string> lineSplit, int countLine);
 		bool	handleHostName(std::vector<std::string> lineSplit, int countLine);
 		bool	handleClientMaxBodySizeParsing(std::vector<std::string> lineSplit, int countLine);
+		bool	handleAutoIndex(std::vector<std::string> lineSplit, int countLine);
 		bool 	AssignToken(std::vector<std::string> lineSplit, int countLine);
 
 		// FONCTION PRINCIPALE DE PARSING DE SERVEUR

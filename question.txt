@@ -9,8 +9,13 @@ ca segfault apres ma ou mes reponses
 il faut lire les pages d'erreurs
 on peut se connecter au port 8080 de quelqu'un d'autre ??
 si root = theRoot et index = index.html il faut forcement que theRoot/index.html existe ? imo non index.html peux etre n'importe ou
+gerer si l'extenstion n;est pas reconnu on renvoie l'erreur correspondante et virer le defaut notfound
+comment gerer les .js quel type
 
 proteger la fonction geterrorpage
 me donne l'index du server
 accepter la methode delete
 accepter l'auto index dans les locations, ils ecrassent l auto index moins precis
+
+a chaque fois que je send une requete il y a un passage qui fail apres, puis tu accepte et ajoute et seulement apres ca je fais une autre requete
+on est bien d'accord que tant que j'ai pas send le css la requete du js reste en suspend
