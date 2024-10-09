@@ -105,7 +105,7 @@ std::string	AutoIndex::createHttpPage()
 			continue;
 
 		page += "<tr>\n<td>";
-		page += "📂: ";
+		page += "📂 ";
 		// ici prend state du readdir
 		page += "</td>";
 		page += "<td> <a href=\"" + this->_urlName + '/' +  std::string(this->_readDir->d_name) + "\">" + this->_readDir->d_name + "</a>" + "</td>";
@@ -120,7 +120,6 @@ std::string	AutoIndex::createHttpPage()
 		// ajouter les stats
 		page += "<td>" + convertFileSizeBytesIntoStr(this->_fileInfo.st_size) + "</td>"; // size
 		page += "<td>" + std::string(std::ctime(&this->_fileInfo.st_mtime)) + "</td>\n"; // last modification
-		page += "<td>" + std::string(std::ctime(&this->_fileInfo.st_ctime)) + "</td>\n";
 		page += "</tr>\n";
 	}
 
@@ -131,7 +130,7 @@ std::string	AutoIndex::createHttpPage()
 		page += "<tr>\n<td>";
 
 		if (this->_readDir->d_type == DT_REG)
-			page += ": ";
+			page += "📝 ";
 		else if (this->_readDir->d_type == DT_BLK)
 			page += "Block device: ";
 		else if (this->_readDir->d_type == DT_CHR)
@@ -146,7 +145,6 @@ std::string	AutoIndex::createHttpPage()
 		page += "<td> <a href=\"" + this->_urlName + '/' +  std::string(this->_readDir->d_name) + "\">" + this->_readDir->d_name + "</a>" + "</td>";
 
 		// ici prend state du readdir
-		std::cout << "<a href=\"" + this->_urlName + '/' +  std::string(this->_readDir->d_name) + "\">" + this->_rootName + '/' + this->_readDir->d_name + "</a>" << std::endl;
 		// ajouter le suffix du path aux file trouver dans le directory pour que stat fonction sinon il cherche dans la cwd
 		std::string path = std::string(this->_rootName) + '/' + this->_readDir->d_name;
 		if (stat(path.c_str(), &this->_fileInfo) == -1) {
@@ -156,8 +154,7 @@ std::string	AutoIndex::createHttpPage()
 		}
 		// ajouter les stats
 		page += "<td>" + convertFileSizeBytesIntoStr(this->_fileInfo.st_size) + "</td>";
-		page += "<td>" + std::string(std::ctime(&this->_fileInfo.st_mtime)).substr(0, 24) + "</td>\n";
-		page += "<td>" + std::string(std::ctime(&this->_fileInfo.st_ctime)) + "</td>\n";
+		page += "<td>" + std::string(std::ctime(&this->_fileInfo.st_mtime)) + "</td>\n";
 		page += "</tr>\n";
 
 	}
