@@ -4,6 +4,7 @@ Answer::Answer(int server_idx)
 {
     this->server_idx = server_idx;
     this->status = 0;
+    this->socket_fd = -2;
     this->code = 200;
 
     this->mime_map[".html"] = "text/html";
@@ -21,10 +22,11 @@ Answer::Answer(int server_idx)
     this->mime_map[".txt"] = "text/plain";
     this->mime_map[".mp3"] = "audio/mp3";
     this->mime_map[".pdf"] = "application/pdf";
+    this->mime_map[".js"] = "application/javascript";
 
     this->code_map[100] = "Continue";
     this->code_map[101] = "Switching Protocol";
-    this->code_map[200] = "OK";
+    this->code_map[200] = "OK";// use
     this->code_map[201] = "Created";
     this->code_map[202] = "Accepted";
     this->code_map[203] = "Non-Authoritative Information";
@@ -38,10 +40,10 @@ Answer::Answer(int server_idx)
     this->code_map[304] = "Not Modified";
     this->code_map[307] = "Temporary Redirect";
     this->code_map[308] = "Permanent Redirect";
-    this->code_map[400] = "Bad Request";
+    this->code_map[400] = "Bad Request";// use
     this->code_map[401] = "Unauthorized";
-    this->code_map[403] = "Forbidden";
-    this->code_map[404] = "Not Found";
+    this->code_map[403] = "Forbidden";// use
+    this->code_map[404] = "Not Found";//use
     this->code_map[405] = "Method Not Allowed";
     this->code_map[406] = "Not Acceptable";
     this->code_map[407] = "Proxy Authentication Required";
@@ -52,7 +54,7 @@ Answer::Answer(int server_idx)
     this->code_map[412] = "Precondition Failed";
     this->code_map[413] = "Payload Too Large";
     this->code_map[414] = "URI Too Long";
-    this->code_map[415] = "Unsupported Media Type";
+    this->code_map[415] = "Unsupported Media Type";// use
     this->code_map[416] = "Requested Range Not Satisfiable";
     this->code_map[417] = "Expectation Failed";
     this->code_map[418] = "I'm a teapot";
@@ -63,12 +65,12 @@ Answer::Answer(int server_idx)
     this->code_map[429] = "Too Many Requests";
     this->code_map[431] = "Request Header Fields Too Large";
     this->code_map[451] = "Unavailable for Legal Reasons";
-    this->code_map[500] = "Internal Server Error";
+    this->code_map[500] = "Internal Server Error";//use
     this->code_map[501] = "Not Implemented";
     this->code_map[502] = "Bad Gateway";
     this->code_map[503] = "Service Unavailable";
     this->code_map[504] = "Gateway Timeout";
-    this->code_map[505] = "HTTP Version Not Supported";
+    this->code_map[505] = "HTTP Version Not Supported";//use
     this->code_map[506] = "Variant Also Negotiates";
     this->code_map[507] = "Insufficient Storage";
     this->code_map[510] = "Not Extended";
@@ -117,6 +119,7 @@ int Answer::is_that_a_directory()
 
 // on obtient l'emplacement de la ressource sur notre machine
 // ex: pour une loc /blabla, un root theRoot et une requete /blabla/fichier.html -> on renvoit theRoot/fichier.html
+// une fois qu'on a la loc on peut savoir si la methode est valide ou pas
 void Answer::find_ressource_path(Configuration const &conf)
 {
     size_t idx = 0;
@@ -194,7 +197,7 @@ void Answer::ParseRequest()
     end = header.front().find(' ', 0);
     if (end == std::string::npos)
     {
-        this->code = 400;
+        this->code = 400;// requete mal faite
         return ;
     }
     this->methode = header.front().substr(start, end);
@@ -202,13 +205,23 @@ void Answer::ParseRequest()
     end = header.front().find(' ', start);
     if (end == std::string::npos)
     {
-        this->code = 400;
+        this->code = 400;// requete mal faite
         return ;
     }
     this->ressource = header.front().substr(start, end - start);
+    // on cherche si on a des parametres cgi
+    size_t lim = this->ressource.find_last_of('?');
+    if (lim != std::string::npos && lim != 0 && lim != this->ressource.size())
+    {
+        this->cgi_env_var = this->ressource.substr(lim + 1);
+        this->ressource = this->ressource.substr(0, lim);
+    }
     start = end + 1;
     if (header.front().substr(start) != "HTTP/1.1")
-        this->code = 400;// 400 mauvais format ou version, selon ce que l'on fait quand c'est pas 1.1 faudra ajuster
+    {
+        this->code = 505;// http pas supporte
+        return ;
+    }
     for (size_t i = 1; i < header.size(); ++i)
     {
         size_t colon = header[i].find(":");
@@ -223,9 +236,7 @@ void Answer::find_good_index_or_autoindex(Configuration const &conf)
         fake_path.append("/");
     if (this->match_location != "None")
     {   
-        // std::cout << conf.getServer(1);
         this->autoindex = conf.getServer(this->server_idx).getLocation(this->match_location)->getAutoIndex();
-        this->autoindex = true;// temporaire
         std::vector<std::string> vec = conf.getServer(this->server_idx).getLocation(this->match_location)->getIndex();
         for (std::vector<std::string>::iterator it = vec.begin(); it != vec.end(); it++)
         {
@@ -248,6 +259,18 @@ void Answer::find_good_index_or_autoindex(Configuration const &conf)
         this->code = 404;
 }
 
+bool Answer::isScript()
+{
+    std::vector<std::string> tab;
+    tab.push_back(".js");
+    size_t dot = this->ressource_path.find_last_of('.');
+    if (dot != std::string::npos && dot < this->ressource_path.size() && this->mime_map.find(this->ressource_path.substr(dot)) != this->mime_map.end())
+    {
+        if (std::find(tab.begin(), tab.end(), this->ressource_path.substr(dot)) == tab.end())
+            return true;
+    }
+    return false;
+}
 
 bool Answer::isBinary()
 {
@@ -268,57 +291,42 @@ bool Answer::isBinary()
 void Answer::DoneWithRequest(Configuration const &conf)
 {
     this->ParseRequest();
-    this->find_ressource_path(conf);
-    // verifier que la ressource est bien dans la liste todo
-
-
-    // if (this->methode == "GET")
-    //     this->GET(conf);
-    // else if (this->methode == "POST")
-    //     this->POST();
-    // else if (this->methode == "DELETE")
-    //     this->DELETE();
-
-
-    if (this->is_that_a_directory() == 1)
-    {
-        this->find_good_index_or_autoindex(conf);
-        if (this->status == 3)
-            return ;
-    }
     if (this->code >= 400)
+        return ;
+    this->find_ressource_path(conf);
+    if (this->code >= 400)
+        return ;
+
+    if (this->methode == "GET")
+        this->GET(conf);
+    else if (this->methode == "POST")
+        this->POST();
+    else if (this->methode == "DELETE")
+        this->DELETE();
+
+    return ;
+}
+
+void Answer::HandleError(Configuration const &conf)
+{
+    std::stringstream tmp;
+    tmp << this->code;
+    std::map<std::string, std::string> map = conf.getServer(this->server_idx).getErrorPageMap();
+    if (map.find(tmp.str()) != map.end())
     {
         this->status = 1;
-    }
-    else
-    {
-        this->status = 1;// attention, quand c'est pas get on gere differement
-        if (access(this->ressource_path.c_str(), F_OK) == -1)
-        {
-            this->code = 404;//not found
-            return ;
-        }
-        if (access(this->ressource_path.c_str(), F_OK | R_OK) == -1)
-        {
-            this->code = 403;//forbidden
-            return ;
-        }
-        if (this->isBinary() == true)// si on a besoin de le lire en binaire
-        {
-            this->read_file = new std::ifstream(this->ressource_path.c_str(), std::ios::binary);
-            if (!(*read_file) || !this->read_file->is_open())
-                this->code = 500;// a voir quelle code on met quand le fichier ne s'ouvre pas  todo
-            return ;
-        }
+        this->fd_read = open(map[tmp.str()].c_str(), O_RDONLY);
+        if (this->fd_read == -1)
+            this->code = 500;// normalement les fichiers sont tester a la config et ne peuvent pas fail ici, c'est juste une precaution, a voir ce qu'on fait quand 500 est dans la liste des error page
         else
-        {
-            this->read_file = new std::ifstream(this->ressource_path.c_str());
-            if (!(*read_file) || !this->read_file->is_open())
-                this->code = 500;// a voir quelle code on met quand le fichier ne s'ouvre pas  todo
             return ;
-        }
     }
-    return ;
+    // si on a pas la page dans la config, on genere une page d'erreur par default
+    this->status = 3;
+    std::stringstream tmp2;
+    tmp2 << this->code;
+    this->answer_body.clear();// je sais pas si je dois forcement le clear ici, est ce qu'on peut avoir une erreur apres avoir commencer a remplir le body ?? todo
+    this->answer_body = "<!DOCTYPE html>\n<html lang=\"fr\">\n<head>\n<meta charset=\"UTF-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n<title>Error " + tmp2.str() + "</title>\n<style>\nh1 { text-align: center; margin-top: 10%; }\nh2 { text-align: center; }\n</style>\n</head>\n<body>\n<h1>Error " + tmp2.str() + " - " + this->GetCodeSentence(this->code) + "</h1>\n<h2>Default page</h2>\n</body>\n</html>\n";
 }
 
 // on lit la requete par tranche de READ_SIZE et quand on a fini on la parse avec DoneWithRequest
@@ -326,45 +334,23 @@ void Answer::ReadRequest(Configuration const &conf, int socket_fd)
 {
     std::cout << RED << "Debut de ReadRequest" << WHITE << std::endl;
 
+    if (this->socket_fd == -2)
+        this->socket_fd = socket_fd;
     char buffer[READ_SIZE];
-    // ssize_t bytesRead = 1;
-	// (void)socket_fd;
-    ssize_t bytesRead = recv(socket_fd, buffer, READ_SIZE, 0);
+    ssize_t bytesRead = recv(this->socket_fd, buffer, READ_SIZE, 0);
     if (bytesRead == -1) {
-		std::cerr << "Error with recv: " <<  std::endl;// peut etre renvoyer une erreur cote client ou server
-        close(socket_fd);
-        return ;
+        this->code = 500;//error server
     }
 
     buffer[bytesRead] = '\0';
     this->request.append(buffer);
-    if (bytesRead < READ_SIZE)// si on a fini de lire la requete
+    if (bytesRead < READ_SIZE || this->code == 500)// si on a fini de lire la requete
     {
-        this->DoneWithRequest(conf);
+        if (this->code != 500)// si la lecture a marcher
+            this->DoneWithRequest(conf);
         if (this->code >= 400)
-        {
-            this->status = 1;
-            std::stringstream tmp;
-            tmp << this->code;
-            std::map<std::string, std::string> map = conf.getServer(this->server_idx).getErrorPageMap();
-            if (map.find(tmp.str()) != map.end())
-            {
-                this->read_file = new std::ifstream(map[tmp.str()].c_str());
-                if (!(*read_file) || !this->read_file->is_open())
-                    this->code = 500;// peut etre
-            }
-            else
-            {
-                // si on a pas la page dans la config
-                this->status = 3;
-                std::stringstream tmp;
-                tmp << this->code;
-                // on genere une page d'erreur par default , a voir comment on gere ca todo
-                this->answer_body = "<!DOCTYPE html>\n<html lang=\"fr\">\n<head>\n<meta charset=\"UTF-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n<title>Error " + tmp.str() + "</title>\n</head>\n<body>\n<h1>Error " + tmp.str() + "</h1>\n</body>\n</html>\n";
-            }
-        }
+            this->HandleError(conf);
     }
-    std::cout << this->code << " " << this->status << std::endl;
     if (bytesRead < READ_SIZE)// juste pour l'affichage
         std::cout << YELLOW << "Complete," << std::endl << this->request << WHITE;
     else
@@ -376,25 +362,25 @@ void Answer::ReadRequest(Configuration const &conf, int socket_fd)
 void Answer::ReadFile()
 {
     std::cout << RED << "Debut de ReadFile" << WHITE << std::endl;
-    std::cout << this->code << " " << this->fd_read << this->ressource_path << std::endl;
-    char buffer[READ_SIZE + 1];
+    std::cout << this->code << " " << this->fd_read << std::endl;
+    char buffer[READ_SIZE];
+    int bytesRead;
 
-    this->read_file->read(buffer, READ_SIZE);
-    // if (this->read_file->fail()) {
-	// 	std::cerr << "Error with read" << std::endl;// peut etre renvoyer une erreur cote client ou server
-    //     this->read_file->close();
-    //     return ;
-    // }
-    size_t bytes_read = this->read_file->gcount();
-    buffer[bytes_read] = '\0';
+    bytesRead = read(this->fd_read, buffer, READ_SIZE);
+    if (bytesRead == -1) {
+		std::cerr << "Error with read" << std::endl;// peut etre renvoyer une erreur cote client ou server
+        close(this->fd_read);
+        return ;
+    }
+    buffer[bytesRead] = '\0';
     this->answer_body.append(buffer);
-    if (this->read_file->eof())
+    if (bytesRead < READ_SIZE)
     {
-        this->read_file->close();
+        close(this->fd_read);
         this->status = 3;
     }
 
-    if (this->read_file->eof())// juste pour l'affichage
+    if (bytesRead < READ_SIZE)// juste pour l'affichage
         std::cout << YELLOW << "Complete," << std::endl << this->answer_body << WHITE << std::endl;
     else
         std::cout << YELLOW << "Uncomplete," << WHITE << std::endl;
@@ -408,7 +394,7 @@ void Answer::WriteFile()
     std::cout << RED << "Fin de WriteFile" << WHITE << std::endl;
 }
 
-void Answer::SendAnswer(Configuration const &conf, int socket_fd)
+void Answer::SendAnswer(Configuration const &conf)
 {
     std::cout << RED << "Debut de SendAnswer" << WHITE << std::endl;
     std::stringstream tmp;
@@ -427,8 +413,10 @@ void Answer::SendAnswer(Configuration const &conf, int socket_fd)
     if (this->answer_body.size() != 0)
         this->answer.append(this->answer_body);
 
-    send(socket_fd, this->answer.c_str(), strlen(this->answer.c_str()), 0);
-    close(socket_fd);
+    send(this->socket_fd, this->answer.c_str(), strlen(this->answer.c_str()), 0);
+    // if(this->header_map.find("Connection") == this->header_map.end() || this->header_map["Connection"] != "keep-alive")
+    //     close(this->socket_fd);// la close ailleur ou pas ?? normalement meme si on collapse avant on send quand meme donc non
+    close(this->socket_fd);// la close ailleur ou pas ?? normalement meme si on collapse avant on send quand meme donc non
     std::cout << YELLOW << this->answer << WHITE << std::endl;
     std::cout << RED << "Fin de SendAnswer" << WHITE << std::endl;
     this->Reset();
@@ -436,14 +424,12 @@ void Answer::SendAnswer(Configuration const &conf, int socket_fd)
 
 void Answer::contentType()
 {
-    if(this->code != 200)
+    if(this->code != 200)// est ce qu'on affiche quand meme que c'est du html ?? todo
         return;
     this->answer.append("Content-Type: ");
     size_t dot = this->ressource_path.find_last_of('.');
     if (dot != std::string::npos && dot < this->ressource_path.size() && this->mime_map.find(this->ressource_path.substr(dot)) != this->mime_map.end())
         this->answer.append(this->GetMime(this->ressource_path.substr(dot)));
-    else
-        this->answer.append(this->GetMime("notfound"));
     this->answer.append("\r\n");
 }
 
@@ -486,12 +472,14 @@ void Answer::Reset()
 {
     this->status = 0;
     this->code = 200;
+    this->socket_fd = -2;
     this->answer.clear();
     this->answer_body.clear();
 
     this->request.clear();
     this->methode.clear();
     this->ressource_path.clear();
+    this->cgi_env_var.clear();
     this->header_map.clear();
     this->request_body.clear();
 
@@ -507,25 +495,53 @@ void Answer::GET(Configuration const &conf)
         if (this->status == 3)
             return ;
     }
+    // on a tout de pres pour savoir si l'extension
+    size_t dot = this->ressource_path.find_last_of('.');
+    if (dot == std::string::npos || (dot < this->ressource_path.size() && this->mime_map.find(this->ressource_path.substr(dot)) == this->mime_map.end()))
+        this->code == 415;
+
+    this->status = 1;
+    if (this->code >= 400)
+    {
+        // si le chemin est un dossier sans autoindex et sans index qui marche
+    }
     else
     {
-        this->status = 1;
         if (access(this->ressource_path.c_str(), F_OK) == -1)
         {
             this->code = 404;//not found
             return ;
         }
-        if (access(this->ressource_path.c_str(), F_OK | R_OK) == -1)
+        else if (access(this->ressource_path.c_str(), F_OK | R_OK) == -1)
         {
-            this->code = 403;
+            this->code = 403;//forbidden
             return ;
         }
-        this->fd_read = open(this->ressource_path.c_str(), O_RDONLY);
-        if (this->fd_read == -1)
+        else if (this->isScript() == true && access(this->ressource_path.c_str(), F_OK | R_OK | X_OK) == -1)
         {
-            std::cerr << "Erreur lors de l'ouverture du fichier" << std::endl;
-            this->code = 500;// a voir quelle code on met quand le fichier ne s'ouvre pas  todo
+            this->code = 403;//forbidden
             return ;
+        }
+        if (this->isBinary() == true)// si on a besoin de le lire en binaire
+        {
+
+            this->fd_read = open(this->ressource_path.c_str(), O_RDONLY);
+            if (this->fd_read == -1)
+            {
+                std::cerr << "Erreur lors de l'ouverture du fichier" << std::endl;
+                this->code = 500;// a voir quelle code on met quand le fichier ne s'ouvre pas  todo
+                return ;
+            }
+        }
+        else
+        {
+            this->fd_read = open(this->ressource_path.c_str(), O_RDONLY);
+            if (this->fd_read == -1)
+            {
+                std::cerr << "Erreur lors de l'ouverture du fichier" << std::endl;
+                this->code = 500;// a voir quelle code on met quand le fichier ne s'ouvre pas  todo
+                return ;
+            }
         }
     }
 }

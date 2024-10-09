@@ -31,7 +31,7 @@ void Asynchrone::Server_action(Configuration const &conf, int server_idx, int so
             this->Answers_instances[server_idx].WriteFile();
             break;
         case 3:
-            this->Answers_instances[server_idx].SendAnswer(conf, socket_fd);
+            this->Answers_instances[server_idx].SendAnswer(conf);
             break;
     }
     std::cout << BLUE << "Fin de Server_action, serv numero " << server_idx << ", nouveau status " << this->Answers_instances[server_idx].GetStatus() << WHITE << std::endl;
