@@ -4,13 +4,22 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>page index</title>
-        <script src="script.js" defer></script>
         <link rel="stylesheet" href="style.css">
-        <link rel="icon" type="x-icon" href="images.ico">
+        <script src="script.js" defer></script>
+        <!-- <link rel="icon" type="x-icon" href="images.ico"> -->
     </head>
     <body>
         <h1>c'est la page index !!!</h1>
         <p id="texte">La page 2 qui est dans theRoot <a href="blabla/page2.html">Page 2</a></p>
         <button onclick="changerCouleur()">Changer la couleur</button>
+        <form action="/cgi-bin/cgi_script.py" method="POST">
+            <input type="text" name="age" placeholder="Entrez votre age" required>
+            <button type="submit">Envoyer</button>
+        </form>
+        <form action="/upload" method="POST" enctype="multipart/form-data">
+            <input type="file" name="file" required>
+            <button type="submit">Télécharger</button>
+        </form>
+        <img src="" alt="Description de l'image" width="500" height="300">
     </body>
 </html>

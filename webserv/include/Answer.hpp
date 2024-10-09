@@ -12,12 +12,13 @@
 #include <fstream>
 
 
-#define READ_SIZE 1024 // pour l'instant choisi arbitrairement, on verra si on le change pour plus de performance
+#define READ_SIZE 4096 // pour l'instant choisi arbitrairement, on verra si on le change pour plus de performance
 
 class Answer
 {
     private:
         int server_idx;
+        int socket_fd;
         int status; // de longeur nb_serv,
                     // 0 pour en cours de lecture de la requete,
                     // 1 pour en cours de lecture d'un file,
@@ -35,6 +36,7 @@ class Answer
         std::string methode;
         std::string ressource;// la ressource tel que dans la requete
         std::string ressource_path;// le chemin de la ressource sur notre machine
+        std::string cgi_env_var;//les variables donnee dans l'url pour le cgi
         std::map<std::string, std::string> header_map;// les elements du header associes a leur valeur
         std::string request_body;
 
@@ -53,6 +55,11 @@ class Answer
         int is_that_a_directory();
         void find_good_index_or_autoindex(Configuration const &conf);
         bool isBinary();
+        bool isScript();
+        void HandleError(Configuration const &conf);
+        void cgi_from_post();
+        void build_env_cgi(std::string data);
+
 
         std::string GetMime(std::string extansion);// prend l'extension du fichier en parametre et renvoie le type
         std::string GetCodeSentence(int code);// on renvoie la phrase de raison associe au code d etat
@@ -77,7 +84,7 @@ class Answer
         void ReadRequest(Configuration const &conf, int socket_fd);
         void ReadFile();
         void WriteFile();
-        void SendAnswer(Configuration const &conf, int socket_fd);
+        void SendAnswer(Configuration const &conf);
 
 };
 

@@ -1,21 +1,13 @@
 quelle taille choisir pour le buffer de lecture de la socket ? 4096 ? pourquoi ?
 si pas http 1.1 on refuse ?
 si on ne reconnai pas l'extention on affiche quand meme sous format html ou on gere pas ?
-
-
-
-si dans allowd methode on met head, tu refuses ?
-ca segfault apres ma ou mes reponses
-il faut lire les pages d'erreurs
 on peut se connecter au port 8080 de quelqu'un d'autre ??
-si root = theRoot et index = index.html il faut forcement que theRoot/index.html existe ? imo non index.html peux etre n'importe ou
+
+
 gerer si l'extenstion n;est pas reconnu on renvoie l'erreur correspondante et virer le defaut notfound
-comment gerer les .js quel type
-
-proteger la fonction geterrorpage
-me donne l'index du server
-accepter la methode delete
-accepter l'auto index dans les locations, ils ecrassent l auto index moins precis
-
-a chaque fois que je send une requete il y a un passage qui fail apres, puis tu accepte et ajoute et seulement apres ca je fais une autre requete
-on est bien d'accord que tant que j'ai pas send le css la requete du js reste en suspend
+limiter la longueur de l'url (2000 dans les navigateur classique)
+est ce qu'on affiche forecement la page d'erreur quand il y a une erreur (exemple 404 et .ico)
+limiter la lecture du body dans le requete
+keep-alive pour eviter de creer une nouvelle connexion a chaque requete, quand il y a keep alive moi je ne dois pas close le fd, ca veut dire qu'on vas le reutiliser
+reussir a parser GET /cgi-bin/script.py?name=John&age=25 HTTP/1.1
+est ce qu'il faut indiquer un nom de domaine dans l'url ??
