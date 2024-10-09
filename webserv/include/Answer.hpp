@@ -12,7 +12,7 @@
 #include <fstream>
 
 
-#define READ_SIZE 1024 // pour l'instant choisi arbitrairement, on verra si on le change pour plus de performance
+#define READ_SIZE 4096 // pour l'instant choisi arbitrairement, on verra si on le change pour plus de performance
 
 class Answer
 {
@@ -57,6 +57,9 @@ class Answer
         bool isBinary();
         bool isScript();
         void HandleError(Configuration const &conf);
+        void cgi_from_post();
+        void build_env_cgi(std::string data);
+
 
         std::string GetMime(std::string extansion);// prend l'extension du fichier en parametre et renvoie le type
         std::string GetCodeSentence(int code);// on renvoie la phrase de raison associe au code d etat

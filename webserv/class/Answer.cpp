@@ -177,9 +177,10 @@ void Answer::ParseRequest()
 {
     size_t start = 0;
 	size_t end = 0;
+    size_t limi = std::string(this->request).find("\r\n\r\n");
     std::string str_request(std::string(this->request).substr(0, std::string(this->request).find("\n\n")));
-    if (std::string(this->request).find("\n\n") != std::string::npos)
-        this->request_body = std::string(this->request).substr(std::string(this->request).find("\n\n"));
+    if (limi != std::string::npos)
+        this->request_body = std::string(this->request).substr(limi + 2);
     std::vector<std::string> header;
 	while (end != std::string::npos)// on prend le header et la ligne d etat ligne par ligne et on trime au cas ou
 	{
@@ -262,14 +263,14 @@ void Answer::find_good_index_or_autoindex(Configuration const &conf)
 bool Answer::isScript()
 {
     std::vector<std::string> tab;
-    tab.push_back(".js");
+    tab.push_back(".py");
     size_t dot = this->ressource_path.find_last_of('.');
     if (dot != std::string::npos && dot < this->ressource_path.size() && this->mime_map.find(this->ressource_path.substr(dot)) != this->mime_map.end())
     {
         if (std::find(tab.begin(), tab.end(), this->ressource_path.substr(dot)) == tab.end())
-            return true;
+            return false;
     }
-    return false;
+    return false;// faut que je le remette en true mais que j'empeche les /upload d'etre true todo
 }
 
 bool Answer::isBinary()
@@ -498,7 +499,7 @@ void Answer::GET(Configuration const &conf)
     // on a tout de pres pour savoir si l'extension
     size_t dot = this->ressource_path.find_last_of('.');
     if (dot == std::string::npos || (dot < this->ressource_path.size() && this->mime_map.find(this->ressource_path.substr(dot)) == this->mime_map.end()))
-        this->code == 415;
+        this->code = 415;
 
     this->status = 1;
     if (this->code >= 400)
@@ -514,17 +515,22 @@ void Answer::GET(Configuration const &conf)
         }
         else if (access(this->ressource_path.c_str(), F_OK | R_OK) == -1)
         {
+            std::cout << "1 " << this->ressource << " et " << this->ressource_path << std::endl;
             this->code = 403;//forbidden
             return ;
         }
         else if (this->isScript() == true && access(this->ressource_path.c_str(), F_OK | R_OK | X_OK) == -1)
         {
+            std::cout << "2 " << this->ressource << " et " << this->ressource_path << " et " << this->cgi_env_var << std::endl;
             this->code = 403;//forbidden
             return ;
         }
-        if (this->isBinary() == true)// si on a besoin de le lire en binaire
+        if (this->isScript() == true)
         {
-
+            // on fait le cgi avec les parametres de l'url
+        }
+        else if (this->isBinary() == true)// si on a besoin de le lire en binaire
+        {
             this->fd_read = open(this->ressource_path.c_str(), O_RDONLY);
             if (this->fd_read == -1)
             {
@@ -546,9 +552,64 @@ void Answer::GET(Configuration const &conf)
     }
 }
 
+void Answer::build_env_cgi(std::string data)
+{
+    (void)data;
+    std::vector<std::string> vec_env;
+    if (this->header_map.find("Content-Type") != this->header_map.end())
+        vec_env.push_back(this->header_map["Content-Type"]);
+}
+
+void Answer::cgi_from_post()
+{
+    size_t start = 0;
+	size_t end = 0;
+    std::string line;
+	while (end != std::string::npos)
+	{
+		end = this->request_body.find("\r\n", start);
+		if (end > start) {
+			std::string str = this->request_body.substr(start, end - start);
+			size_t first = str.find_first_not_of(" \t\n\r\f\v");
+			size_t last = str.find_last_not_of(" \t\n\r\f\v");
+			if (first != std::string::npos && str.substr(first, last - first + 1).find('=') != std::string::npos)
+            {
+				line = str.substr(first, last - first + 1);
+                break ;
+            }
+		}
+		start = end + 1;
+	}
+    std::cout << CYAN << this->code << WHITE << std::endl;
+    std::cout << MAGENTA << this->request_body << WHITE << std::endl;
+    std::cout << CYAN << line << WHITE << std::endl;
+    this->build_env_cgi(line);
+
+    
+}
+
 void Answer::POST()
 {
+    std::cout << MAGENTA << this->code << WHITE << std::endl;
+    if (this->isScript() == true)
+    {
+        this->cgi_from_post();
+        this->status = 3;
+        return ;
+    }
 
+    this->status = 1;
+    if (this->code >= 400)
+    {
+        return ;
+    }
+
+
+    // met toi ici GARFI, tu peux faire l'upload file ici
+    std::cout << GREEN << this->ressource << std::endl;
+    std::cout << this->request_body << WHITE << std::endl;
+    this->code = 201;//quand post marche
+    this->status = 2; // si il faut ecrire quelque chose (la fonction writefile est vide tu peux faire la suite la bas)
 }
 
 void Answer::DELETE()

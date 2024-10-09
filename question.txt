@@ -5,6 +5,7 @@ on peut se connecter au port 8080 de quelqu'un d'autre ??
 
 
 gerer si l'extenstion n;est pas reconnu on renvoie l'erreur correspondante et virer le defaut notfound
+limiter la longueur de l'url (2000 dans les navigateur classique)
 est ce qu'on affiche forecement la page d'erreur quand il y a une erreur (exemple 404 et .ico)
 limiter la lecture du body dans le requete
 keep-alive pour eviter de creer une nouvelle connexion a chaque requete, quand il y a keep alive moi je ne dois pas close le fd, ca veut dire qu'on vas le reutiliser
