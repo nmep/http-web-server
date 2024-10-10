@@ -10,6 +10,8 @@
 #include <string>
 #include <algorithm>
 #include <fstream>
+#include <signal.h> // pour kill
+#include <wait.h>// pour wait
 
 
 #define READ_SIZE 4096 // pour l'instant choisi arbitrairement, on verra si on le change pour plus de performance
@@ -47,7 +49,11 @@ class Answer
         bool autoindex; // faut que tu le mette dans la class serv pas dans location
         std::string match_location;
         int fd_read;// utiliser pour la ressource a lire ou le fichier d'erreure a lire aussi
+        int fd_write;
         std::ifstream *read_file;
+        bool cgi;
+        size_t nb_readfile;
+        int cgi_pid;
 
         void DoneWithRequest(Configuration const &conf);
         void ParseRequest();
@@ -58,7 +64,7 @@ class Answer
         bool isScript();
         void HandleError(Configuration const &conf);
         void cgi_from_post();
-        void build_env_cgi(std::string data);
+        void build_env_cgi();
 
 
         std::string GetMime(std::string extansion);// prend l'extension du fichier en parametre et renvoie le type
@@ -72,7 +78,7 @@ class Answer
         void Reset();
 
         void GET(Configuration const &conf);
-        void POST();
+        void POST(Configuration const &conf);
         void DELETE();
 
     public:

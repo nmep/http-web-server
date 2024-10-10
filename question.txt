@@ -11,3 +11,15 @@ limiter la lecture du body dans le requete
 keep-alive pour eviter de creer une nouvelle connexion a chaque requete, quand il y a keep alive moi je ne dois pas close le fd, ca veut dire qu'on vas le reutiliser
 reussir a parser GET /cgi-bin/script.py?name=John&age=25 HTTP/1.1
 est ce qu'il faut indiquer un nom de domaine dans l'url ??
+comment faire pour faire savoir qu'on a fail execve, doit on le faire savoir
+ne pas blocker quand on a post et que la ressource ne mene a rien
+
+l'index location correspond au nombre total de location et pas au nb de location de son server
+a quoi sert host dans les fichier de config
+la condition dans serveraction c'est pour quoi ? un test ?
+est ce qu'on close les sockets dans l'enfant ?
+build l'env du cgi automatiquement
+faire un deuxieme cgi
+write en plusieurs fois ?
+faire les cookies
+

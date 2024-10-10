@@ -6,6 +6,8 @@ Answer::Answer(int server_idx)
     this->status = 0;
     this->socket_fd = -2;
     this->code = 200;
+    this->cgi = false;
+    this->nb_readfile = 0;
 
     this->mime_map[".html"] = "text/html";
     this->mime_map[".htm"] = "text/html";
@@ -23,6 +25,7 @@ Answer::Answer(int server_idx)
     this->mime_map[".mp3"] = "audio/mp3";
     this->mime_map[".pdf"] = "application/pdf";
     this->mime_map[".js"] = "application/javascript";
+    this->mime_map[".py"] = "text/x-python";
 
     this->code_map[100] = "Continue";
     this->code_map[101] = "Switching Protocol";
@@ -120,14 +123,13 @@ int Answer::is_that_a_directory()
 // on obtient l'emplacement de la ressource sur notre machine
 // ex: pour une loc /blabla, un root theRoot et une requete /blabla/fichier.html -> on renvoit theRoot/fichier.html
 // une fois qu'on a la loc on peut savoir si la methode est valide ou pas
+// la difference entre l'apelle dans get et dans post c'est que dans post on veux pas que ca bloque si la ressource ne correspond pas a une location (genre /upload)
 void Answer::find_ressource_path(Configuration const &conf)
 {
-    size_t idx = 0;
     int depth = -1;
-    std::map<std::string, Location*>::iterator it = conf.getServer(this->server_idx).getLocationMap().begin();
-    while (idx++ < conf.getServer(this->server_idx).getLocationMap().size()) {
-        if (idx != 1)
-            it++;
+    std::map<std::string, Location*> map = conf.getServer(this->server_idx).getLocationMap();
+    std::map<std::string, Location*>::iterator it = map.begin();
+    for (; it != map.end(); it++) {
         if (it->first.size() <= this->ressource.size() && it->first == this->ressource.substr(0, it->first.size()))
         {
             int count = 0;
@@ -148,13 +150,18 @@ void Answer::find_ressource_path(Configuration const &conf)
                 this->match_location = it->first;
             }
         }
-        // std::cout << YELLOW << ressource << " " << this->match_location << " " << this->ressource_path << " " << this->ressource_path << WHITE << std::endl;
+        // std::cout << YELLOW << it->first << " et " << it ->second << " " << this->ressource << " " << this->match_location << " " << this->ressource_path << WHITE << std::endl;
     }
-    if (depth == -1)
+    if (depth == -1 && this->methode == "GET")
     {
         this->ressource_path = this->ressource;
         this->match_location = "None";
         this->code = 404; 
+        return ;
+    }
+    else if (depth == -1 && this->methode == "POST")
+    {
+        this->ressource_path = this->ressource;
         return ;
     }
     // on verifie que la methode soit bien autorisee
@@ -170,6 +177,7 @@ void Answer::find_ressource_path(Configuration const &conf)
     }
     if (find == false)
         this->code = 405;//methode not allowed
+    
     return ;
 }
 
@@ -267,10 +275,10 @@ bool Answer::isScript()
     size_t dot = this->ressource_path.find_last_of('.');
     if (dot != std::string::npos && dot < this->ressource_path.size() && this->mime_map.find(this->ressource_path.substr(dot)) != this->mime_map.end())
     {
-        if (std::find(tab.begin(), tab.end(), this->ressource_path.substr(dot)) == tab.end())
-            return false;
+        if (std::find(tab.begin(), tab.end(), this->ressource_path.substr(dot)) != tab.end())
+            return true;
     }
-    return false;// faut que je le remette en true mais que j'empeche les /upload d'etre true todo
+    return false;
 }
 
 bool Answer::isBinary()
@@ -294,14 +302,12 @@ void Answer::DoneWithRequest(Configuration const &conf)
     this->ParseRequest();
     if (this->code >= 400)
         return ;
-    this->find_ressource_path(conf);
-    if (this->code >= 400)
-        return ;
 
+    
     if (this->methode == "GET")
         this->GET(conf);
     else if (this->methode == "POST")
-        this->POST();
+        this->POST(conf);
     else if (this->methode == "DELETE")
         this->DELETE();
 
@@ -363,18 +369,26 @@ void Answer::ReadRequest(Configuration const &conf, int socket_fd)
 void Answer::ReadFile()
 {
     std::cout << RED << "Debut de ReadFile" << WHITE << std::endl;
-    std::cout << this->code << " " << this->fd_read << std::endl;
     char buffer[READ_SIZE];
     int bytesRead;
 
+    if (this->cgi == true && this->nb_readfile == 0)
+    {
+        this->nb_readfile = 1;
+        int status;
+        int result = waitpid(this->cgi_pid, &status, 0);
+        std::cout << RED << "result " << result << " fin" << WHITE << std::endl;
+        if (!WIFEXITED(status))
+            this->code = 500;// a voir comment on determine que ca a fail todo
+    }
     bytesRead = read(this->fd_read, buffer, READ_SIZE);
     if (bytesRead == -1) {
-		std::cerr << "Error with read" << std::endl;// peut etre renvoyer une erreur cote client ou server
+		this->code = 500;//gerer comment on traiter la page d'erreur depuis ici ?
         close(this->fd_read);
         return ;
     }
     buffer[bytesRead] = '\0';
-    this->answer_body.append(buffer);
+    this->answer_body.append(buffer);// dans le cas d'un cgi c'est pas vraiment le body, il y a aussi des headers
     if (bytesRead < READ_SIZE)
     {
         close(this->fd_read);
@@ -392,6 +406,19 @@ void Answer::WriteFile()
 {
     std::cout << RED << "Debut de WriteFile" << WHITE << std::endl;
 
+    if (this->cgi == true)
+    {
+        write(this->fd_write, this->cgi_env_var.c_str(), this->cgi_env_var.size());// a voir si on ecrit en plusieurs fois, je pense que oui mais je veux deja voir si ca marche
+        // faut proteger le write
+        close(this->fd_write);
+        this->status = 1;
+    }
+    else
+    {
+        // ecrire un fichier classique
+    }
+
+
     std::cout << RED << "Fin de WriteFile" << WHITE << std::endl;
 }
 
@@ -408,7 +435,8 @@ void Answer::SendAnswer(Configuration const &conf)
     this->location();
     this->date();
     this->taille();
-    this->answer.append("\r\n");
+    if (this->cgi == false)
+        this->answer.append("\r\n");
 
     // on remplit le body
     if (this->answer_body.size() != 0)
@@ -425,7 +453,7 @@ void Answer::SendAnswer(Configuration const &conf)
 
 void Answer::contentType()
 {
-    if(this->code != 200)// est ce qu'on affiche quand meme que c'est du html ?? todo
+    if(this->code >= 400 || this->cgi == true)// est ce qu'on affiche quand meme que c'est du html en cas de page d'erreur?? todo
         return;
     this->answer.append("Content-Type: ");
     size_t dot = this->ressource_path.find_last_of('.');
@@ -461,12 +489,18 @@ void Answer::date()
 
 void Answer::taille()
 {
-    if (this->answer_body.size() > 0)// peut etre initialiser le answerbody a "" au debut
+    size_t len;
+    if (this->cgi == true)// quand c'est le retour d'un cgi, answer body a aussi les headers que le cgi a renvoyer
     {
-        std::stringstream tmp;
-        tmp << this->answer_body.size();
-        this->answer.append("Content-Length: " + tmp.str() + "\r\n");
+        if (this->answer_body.find("\n\n") != std::string::npos)
+        len = this->answer_body.substr(this->answer_body.find("\n\n")).size();
+
     }
+    else
+        len = this->answer_body.size();
+    std::stringstream tmp;
+    tmp << len;
+    this->answer.append("Content-Length: " + tmp.str() + "\r\n");
 }
 
 void Answer::Reset()
@@ -474,6 +508,8 @@ void Answer::Reset()
     this->status = 0;
     this->code = 200;
     this->socket_fd = -2;
+    this->cgi = false;
+    this->nb_readfile = 0;
     this->answer.clear();
     this->answer_body.clear();
 
@@ -490,6 +526,9 @@ void Answer::Reset()
 
 void Answer::GET(Configuration const &conf)
 {
+    this->find_ressource_path(conf);
+    if (this->code >= 400)
+        return ;
     if (this->is_that_a_directory() == 1)
     {
         this->find_good_index_or_autoindex(conf);
@@ -528,6 +567,7 @@ void Answer::GET(Configuration const &conf)
         if (this->isScript() == true)
         {
             // on fait le cgi avec les parametres de l'url
+            this->cgi = true;
         }
         else if (this->isBinary() == true)// si on a besoin de le lire en binaire
         {
@@ -552,12 +592,97 @@ void Answer::GET(Configuration const &conf)
     }
 }
 
-void Answer::build_env_cgi(std::string data)
+void Answer::build_env_cgi()
 {
-    (void)data;
+    int pipe_in[2];
+    int pipe_out[2];
+    pipe(pipe_in);
+    pipe(pipe_out);
+
+
+    
+    // int fd_pipe[2];
+    // if (pipe(fd_pipe) < 0)
+	// {
+    //     this->code = 500;
+	// 	return ;
+	// }
+
+
     std::vector<std::string> vec_env;
+    vec_env.push_back("REQUEST_METHOD=" + this->methode);
+    vec_env.push_back("QUERY_STRING=" + this->cgi_env_var);
     if (this->header_map.find("Content-Type") != this->header_map.end())
         vec_env.push_back(this->header_map["Content-Type"]);
+    // on fork et on new dans le fork
+    this->cgi_pid = fork();
+	if (this->cgi_pid == -1)
+	{
+        this->code = 500;
+        return ;
+    }
+	if (this->cgi_pid == 0)
+	{
+        dup2(pipe_in[0], STDIN_FILENO);  // Redirige l'entrée
+        dup2(pipe_out[1], STDOUT_FILENO); // Redirige la sortie
+        close(pipe_in[0]);
+        close(pipe_in[1]);
+        close(pipe_out[0]);
+        close(pipe_out[1]);
+		// char** envp = new char*[vec_env.size()] + 1;
+        // for (size_t idx = 0; idx < vec_env.size(); idx++)
+        // {
+        //     envp[idx] = new char[vec_env[idx].length() + 1];
+        //     std::strcpy(envp[idx], vec_env[idx].c_str());
+        // }
+        // envp[vec_env.size()] = NULL;
+
+        // char *exec_path;
+        // char *argv[3];
+        // std::string extension = this->answer.append(this->GetMime(this->ressource_path.substr(this->ressource_path.find_last_of('.'))));
+        // if (extension == ".py")
+        // {
+        //     exec_path = (char*)"/usr/bin/python3";
+        //     argv[0] = exec_path;
+        //     argv[1] = (char*)this->ressource_path.c_str();
+        //     argv[2] = NULL;
+        // }
+        char *exec_path = (char*)"/usr/bin/python3";  // Chemin vers l'interpréteur Python
+        char *argv[] = { exec_path, (char*)this->ressource_path.c_str(), NULL };  // Arguments pour execve
+        // Variables d'environnement pour le CGI
+        char *envp[] = {
+            (char*)"REQUEST_METHOD=POST",
+            (char*)(std::string("QUERY_STRING=") + this->cgi_env_var).c_str(),
+            (char*)"CONTENT_TYPE=application/x-www-form-urlencoded",
+            NULL
+        };
+        if (execve(exec_path, argv, envp) == -1)
+        {
+            std::cerr << RED << "fail execve" << WHITE << std::endl;
+            // for (size_t i = 0; i < vec_env.size(); i++)
+            //     delete[] envp[i];
+            // delete[] envp;
+            // faut delete plein de truc, todo 
+            // est ce qu'on close les sockets ?? todo
+            this->code = 500;// comment faire pour faire savoir qu'on a fail, doit on le faire savoir ?? to do
+            // kill(this->cgi_pid, SIGKILL);
+            exit(EXIT_FAILURE);// on a pas le droit a exit, a voir ce qu'on fait todo
+        }
+    }
+    else
+    {
+        close(pipe_in[0]); // Ferme le côté lecture
+        close(pipe_out[1]); // Ferme le côté écriture
+        this->fd_read = pipe_out[0];
+        this->fd_write = pipe_in[1];
+        std::cout << RED << "parent" << WHITE << std::endl;
+        this->status = 2;
+        // int status;
+        // int result = waitpid(pid, &status, 0);
+        // std::cout << RED << "result " << result << " fin" << WHITE << std::endl;
+        // if (!WIFEXITED(status))
+        //     this->code = 500;// a voir comment on determine que ca a fail todo
+    }
 }
 
 void Answer::cgi_from_post()
@@ -574,27 +699,36 @@ void Answer::cgi_from_post()
 			size_t last = str.find_last_not_of(" \t\n\r\f\v");
 			if (first != std::string::npos && str.substr(first, last - first + 1).find('=') != std::string::npos)
             {
-				line = str.substr(first, last - first + 1);
+				this->cgi_env_var = str.substr(first, last - first + 1);
                 break ;
             }
 		}
 		start = end + 1;
 	}
-    std::cout << CYAN << this->code << WHITE << std::endl;
     std::cout << MAGENTA << this->request_body << WHITE << std::endl;
-    std::cout << CYAN << line << WHITE << std::endl;
-    this->build_env_cgi(line);
-
-    
+    std::cout << CYAN << this->cgi_env_var << WHITE << std::endl;
+    this->build_env_cgi();
 }
 
-void Answer::POST()
-{
-    std::cout << MAGENTA << this->code << WHITE << std::endl;
+void Answer::POST(Configuration const &conf)
+{   
+    this->find_ressource_path(conf);
+    if (this->code >= 400)
+        return ;
     if (this->isScript() == true)
     {
+        this->cgi = true;
+        this->find_ressource_path(conf);
+        if (this->code >= 400)
+            return ;
         this->cgi_from_post();
-        this->status = 3;
+        if (this->code >= 400)
+        {
+            this->status = 3;
+            return ;
+        }
+        this->status = 2;
+        
         return ;
     }
 
