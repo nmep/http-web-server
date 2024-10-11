@@ -20,7 +20,6 @@ Socket::~Socket()
 	std::cout << "finish" << std::endl;
 }
 
-
 // renvoie le fd su serveur associe a "fd" sinon renvoie -1
 int	Socket::getFdAndServer(int fd) {
 	if (this->fdAndServer.find(fd) != this->fdAndServer.end())

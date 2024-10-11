@@ -2,10 +2,12 @@
 
 Answer::Answer(int server_idx)
 {
+	std::cout << YELLOW << "constructeur called" << RESET << std::endl;
     this->server_idx = server_idx;
     this->status = 0;
     this->socket_fd = -2;
     this->code = 200;
+	this->socketRead = 0;
 
     this->mime_map[".html"] = "text/html";
     this->mime_map[".htm"] = "text/html";
@@ -148,7 +150,7 @@ void Answer::find_ressource_path(Configuration const &conf)
                 this->match_location = it->first;
             }
         }
-        // std::cout << YELLOW << ressource << " " << this->match_location << " " << this->ressource_path << " " << this->ressource_path << WHITE << std::endl;
+        // std::cout << YELLOW << ressource << " " << this->match_location << " " << this->ressource_path << " " << this->ressource_path << RESET << std::endl;
     }
     if (depth == -1)
     {
@@ -180,7 +182,7 @@ void Answer::ParseRequest()
     size_t limi = std::string(this->request).find("\r\n\r\n");
     std::string str_request(std::string(this->request).substr(0, std::string(this->request).find("\n\n")));
     if (limi != std::string::npos)
-        this->request_body = std::string(this->request).substr(limi + 2);
+        this->request_body = std::string(this->request).substr(limi + 4);
     std::vector<std::string> header;
 	while (end != std::string::npos)// on prend le header et la ligne d etat ligne par ligne et on trime au cas ou
 	{
@@ -333,18 +335,24 @@ void Answer::HandleError(Configuration const &conf)
 // on lit la requete par tranche de READ_SIZE et quand on a fini on la parse avec DoneWithRequest
 void Answer::ReadRequest(Configuration const &conf, int socket_fd)
 {
-    std::cout << RED << "Debut de ReadRequest" << WHITE << std::endl;
+	std::cout << RED << "Debut de ReadRequestJQWEORHJEORJHWQE" << RESET << std::endl;
 
-    if (this->socket_fd == -2)
-        this->socket_fd = socket_fd;
-    char buffer[READ_SIZE];
+	if (this->socket_fd == -2)
+		this->socket_fd = socket_fd;
+	char buffer[READ_SIZE];
+	// si y'a un conte length lire tout le body jusqu'au content length
     ssize_t bytesRead = recv(this->socket_fd, buffer, READ_SIZE, 0);
     if (bytesRead == -1) {
+		std::cout << "ERROR WITH RECV" << std::endl;
         this->code = 500;//error server
     }
 
-    buffer[bytesRead] = '\0';
-    this->request.append(buffer);
+	buffer[bytesRead] = '\0';
+
+	this->socketRead = this->socketRead + bytesRead;
+    this->request.append(buffer, bytesRead - 1);
+
+	//
     if (bytesRead < READ_SIZE || this->code == 500)// si on a fini de lire la requete
     {
         if (this->code != 500)// si la lecture a marcher
@@ -353,16 +361,16 @@ void Answer::ReadRequest(Configuration const &conf, int socket_fd)
             this->HandleError(conf);
     }
     if (bytesRead < READ_SIZE)// juste pour l'affichage
-        std::cout << YELLOW << "Complete," << std::endl << this->request << WHITE;
+        std::cout << YELLOW << "Complete," << std::endl << this->request << RESET;
     else
-        std::cout << YELLOW << "Uncomplete," << WHITE << std::endl;
-    std::cout << RED << "Fin de ReadRequest" << WHITE << std::endl;
+        std::cout << YELLOW << "Uncomplete," << RESET << std::endl;
+    std::cout << RED << "Fin de ReadRequest" << RESET << std::endl;
 }
 
 // on lit le fichier demander, que ce soit la ressource ou un fichier d'erreur
 void Answer::ReadFile()
 {
-    std::cout << RED << "Debut de ReadFile" << WHITE << std::endl;
+    std::cout << RED << "Debut de ReadFile" << RESET << std::endl;
     std::cout << this->code << " " << this->fd_read << std::endl;
     char buffer[READ_SIZE];
     int bytesRead;
@@ -374,30 +382,31 @@ void Answer::ReadFile()
         return ;
     }
     buffer[bytesRead] = '\0';
-    this->answer_body.append(buffer);
+    this->answer_body.append(buffer, bytesRead - 1);
     if (bytesRead < READ_SIZE)
     {
         close(this->fd_read);
         this->status = 3;
     }
 
+	// std::cout << "request lu = " << this->answer_body << " size = " << this->answer_body.size() << std::endl;
     if (bytesRead < READ_SIZE)// juste pour l'affichage
-        std::cout << YELLOW << "Complete," << std::endl << this->answer_body << WHITE << std::endl;
+        std::cout << YELLOW << "Complete," << std::endl << this->answer_body << RESET << std::endl;
     else
-        std::cout << YELLOW << "Uncomplete," << WHITE << std::endl;
-    std::cout << RED << "Fin de ReadFile" << WHITE << std::endl;
+        std::cout << YELLOW << "Uncomplete," << RESET << std::endl;
+    std::cout << RED << "Fin de ReadFile" << RESET << std::endl;
 }
 
 void Answer::WriteFile()
 {
-    std::cout << RED << "Debut de WriteFile" << WHITE << std::endl;
+    std::cout << RED << "Debut de WriteFile" << RESET << std::endl;
 
-    std::cout << RED << "Fin de WriteFile" << WHITE << std::endl;
+    std::cout << RED << "Fin de WriteFile" << RESET << std::endl;
 }
 
 void Answer::SendAnswer(Configuration const &conf)
 {
-    std::cout << RED << "Debut de SendAnswer" << WHITE << std::endl;
+    std::cout << RED << "Debut de SendAnswer" << RESET << std::endl;
     std::stringstream tmp;
     tmp << this->code;
 
@@ -418,8 +427,8 @@ void Answer::SendAnswer(Configuration const &conf)
     // if(this->header_map.find("Connection") == this->header_map.end() || this->header_map["Connection"] != "keep-alive")
     //     close(this->socket_fd);// la close ailleur ou pas ?? normalement meme si on collapse avant on send quand meme donc non
     close(this->socket_fd);// la close ailleur ou pas ?? normalement meme si on collapse avant on send quand meme donc non
-    std::cout << YELLOW << this->answer << WHITE << std::endl;
-    std::cout << RED << "Fin de SendAnswer" << WHITE << std::endl;
+    std::cout << YELLOW << this->answer << RESET << std::endl;
+    std::cout << RED << "Fin de SendAnswer" << RESET << std::endl;
     this->Reset();
 }
 
@@ -436,8 +445,8 @@ void Answer::contentType()
 
 void Answer::connection()
 {
-    if(this->header_map.find("Connection") != this->header_map.end() && this->header_map["Connection"] == "keep-alive")
-        this->answer.append("Connection: keep-alive\r\n");
+	if (this->header_map.find("Connection") != this->header_map.end() && this->header_map["Connection"] == "keep-alive")
+		this->answer.append("Connection: keep-alive\r\n");
 }
 
 void Answer::server(Configuration const &conf)
@@ -580,17 +589,50 @@ void Answer::cgi_from_post()
 		}
 		start = end + 1;
 	}
-    std::cout << CYAN << this->code << WHITE << std::endl;
-    std::cout << MAGENTA << this->request_body << WHITE << std::endl;
-    std::cout << CYAN << line << WHITE << std::endl;
+    std::cout << CYAN << this->code << RESET << std::endl;
+    std::cout << MAGENTA << this->request_body << RESET << std::endl;
+    std::cout << CYAN << line << RESET << std::endl;
     this->build_env_cgi(line);
-
-    
 }
+
+
+/*
+example de body header
+------WebKitFormBoundaryXATporBEzp3eUwCK
+Content-Disposition: form-data; name="file"; filename="ted.jpg"
+Content-Type: image/jpeg
+
+����JFIFHH��C <- a partir d'ici c'est le binaire de l'image
+*/
+
+bool	Answer::parseBodyHeader()
+{
+	// std::vector<std::string> bodyHeader = split(this->request_body);
+	std::istringstream is(this->request_body);
+	std::string line;
+
+	// std::vector<std::string>::iterator it = bodyHeader.begin();
+	// std::vector<std::string>::iterator ite = bodyHeader.end();
+
+	// std::cout << RED << "vector body" << RESET << std::endl;
+	// for (/**/; it != ite; it++) {
+	// 	std::cout << '[' << *it << ']' << std::endl;
+	// }
+	std::cout << RED << "Getline Body\n" << RESET << std::endl;
+	for (int i = 0; i < 3; i++)
+	{
+		getline(is, line);
+		std::cout << "line n *" << i << std::endl;
+		std::cerr << "LA((qwerqwrwq(" << line << ")))LA" << std::endl;
+	}
+
+	return true;
+}
+
 
 void Answer::POST()
 {
-    std::cout << MAGENTA << this->code << WHITE << std::endl;
+    std::cout << MAGENTA << this->code << RESET << std::endl;
     if (this->isScript() == true)
     {
         this->cgi_from_post();
@@ -606,10 +648,23 @@ void Answer::POST()
 
 
     // met toi ici GARFI, tu peux faire l'upload file ici
-    std::cout << GREEN << this->ressource << std::endl;
-    std::cout << this->request_body << WHITE << std::endl;
+
+	// est ce qeue je dois set un dossier pour l'ipload par default ou bien 
+	// si resourcce est "/upload alors c'est qu'un fichier a ete envoye"
+
+		// si "is uploadfile accepted dans la location"
+    std::cout << GREEN << this->ressource << RESET << std::endl; // savoir si c'est un /upload ou /update
+    // std::cout << this->request_body << RESET << std::endl; // body
+	// exit (2);
+	std::cout << "BODY SIZE = " << this->request_body.size() << std::endl;
+	std::cout << "socket length read = " << this->socketRead << std::endl;
     this->code = 201;//quand post marche
-    this->status = 2; // si il faut ecrire quelque chose (la fonction writefile est vide tu peux faire la suite la bas)
+	if (this->ressource == "/upload") {
+		// est ce que je peux faire un upload file si oui ou je dois le televerser ???? TO DO
+		// parse body
+		this->parseBodyHeader();
+	}
+    this->status = 2; // si il faut ecrire quelque chose (la fonction writefile est vide tu peux faire la suite la bas)	
 }
 
 void Answer::DELETE()

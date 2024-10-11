@@ -167,14 +167,3 @@ std::string	AutoIndex::createHttpPage()
 
 	return page;
 }
-
-int	main()
-{
-	AutoIndex autoindex("toto", ".");
-
-	std::string test = autoindex.createHttpPage();
-
-	if (test.empty())
-		return 2;
-	std::cout << test << std::endl;
-}

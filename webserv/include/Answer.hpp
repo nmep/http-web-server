@@ -10,7 +10,7 @@
 #include <string>
 #include <algorithm>
 #include <fstream>
-
+#include <sstream> //stringstream
 
 #define READ_SIZE 4096 // pour l'instant choisi arbitrairement, on verra si on le change pour plus de performance
 
@@ -25,13 +25,18 @@ class Answer
                     // 2 pour en cours d'ecriture d'un file,
                     // 3 pour en cours d'envoie de la reponse
                     // 4 pour en attente de reset
-        
+
         // elements pour la response
+		int socketRead; // garfi
         int code;
         std::string answer;
         std::string answer_body;
 
         // elements de la requete
+		// garfi
+		std::string bodyHeader;
+
+		//
         std::string request;
         std::string methode;
         std::string ressource;// la ressource tel que dans la requete
@@ -74,8 +79,10 @@ class Answer
         void GET(Configuration const &conf);
         void POST();
         void DELETE();
+		bool parseBodyHeader();
 
     public:
+		Answer() {};
         Answer(int server_idx);
         ~Answer();
 

@@ -5,6 +5,7 @@
 	#include "print_tools.hpp"
 	#include "tools.hpp"
 	#include "Location.hpp"
+	#include "autoIndex.hpp"
 
 class Server
 {
