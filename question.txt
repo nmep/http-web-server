@@ -22,4 +22,7 @@ build l'env du cgi automatiquement
 faire un deuxieme cgi
 write en plusieurs fois ?
 faire les cookies
+gerer les redirections
+parser et lire en meme temps, au fur et a mesure
+
 

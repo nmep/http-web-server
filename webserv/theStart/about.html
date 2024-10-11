@@ -4,7 +4,7 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>page index</title>
-        <link rel="stylesheet" href="style.css">
+        <link rel="stylesheet" href="acceuil.css">
         <script src="script.js" defer></script>
         <!-- <link rel="icon" type="x-icon" href="images.ico"> -->
     </head>
@@ -13,8 +13,13 @@
         <p id="texte">La page 2 qui est dans theRoot <a href="blabla/page2.html">Page 2</a></p>
         <button onclick="changerCouleur()">Changer la couleur</button>
         <form action="/cgi/cgi_script.py" method="POST">
-            <input type="text" name="age" placeholder="Entrez votre age" required>
-            <button type="submit">Envoyer</button>
+            <label for="val1">Valeur 1 :</label>
+            <input type="text" id="val1" name="val1" required><br><br>
+    
+            <label for="val2">Valeur 2 :</label>
+            <input type="text" id="val2" name="val2" required><br><br>
+    
+            <button type="submit">Calculer</button>
         </form>
         <form action="/upload" method="POST" enctype="multipart/form-data">
             <input type="file" name="file" required>

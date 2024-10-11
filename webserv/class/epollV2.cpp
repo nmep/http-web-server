@@ -24,7 +24,7 @@ int Socket::launchEpoll(Configuration const & conf) {
 
 	while (KAA) {
 		std::cout << "epollwait" << std::endl;
-		usleep(500000);
+		usleep(100000);
 		this->nfd = epoll_wait(this->epfd, events, MAX_EVENTS, 0); // TO DO timout voir fichier de configuration
 		if (this->nfd == -1) {
 			std::cerr << "Epoll wait error: " << strerror(errno) << std::endl;
@@ -45,7 +45,7 @@ int Socket::launchEpoll(Configuration const & conf) {
 			{
 				std::cout << "ici c soit un serveur soit une requete qui est lu" << std::endl;
 				// attention a l'appel de la map si un fd n'est pas dans la map il se passe quoi ?
-				usleep(500000);
+				usleep(100000);
 				std::cout << "get = " << this->getFdAndServer(events[i].data.fd) << std::endl;
 				asynch.Server_action(conf, this->fdAndServer[events[i].data.fd], events[i].data.fd);
 				// if (asynch.Answers_instances[this->fdAndServer[events[i].data.fd]].GetStatus() != 0) {
