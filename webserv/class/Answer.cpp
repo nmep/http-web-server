@@ -26,6 +26,7 @@ Answer::Answer(int server_idx)
     this->mime_map[".pdf"] = "application/pdf";
     this->mime_map[".js"] = "application/javascript";
     this->mime_map[".py"] = "text/x-python";
+    this->mime_map[".php"] = "application/x-httpd-php";
 
     this->code_map[100] = "Continue";
     this->code_map[101] = "Switching Protocol";
@@ -272,6 +273,7 @@ bool Answer::isScript()
 {
     std::vector<std::string> tab;
     tab.push_back(".py");
+    tab.push_back(".php");
     size_t dot = this->ressource_path.find_last_of('.');
     if (dot != std::string::npos && dot < this->ressource_path.size() && this->mime_map.find(this->ressource_path.substr(dot)) != this->mime_map.end())
     {
@@ -629,34 +631,34 @@ void Answer::build_env_cgi()
         close(pipe_in[1]);
         close(pipe_out[0]);
         close(pipe_out[1]);
-		// char** envp = new char*[vec_env.size()] + 1;
-        // for (size_t idx = 0; idx < vec_env.size(); idx++)
-        // {
-        //     envp[idx] = new char[vec_env[idx].length() + 1];
-        //     std::strcpy(envp[idx], vec_env[idx].c_str());
-        // }
-        // envp[vec_env.size()] = NULL;
 
         // char *exec_path;
         // char *argv[3];
-        // std::string extension = this->answer.append(this->GetMime(this->ressource_path.substr(this->ressource_path.find_last_of('.'))));
-        // if (extension == ".py")
-        // {
-        //     exec_path = (char*)"/usr/bin/python3";
-        //     argv[0] = exec_path;
-        //     argv[1] = (char*)this->ressource_path.c_str();
-        //     argv[2] = NULL;
-        // }
-        char *exec_path = (char*)"/usr/bin/python3";  // Chemin vers l'interpréteur Python
-        char *argv[] = { exec_path, (char*)this->ressource_path.c_str(), NULL };  // Arguments pour execve
-        // Variables d'environnement pour le CGI
+        std::cerr << (char*)(std::string("QUERY_STRING=") + this->cgi_env_var).c_str() << std::endl;
+        char *tmp = (char*)(std::string("QUERY_STRING=") + this->cgi_env_var).c_str();
+        std::string extension = this->ressource_path.substr(this->ressource_path.find_last_of('.'));
+        // char *exec_path = (char*)"/usr/bin/python3";  // Chemin vers l'interpréteur Python
+        char *exec_path;
+        if (extension == ".py")
+            exec_path = (char*)"/usr/bin/python3";
+        else
+            exec_path = (char*)"/usr/bin/php";
+        char *argv[] = { exec_path, (char*)"-f", (char*)this->ressource_path.c_str(), NULL };  // Arguments pour execve
         char *envp[] = {
             (char*)"REQUEST_METHOD=POST",
-            (char*)(std::string("QUERY_STRING=") + this->cgi_env_var).c_str(),
+            tmp,
             (char*)"CONTENT_TYPE=application/x-www-form-urlencoded",
             NULL
         };
-        if (execve(exec_path, argv, envp) == -1)
+        // Variables d'environnement pour le CGI
+        std::cerr << exec_path << std::endl;
+        std::cerr << argv[0] << std::endl;
+        std::cerr << argv[1] << std::endl;
+        std::cerr << argv[2] << std::endl;
+        std::cerr << envp[0] << std::endl;
+        std::cerr << envp[1] << std::endl;
+        std::cerr << envp[2] << std::endl;
+        if (execve(exec_path, argv, envp) == -1)// php fail todo
         {
             std::cerr << RED << "fail execve" << WHITE << std::endl;
             // for (size_t i = 0; i < vec_env.size(); i++)
@@ -717,6 +719,17 @@ void Answer::POST(Configuration const &conf)
         return ;
     if (this->isScript() == true)
     {
+        if (access(this->ressource_path.c_str(), F_OK) == -1)
+        {
+            this->code = 404;//not found
+            return ;
+        }
+        else if (access(this->ressource_path.c_str(), F_OK | X_OK) == -1)
+        {
+            std::cout << "1 " << this->ressource << " et " << this->ressource_path << std::endl;
+            this->code = 403;//forbidden
+            return ;
+        }
         this->cgi = true;
         this->find_ressource_path(conf);
         if (this->code >= 400)
