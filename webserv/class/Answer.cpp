@@ -410,7 +410,10 @@ void Answer::WriteFile()
 
     if (this->cgi == true)
     {
+        std::cout << RED << "la\n";
+        std::cout << this->fd_write << " et " << this->cgi_env_var << std::endl;
         write(this->fd_write, this->cgi_env_var.c_str(), this->cgi_env_var.size());// a voir si on ecrit en plusieurs fois, je pense que oui mais je veux deja voir si ca marche
+        std::cout << RED << "la2\n" << WHITE;
         // faut proteger le write
         close(this->fd_write);
         this->status = 1;
@@ -631,30 +634,27 @@ void Answer::build_env_cgi()
         close(pipe_in[1]);
         close(pipe_out[0]);
         close(pipe_out[1]);
+        // sleep(3);
 
-        // char *exec_path;
-        // char *argv[3];
-        std::cerr << (char*)(std::string("QUERY_STRING=") + this->cgi_env_var).c_str() << std::endl;
-        char *tmp = (char*)(std::string("QUERY_STRING=") + this->cgi_env_var).c_str();
+
         std::string extension = this->ressource_path.substr(this->ressource_path.find_last_of('.'));
-        // char *exec_path = (char*)"/usr/bin/python3";  // Chemin vers l'interpréteur Python
         char *exec_path;
         if (extension == ".py")
             exec_path = (char*)"/usr/bin/python3";
         else
             exec_path = (char*)"/usr/bin/php";
-        char *argv[] = { exec_path, (char*)"-f", (char*)this->ressource_path.c_str(), NULL };  // Arguments pour execve
+        char *argv[] = { exec_path, (char*)this->ressource_path.c_str(), NULL };
+        std::string tmp = "QUERY_STRING=" + this->cgi_env_var;
         char *envp[] = {
             (char*)"REQUEST_METHOD=POST",
-            tmp,
+            // (char*)(std::string("QUERY_STRING=") + this->cgi_env_var).c_str(),
+            (char*)(tmp.c_str()),
             (char*)"CONTENT_TYPE=application/x-www-form-urlencoded",
             NULL
         };
-        // Variables d'environnement pour le CGI
         std::cerr << exec_path << std::endl;
         std::cerr << argv[0] << std::endl;
         std::cerr << argv[1] << std::endl;
-        std::cerr << argv[2] << std::endl;
         std::cerr << envp[0] << std::endl;
         std::cerr << envp[1] << std::endl;
         std::cerr << envp[2] << std::endl;
@@ -677,7 +677,7 @@ void Answer::build_env_cgi()
         close(pipe_out[1]); // Ferme le côté écriture
         this->fd_read = pipe_out[0];
         this->fd_write = pipe_in[1];
-        std::cout << RED << "parent" << WHITE << std::endl;
+        std::cout << RED << "parent " << this->fd_write << WHITE << std::endl;
         this->status = 2;
         // int status;
         // int result = waitpid(pid, &status, 0);
