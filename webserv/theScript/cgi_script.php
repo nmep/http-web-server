@@ -1,10 +1,24 @@
 <?php
-header("Content-Type: text/html; charset=UTF-8");
+echo "HTTP/1.1 200 OK\n";
+echo "Content-Type: text/html\n";
+if (isset($_SERVER['CONNECTION'])) {
+    echo "Connection: " . $_SERVER['CONNECTION'] . "\r\n";
+}
+if (isset($_SERVER['SERVER_NAME'])) {
+    echo "Server: " . $_SERVER['SERVER_NAME'] . "\r\n";
+}
+if (isset($_SERVER['DATE'])) {
+    echo "Date: " . $_SERVER['DATE'] . "\r\n";
+}
+echo "\r\n";
+// plus les cookies quand ce sera fait todo
 
 // Récupération des valeurs envoyées via POST
-$val1 = isset($_POST['val1']) ? $_POST['val1'] : 'Inconnu';
-$val2 = isset($_POST['val2']) ? $_POST['val2'] : 'Inconnu';
+$val1 = isset($_GET['val1']) ? $_GET['val1'] : 'Inconnu';
+$val2 = isset($_GET['val2']) ? $_GET['val2'] : 'Inconnu';
 
+echo "Method: " . $_SERVER['QUERY_STRING'] . "<br>";
+echo "$val1  et   $val2\n"; // virer todo
 // Fonction pour vérifier si la valeur est un nombre
 function is_number($s) {
     return is_numeric($s);
@@ -52,7 +66,7 @@ echo "
                     <label for=\"val2\">Value 2:</label>
                     <input type=\"number\" name=\"val2\" required>
                     <input type=\"submit\" value=\"Multiply\">
-                    <p>{resultat_message}</p>
+                    <p>res =</p>
                 </form>
             </div>
             <div class=\"form-section\">

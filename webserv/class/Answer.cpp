@@ -378,7 +378,9 @@ void Answer::ReadFile()
     {
         this->nb_readfile = 1;
         int status;
+        std::cerr << "hereeee\n";
         int result = waitpid(this->cgi_pid, &status, 0);
+        std::cerr << "outtt\n";
         std::cout << RED << "result " << result << " fin" << WHITE << std::endl;
         if (!WIFEXITED(status))
             this->code = 500;// a voir comment on determine que ca a fail todo
@@ -404,19 +406,111 @@ void Answer::ReadFile()
     std::cout << RED << "Fin de ReadFile" << WHITE << std::endl;
 }
 
-void Answer::WriteFile()
+char** Answer::ft_build_env(Configuration const &conf) {
+    std::vector<std::string> env_vars;
+
+    env_vars.push_back("REQUEST_METHOD="+this->methode);
+    env_vars.push_back("CONTENT_TYPE=application/x-www-form-urlencoded");
+    if (!cgi_env_var.empty() && this->methode == "GET") {
+        env_vars.push_back("QUERY_STRING=" + cgi_env_var);
+    }
+    env_vars.push_back("SERVER_NAME=" + conf.getServer(server_idx).GetServerName());
+    if(this->header_map.find("Connection") != this->header_map.end() && this->header_map["Connection"] == "keep-alive")
+        env_vars.push_back("CONNECTION=keep-alive");
+    char date[1000];
+    time_t now = time(0) + 7200;//7200 ca vaut 2h en secondes
+    struct tm tm = *gmtime(&now);
+    strftime(date, sizeof(date), "%a, %d %b %Y %H:%M:%S %Z", &tm);
+    env_vars.push_back("DATE=" + std::string(date));
+
+
+    char** envp = new char*[env_vars.size() + 1];
+    for (size_t i = 0; i < env_vars.size(); ++i) {
+        envp[i] = strdup(env_vars[i].c_str());
+    }
+    envp[env_vars.size()] = NULL;
+
+    return envp;
+}
+
+void Answer::WriteFile(Configuration const &conf)
 {
     std::cout << RED << "Debut de WriteFile" << WHITE << std::endl;
 
     if (this->cgi == true)
     {
-        std::cout << RED << "la\n";
-        std::cout << this->fd_write << " et " << this->cgi_env_var << std::endl;
-        write(this->fd_write, this->cgi_env_var.c_str(), this->cgi_env_var.size());// a voir si on ecrit en plusieurs fois, je pense que oui mais je veux deja voir si ca marche
-        std::cout << RED << "la2\n" << WHITE;
-        // faut proteger le write
-        close(this->fd_write);
         this->status = 1;
+        int pipe_in[2];
+        int pipe_out[2];
+        if (pipe(pipe_in) == -1)
+        {
+            this->code = 500;
+            this->status = 3;
+            return ;
+        }
+        if (pipe(pipe_out) == -1)
+        {
+            this->code = 500;
+            this->status = 3;
+            close(pipe_in[0]);
+            close(pipe_in[1]);
+            return ;
+        }
+        this->fd_read = pipe_out[0];
+        this->fd_write = pipe_in[1];
+        
+        this->cgi_pid = fork();
+        if (this->cgi_pid == -1)
+        {
+            this->code = 500;
+            return ;
+        }
+        if (this->cgi_pid == 0)
+        {
+            dup2(pipe_in[0], STDIN_FILENO); // Redirige l'entrée
+            dup2(pipe_out[1], STDOUT_FILENO); // Redirige la sortie
+            close(pipe_in[1]);
+            close(pipe_out[0]);
+            std::string extension = this->ressource_path.substr(this->ressource_path.find_last_of('.'));
+            char *exec_path;
+            if (extension == ".py")
+                exec_path = (char*)"/usr/bin/python3";
+            else
+                exec_path = (char*)"/usr/bin/php";
+            char *argv[] = { exec_path, (char*)this->ressource_path.c_str(), NULL };
+            char **envp = this->ft_build_env(conf);
+            size_t x = 0;
+            while (envp[x] != NULL)
+            {
+                std::cerr << envp[x] << std::endl;
+                x++;
+            }
+            if (execve(exec_path, argv, envp) == -1)
+            {
+                size_t size = 0;
+                while (envp[size] != NULL)
+                    size++;
+                for (size_t i = 0; i <= size; i++) {
+                    free(envp[i]);
+                }
+                delete[] envp;
+                std::cerr << RED << "fail execve" << WHITE << std::endl;
+                // est ce qu'on close les sockets ?? todo
+                this->code = 500;// comment faire pour faire savoir qu'on a fail, doit on le faire savoir ?? to do
+                // kill(this->cgi_pid, SIGKILL);
+                exit(EXIT_FAILURE);// on a pas le droit a exit, a voir ce qu'on fait todo
+            }
+        }
+        else
+        {
+            close(pipe_in[0]); // Ferme le côté lecture
+            write(this->fd_write, this->cgi_env_var.c_str(), this->cgi_env_var.size());// a voir si on ecrit en plusieurs fois, je pense que oui mais je veux deja voir si ca marche
+            close(this->fd_write);
+            std::cout << MAGENTA << "ici " << this->cgi_env_var << std::endl << WHITE;
+            
+            close(pipe_out[1]); // Ferme le côté écriture
+        }
+        
     }
     else
     {
@@ -433,20 +527,24 @@ void Answer::SendAnswer(Configuration const &conf)
     std::stringstream tmp;
     tmp << this->code;
 
-    this->answer.append("HTTP/1.1 " + tmp.str() + " " + this->GetCodeSentence(this->code) + "\r\n");
-    this->contentType();
-    this->connection();
-    this->server(conf);
-    this->location();
-    this->date();
-    this->taille();
-    if (this->cgi == false)
-        this->answer.append("\r\n");
-
-    // on remplit le body
-    if (this->answer_body.size() != 0)
+    if (this->cgi == true)
+    {
         this->answer.append(this->answer_body);
-
+    }
+    else
+    {
+        this->answer.append("HTTP/1.1 " + tmp.str() + " " + this->GetCodeSentence(this->code) + "\r\n");
+        this->contentType();
+        this->connection();
+        this->server(conf);
+        this->location();
+        this->date();
+        this->taille();
+        this->answer.append("\n");
+        // on remplit le body
+        if (this->answer_body.size() != 0)
+            this->answer.append(this->answer_body);
+    }
     send(this->socket_fd, this->answer.c_str(), strlen(this->answer.c_str()), 0);
     // if(this->header_map.find("Connection") == this->header_map.end() || this->header_map["Connection"] != "keep-alive")
     //     close(this->socket_fd);// la close ailleur ou pas ?? normalement meme si on collapse avant on send quand meme donc non
@@ -570,9 +668,9 @@ void Answer::GET(Configuration const &conf)
             return ;
         }
         if (this->isScript() == true)
-        {
-            // on fait le cgi avec les parametres de l'url
+        {  
             this->cgi = true;
+            this->status = 2;
         }
         else if (this->isBinary() == true)// si on a besoin de le lire en binaire
         {
@@ -597,96 +695,6 @@ void Answer::GET(Configuration const &conf)
     }
 }
 
-void Answer::build_env_cgi()
-{
-    int pipe_in[2];
-    int pipe_out[2];
-    pipe(pipe_in);
-    pipe(pipe_out);
-
-
-    
-    // int fd_pipe[2];
-    // if (pipe(fd_pipe) < 0)
-	// {
-    //     this->code = 500;
-	// 	return ;
-	// }
-
-
-    std::vector<std::string> vec_env;
-    vec_env.push_back("REQUEST_METHOD=" + this->methode);
-    vec_env.push_back("QUERY_STRING=" + this->cgi_env_var);
-    if (this->header_map.find("Content-Type") != this->header_map.end())
-        vec_env.push_back(this->header_map["Content-Type"]);
-    // on fork et on new dans le fork
-    this->cgi_pid = fork();
-	if (this->cgi_pid == -1)
-	{
-        this->code = 500;
-        return ;
-    }
-	if (this->cgi_pid == 0)
-	{
-        dup2(pipe_in[0], STDIN_FILENO);  // Redirige l'entrée
-        dup2(pipe_out[1], STDOUT_FILENO); // Redirige la sortie
-        close(pipe_in[0]);
-        close(pipe_in[1]);
-        close(pipe_out[0]);
-        close(pipe_out[1]);
-        // sleep(3);
-
-
-        std::string extension = this->ressource_path.substr(this->ressource_path.find_last_of('.'));
-        char *exec_path;
-        if (extension == ".py")
-            exec_path = (char*)"/usr/bin/python3";
-        else
-            exec_path = (char*)"/usr/bin/php";
-        char *argv[] = { exec_path, (char*)this->ressource_path.c_str(), NULL };
-        std::string tmp = "QUERY_STRING=" + this->cgi_env_var;
-        char *envp[] = {
-            (char*)"REQUEST_METHOD=POST",
-            // (char*)(std::string("QUERY_STRING=") + this->cgi_env_var).c_str(),
-            (char*)(tmp.c_str()),
-            (char*)"CONTENT_TYPE=application/x-www-form-urlencoded",
-            NULL
-        };
-        std::cerr << exec_path << std::endl;
-        std::cerr << argv[0] << std::endl;
-        std::cerr << argv[1] << std::endl;
-        std::cerr << envp[0] << std::endl;
-        std::cerr << envp[1] << std::endl;
-        std::cerr << envp[2] << std::endl;
-        if (execve(exec_path, argv, envp) == -1)// php fail todo
-        {
-            std::cerr << RED << "fail execve" << WHITE << std::endl;
-            // for (size_t i = 0; i < vec_env.size(); i++)
-            //     delete[] envp[i];
-            // delete[] envp;
-            // faut delete plein de truc, todo 
-            // est ce qu'on close les sockets ?? todo
-            this->code = 500;// comment faire pour faire savoir qu'on a fail, doit on le faire savoir ?? to do
-            // kill(this->cgi_pid, SIGKILL);
-            exit(EXIT_FAILURE);// on a pas le droit a exit, a voir ce qu'on fait todo
-        }
-    }
-    else
-    {
-        close(pipe_in[0]); // Ferme le côté lecture
-        close(pipe_out[1]); // Ferme le côté écriture
-        this->fd_read = pipe_out[0];
-        this->fd_write = pipe_in[1];
-        std::cout << RED << "parent " << this->fd_write << WHITE << std::endl;
-        this->status = 2;
-        // int status;
-        // int result = waitpid(pid, &status, 0);
-        // std::cout << RED << "result " << result << " fin" << WHITE << std::endl;
-        // if (!WIFEXITED(status))
-        //     this->code = 500;// a voir comment on determine que ca a fail todo
-    }
-}
-
 void Answer::cgi_from_post()
 {
     size_t start = 0;
@@ -707,9 +715,7 @@ void Answer::cgi_from_post()
 		}
 		start = end + 1;
 	}
-    std::cout << MAGENTA << this->request_body << WHITE << std::endl;
-    std::cout << CYAN << this->cgi_env_var << WHITE << std::endl;
-    this->build_env_cgi();
+    this->status = 2;
 }
 
 void Answer::POST(Configuration const &conf)

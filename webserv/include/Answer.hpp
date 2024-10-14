@@ -64,7 +64,7 @@ class Answer
         bool isScript();
         void HandleError(Configuration const &conf);
         void cgi_from_post();
-        void build_env_cgi();
+        char** ft_build_env(Configuration const &conf);
 
 
         std::string GetMime(std::string extansion);// prend l'extension du fichier en parametre et renvoie le type
@@ -89,7 +89,7 @@ class Answer
 
         void ReadRequest(Configuration const &conf, int socket_fd);
         void ReadFile();
-        void WriteFile();
+        void WriteFile(Configuration const &conf);
         void SendAnswer(Configuration const &conf);
 
 };

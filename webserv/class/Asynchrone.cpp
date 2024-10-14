@@ -28,7 +28,7 @@ void Asynchrone::Server_action(Configuration const &conf, int server_idx, int so
             this->Answers_instances[server_idx].ReadFile();
             break;
         case 2:
-            this->Answers_instances[server_idx].WriteFile();
+            this->Answers_instances[server_idx].WriteFile(conf);
             break;
         case 3:
             this->Answers_instances[server_idx].SendAnswer(conf);

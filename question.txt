@@ -18,31 +18,16 @@ l'index location correspond au nombre total de location et pas au nb de location
 a quoi sert host dans les fichier de config
 la condition dans serveraction c'est pour quoi ? un test ?
 est ce qu'on close les sockets dans l'enfant ?
-build l'env du cgi automatiquement
-faire un deuxieme cgi
 write en plusieurs fois ?
 faire les cookies
 gerer les redirections
 parser et lire en meme temps, au fur et a mesure
 quoi faire quand on a pas le /usr/bin/python3
-
-char *envp[] = {
-            (char*)"REQUEST_METHOD=POST",
-            (char*)(std::string("QUERY_STRING=") + this->cgi_env_var).c_str(),
-            (char*)"CONTENT_TYPE=application/x-www-form-urlencoded",
-            NULL
-        };
-        char *exec_path;
-        std::string extension = this->answer.append(this->GetMime(this->ressource_path.substr(this->ressource_path.find_last_of('.'))));
-        if (extension == ".py")
-        {
-            exec_path = (char*)"/usr/bin/python3";
-        }
-        else if (extension == ".php")
-        {
-            exec_path = (char*)"/usr/bin/php";
-        }
-    
-        char *argv[] = { exec_path, (char*)this->ressource_path.c_str(), NULL };  // Arguments pour execve
-
-
+trouver quoi faire quand l'erreur arrive apres l'etapes de lecture des fichiers d'erreurs
+faire en sort que le cgi soit une response entiere, pas un bon, ajouter la ligne d'en tete
+faire passer les arguments avec post pour php
+mettre tous les truc par default si ils ne sont pas preciser, comme le server name
+ajouter la gestion des cookies dans la reponse depuis send et depuis cgi
+je suis oblige de free pour les strdup, on peut le faire ??
+voir si on est oblige de mettre la taille pour les responses cgi
+mettre la date au dernier moment en php
