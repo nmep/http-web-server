@@ -167,3 +167,10 @@ std::string	AutoIndex::createHttpPage()
 
 	return page;
 }
+
+// int	main()
+// {
+// 	AutoIndex test("./", "./");
+	
+// 	std::cout << test.createHttpPage() << std::endl;
+// }

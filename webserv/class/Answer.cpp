@@ -7,7 +7,6 @@ Answer::Answer(int server_idx)
     this->status = 0;
     this->socket_fd = -2;
     this->code = 200;
-	this->socketRead = 0;
 
     this->mime_map[".html"] = "text/html";
     this->mime_map[".htm"] = "text/html";
@@ -348,11 +347,8 @@ void Answer::ReadRequest(Configuration const &conf, int socket_fd)
     }
 
 	buffer[bytesRead] = '\0';
-
-	this->socketRead = this->socketRead + bytesRead;
     this->request.append(buffer, bytesRead - 1);
 
-	//
     if (bytesRead < READ_SIZE || this->code == 500)// si on a fini de lire la requete
     {
         if (this->code != 500)// si la lecture a marcher
@@ -361,7 +357,7 @@ void Answer::ReadRequest(Configuration const &conf, int socket_fd)
             this->HandleError(conf);
     }
     if (bytesRead < READ_SIZE)// juste pour l'affichage
-        std::cout << YELLOW << "Complete," << std::endl << this->request << RESET;
+        std::cout << YELLOW << "Complete\n" << this->request << RESET << std::endl;
     else
         std::cout << YELLOW << "Uncomplete," << RESET << std::endl;
     std::cout << RED << "Fin de ReadRequest" << RESET << std::endl;
@@ -595,7 +591,6 @@ void Answer::cgi_from_post()
     this->build_env_cgi(line);
 }
 
-
 /*
 example de body header
 ------WebKitFormBoundaryXATporBEzp3eUwCK
@@ -605,30 +600,129 @@ Content-Type: image/jpeg
 ����JFIFHH��C <- a partir d'ici c'est le binaire de l'image
 */
 
-bool	Answer::parseBodyHeader()
+bool	Answer::parseBoundary(std::string line)
 {
-	// std::vector<std::string> bodyHeader = split(this->request_body);
-	std::istringstream is(this->request_body);
-	std::string line;
-
-	// std::vector<std::string>::iterator it = bodyHeader.begin();
-	// std::vector<std::string>::iterator ite = bodyHeader.end();
-
-	// std::cout << RED << "vector body" << RESET << std::endl;
-	// for (/**/; it != ite; it++) {
-	// 	std::cout << '[' << *it << ']' << std::endl;
-	// }
-	std::cout << RED << "Getline Body\n" << RESET << std::endl;
-	for (int i = 0; i < 3; i++)
-	{
-		getline(is, line);
-		std::cout << "line n *" << i << std::endl;
-		std::cerr << "LA((qwerqwrwq(" << line << ")))LA" << std::endl;
+	size_t i = 0;
+	while (line[i] && line[i] == '-') {
+		i++;
 	}
 
+	if (i < 2) {
+		std::cerr << "Post upload file error: boundary syntax isn't valid" << std::endl;
+		this->code = 400;
+		return false;
+	}
+	this->beginBoundary = line.substr(i - 2, (size_t) line.length());
+	this->endBoundary = this->beginBoundary + "--";
 	return true;
 }
 
+bool	Answer::parseFileName(std::string line) {
+
+
+	if (line.find("filename=\"") == (size_t) -1) {
+		std::cout << "filename n'a pas de quote ou error avec file name" << std::endl;
+		return 2;
+	}
+	std::cout << line << std::endl;
+	this->fileName = line.substr(line.find("filename=\"") + std::strlen("filename=\""), line.size());
+	std::cout << this->fileName << std::endl;
+
+	if (this->fileName.find_last_of('"') == (size_t) -1) {
+		std::cerr << "il n'y a pas de quote fermante" << std::endl;
+		return 2;
+	}
+	std::cout << "name size apres = " << this->fileName.size() << std::endl;
+	std::cout << "name lat of \" = " << (this->fileName.find_last_of('"')) << std::endl;
+
+	this->fileName = this->fileName.substr(0,this->fileName.find_last_of('"'));
+	std::cout << "name final du fichier = [" << this->fileName << ']' << std::endl;
+	
+	if (this->fileName.empty())
+		std::cout << "file name est vide je dois en creer un" << std::endl;
+	return 0;
+	return true;
+}
+
+bool	Answer::parseContentDisposition(std::string line)
+{
+	std::vector<std::string> contentDispotion;
+
+	contentDispotion = split(line);
+
+	printVector(contentDispotion, std::cout);
+	if (contentDispotion.size() < 4) {
+		std::cerr << "Post upload file error: Content Disposition isn't valid" << std::endl;
+		this->code = 400;
+		return false;
+	}
+
+	std::vector<std::string>::iterator it = contentDispotion.begin();
+	for (size_t i = 0; i < contentDispotion.size(); i++) {
+		switch (i)
+		{
+			case 0:
+				if (*it != "Content-Disposition:") {
+					std::cerr << "Post upload file error: Content Disposition isn't valid" << std::endl;
+					this->code = 400;
+					return false;
+				}
+				break;
+			case 1:
+				if (*it != "form-data;") {
+					std::cerr << "Post upload file error: Content Disposition isn't valid" << std::endl;
+					this->code = 400;
+					return false;
+				}
+				break;
+			case 3:
+				if (!parseFileName(line)) {
+					std::cerr << "Post upload file error: Content Disposition isn't valid" << std::endl;
+					this->code = 400;
+					return false;
+				}
+				break;
+
+			default:
+				break;
+		}
+		it++;
+	}
+	return true;
+}
+
+bool	Answer::parseBodyHeader()
+{
+	std::istringstream is(this->request_body);
+	std::string line;
+
+	std::cout << RED << "Getline Body\n" << RESET << std::endl;
+	for (int i = 0; getline(is, line) && i < 5; i++)
+	{
+		if (line.empty()) {
+			std::cout << "ligne vide rencontre je break" << std::endl;
+			break;
+		}
+		switch (i)
+		{
+			case 0:
+				// parse boundary
+				if (!parseBoundary(line))
+					return false;
+				break;
+			case 1:
+				if (!parseContentDisposition(line))
+					return false;
+				break;
+			case 2:
+				// parse content type
+				break;
+			default:
+				break;
+		}
+	}
+	return true;
+}
 
 void Answer::POST()
 {
@@ -643,9 +737,8 @@ void Answer::POST()
     this->status = 1;
     if (this->code >= 400)
     {
-        return ;
+		return ;
     }
-
 
     // met toi ici GARFI, tu peux faire l'upload file ici
 
@@ -657,12 +750,12 @@ void Answer::POST()
     // std::cout << this->request_body << RESET << std::endl; // body
 	// exit (2);
 	std::cout << "BODY SIZE = " << this->request_body.size() << std::endl;
-	std::cout << "socket length read = " << this->socketRead << std::endl;
     this->code = 201;//quand post marche
 	if (this->ressource == "/upload") {
 		// est ce que je peux faire un upload file si oui ou je dois le televerser ???? TO DO
 		// parse body
-		this->parseBodyHeader();
+		if (!this->parseBodyHeader())
+			return ;
 	}
     this->status = 2; // si il faut ecrire quelque chose (la fonction writefile est vide tu peux faire la suite la bas)	
 }
