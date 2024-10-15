@@ -8,6 +8,8 @@ Answer::Answer(int server_idx)
     this->code = 200;
     this->cgi = false;
     this->nb_readfile = 0;
+    this->sum_len = 0;
+    this->step = 0;
 
     this->mime_map[".html"] = "text/html";
     this->mime_map[".htm"] = "text/html";
@@ -56,7 +58,7 @@ Answer::Answer(int server_idx)
     this->code_map[410] = "Gone";
     this->code_map[411] = "Length Required";
     this->code_map[412] = "Precondition Failed";
-    this->code_map[413] = "Payload Too Large";
+    this->code_map[413] = "Payload Too Large";//use
     this->code_map[414] = "URI Too Long";
     this->code_map[415] = "Unsupported Media Type";// use
     this->code_map[416] = "Requested Range Not Satisfiable";
@@ -178,65 +180,7 @@ void Answer::find_ressource_path(Configuration const &conf)
     }
     if (find == false)
         this->code = 405;//methode not allowed
-    
     return ;
-}
-
-void Answer::ParseRequest()
-{
-    size_t start = 0;
-	size_t end = 0;
-    size_t limi = std::string(this->request).find("\r\n\r\n");
-    std::string str_request(std::string(this->request).substr(0, std::string(this->request).find("\n\n")));
-    if (limi != std::string::npos)
-        this->request_body = std::string(this->request).substr(limi + 2);
-    std::vector<std::string> header;
-	while (end != std::string::npos)// on prend le header et la ligne d etat ligne par ligne et on trime au cas ou
-	{
-		end = str_request.find("\r\n", start);
-		if (end > start) {
-			std::string str = str_request.substr(start, end - start);
-			size_t first = str.find_first_not_of(" \t\n\r\f\v");
-			size_t last = str.find_last_not_of(" \t\n\r\f\v");
-			if (first != std::string::npos)
-				header.push_back(str.substr(first, last - first + 1));
-		}
-		start = end + 1;
-	}
-    start = 0;
-    end = header.front().find(' ', 0);
-    if (end == std::string::npos)
-    {
-        this->code = 400;// requete mal faite
-        return ;
-    }
-    this->methode = header.front().substr(start, end);
-    start = end + 1;
-    end = header.front().find(' ', start);
-    if (end == std::string::npos)
-    {
-        this->code = 400;// requete mal faite
-        return ;
-    }
-    this->ressource = header.front().substr(start, end - start);
-    // on cherche si on a des parametres cgi
-    size_t lim = this->ressource.find_last_of('?');
-    if (lim != std::string::npos && lim != 0 && lim != this->ressource.size())
-    {
-        this->cgi_env_var = this->ressource.substr(lim + 1);
-        this->ressource = this->ressource.substr(0, lim);
-    }
-    start = end + 1;
-    if (header.front().substr(start) != "HTTP/1.1")
-    {
-        this->code = 505;// http pas supporte
-        return ;
-    }
-    for (size_t i = 1; i < header.size(); ++i)
-    {
-        size_t colon = header[i].find(":");
-        this->header_map[header[i].substr(0, colon)] = header[i].substr(colon + 2);
-    }
 }
 
 void Answer::find_good_index_or_autoindex(Configuration const &conf)
@@ -301,11 +245,6 @@ bool Answer::isBinary()
 // quand on an fini de lire la request, on la parse et on indique quelle sera la prochaine etape
 void Answer::DoneWithRequest(Configuration const &conf)
 {
-    this->ParseRequest();
-    if (this->code >= 400)
-        return ;
-
-    
     if (this->methode == "GET")
         this->GET(conf);
     else if (this->methode == "POST")
@@ -338,25 +277,192 @@ void Answer::HandleError(Configuration const &conf)
     this->answer_body = "<!DOCTYPE html>\n<html lang=\"fr\">\n<head>\n<meta charset=\"UTF-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n<title>Error " + tmp2.str() + "</title>\n<style>\nh1 { text-align: center; margin-top: 10%; }\nh2 { text-align: center; }\n</style>\n</head>\n<body>\n<h1>Error " + tmp2.str() + " - " + this->GetCodeSentence(this->code) + "</h1>\n<h2>Default page</h2>\n</body>\n</html>\n";
 }
 
+void Answer::parse_state_line(std::string state_line)
+{
+    this->piece_of_request = this->piece_of_request.substr(this->piece_of_request.find_first_of("\r\n") + 2);
+    size_t start = 0;
+    size_t end = state_line.find_first_of(' ');
+    if (end == std::string::npos)
+    {
+        this->code = 400;// requete mal faite
+        return ;
+    }
+    this->methode = state_line.substr(start, end);
+    std::cout << this->methode << std::endl;
+    state_line = state_line.substr(end + 1);
+    start = 0;
+    end = state_line.find_first_of(' ');
+    if (end == std::string::npos)
+    {
+        this->code = 400;// requete mal faite
+        return ;
+    }
+    this->ressource = state_line.substr(start, end);
+    // on cherche si on a des parametres cgi
+    size_t lim = this->ressource.find_last_of('?');
+    if (lim != std::string::npos && lim != 0 && lim != this->ressource.size())
+    {
+        this->cgi_env_var = this->ressource.substr(lim + 1);
+        this->ressource = this->ressource.substr(0, lim);
+    }
+    std::cout << this->ressource << std::endl;
+    state_line = state_line.substr(end + 1);
+    if (state_line != "HTTP/1.1")
+    {
+        this->code = 505;// http pas supporte
+        return ;
+    }
+}
+
+void Answer::parse_header(std::string header)
+{
+    size_t end = 0;
+    size_t start = 0;
+    std::vector<std::string> header_line;
+	while (end != std::string::npos)// on prend le header ligne par ligne et on trime
+	{
+		end = header.find_first_of("\r\n", start);
+		if (end > start) {
+			std::string line = header.substr(start, end - start);
+			size_t last = line.find_last_not_of("\r\n");
+			if (last != std::string::npos)
+				line = line.substr(0, last + 1);
+            header_line.push_back(line);
+		}
+		start = end + 2;
+	}
+    for (size_t i = 0; i < header_line.size(); i++)
+    {
+        size_t colon = header_line[i].find(":");
+        if (colon == std::string::npos)
+        {
+            this->code = 400;
+            return ;
+        }
+        this->header_map[header_line[i].substr(0, colon)] = header_line[i].substr(colon + 2);
+    }
+    for (std::map<std::string, std::string>::iterator it = this->header_map.begin(); it != this->header_map.end(); it++)
+    {
+        std::cout << it->first << " et " << it->second << std::endl;
+    }
+    std::cout << "sorti\n";
+}
+
+//quand on a pas encore eu la ligne d'etat en entier
+void Answer::first_step(size_t bytesRead)
+{
+    if (this->piece_of_request.find("\r\n\r\n") != std::string::npos)
+    {
+        this->step = 2;
+        this->parse_state_line(this->piece_of_request.substr(0, this->piece_of_request.find_first_of("\r\n")));
+        if (this->code >= 400)
+            return ;
+        this->piece_of_request = this->piece_of_request.substr(this->piece_of_request.find_first_of("\r\n") + 2);
+        this->parse_header(this->piece_of_request.substr(0, this->piece_of_request.find("\r\n\r\n")));
+        if (this->code >= 400)
+            return ;
+        this->piece_of_request = this->piece_of_request.substr(this->piece_of_request.find("\r\n\r\n") + 4);
+        if (bytesRead < READ_SIZE)
+            this->request_body = this->piece_of_request;
+        else
+            this->remaining_part = this->piece_of_request;
+    }
+    else if (this->piece_of_request.find("\r\n") != std::string::npos)
+    {
+        this->step = 1;
+        this->parse_state_line(this->piece_of_request.substr(0, this->piece_of_request.find_first_of("\r\n")));
+        if (this->code >= 400)
+            return ;
+        this->piece_of_request = this->piece_of_request.substr(this->piece_of_request.find_first_of("\r\n") + 2);
+        if (this->piece_of_request.find("\r\n") != std::string::npos)
+        {
+            this->parse_header(this->piece_of_request.substr(0, this->piece_of_request.find_last_not_of("\r\n") + 1));
+            if (this->code >= 400)
+                return ;
+            this->piece_of_request = this->piece_of_request.substr(this->piece_of_request.find("\r\n\r\n") + 4);
+
+        }
+        this->remaining_part = this->piece_of_request;
+    }
+    else
+    {
+        this->remaining_part = this->piece_of_request;
+    }
+}
+
+void Answer::second_step(size_t bytesRead)
+{
+    if (this->piece_of_request.find("\r\n\r\n") != std::string::npos)
+    {
+        this->step = 2;
+        this->parse_header(this->piece_of_request.substr(0, this->piece_of_request.find("\r\n\r\n")));
+        if (this->code >= 400)
+            return ;
+        this->piece_of_request = this->piece_of_request.substr(this->piece_of_request.find("\r\n\r\n") + 4);
+        if (bytesRead < READ_SIZE)
+            this->request_body = this->piece_of_request;
+        else
+            this->remaining_part = this->piece_of_request;
+    }
+    else if (this->piece_of_request.find("\r\n") != std::string::npos)
+    {
+        this->parse_header(this->piece_of_request.substr(0, this->piece_of_request.find_last_not_of("\r\n") + 1));
+        if (this->code >= 400)
+            return ;
+        this->piece_of_request = this->piece_of_request.substr(this->piece_of_request.find("\r\n\r\n") + 4);
+        this->remaining_part = this->piece_of_request;
+    }
+    else
+    {
+        this->remaining_part = this->piece_of_request;
+    }
+}
+
+void Answer::third_step(size_t bytesRead)
+{
+    if (this->piece_of_request.size() >= 10000)//temporaire apres je pourrais prendre ta variable max size body todo
+        this->code = 413;
+    if (bytesRead < READ_SIZE)
+        this->request_body = this->piece_of_request;
+    else
+        this->remaining_part = this->piece_of_request;
+}
+
 // on lit la requete par tranche de READ_SIZE et quand on a fini on la parse avec DoneWithRequest
 void Answer::ReadRequest(Configuration const &conf, int socket_fd)
 {
     std::cout << RED << "Debut de ReadRequest" << WHITE << std::endl;
-
+    this->piece_of_request.clear();
+    this->piece_of_request.append(this->remaining_part);
     if (this->socket_fd == -2)
         this->socket_fd = socket_fd;
     char buffer[READ_SIZE];
     ssize_t bytesRead = recv(this->socket_fd, buffer, READ_SIZE, 0);
-    if (bytesRead == -1) {
+    if (bytesRead == -1)
         this->code = 500;//error server
-    }
-
     buffer[bytesRead] = '\0';
     this->request.append(buffer);
-    if (bytesRead < READ_SIZE || this->code == 500)// si on a fini de lire la requete
+    this->piece_of_request.append(buffer);
+    sum_len += bytesRead;
+
+    if (this->step == 0)
+        this->first_step(bytesRead);
+    else if (this->step == 1)
+        this->second_step(bytesRead);
+    else if (this->step == 2)
+        this->third_step(bytesRead);
+    
+    if (bytesRead < READ_SIZE || this->code >= 400)// si on a fini de lire la requete
     {
-        if (this->code != 500)// si la lecture a marcher
-            this->DoneWithRequest(conf);
+        if (this->code < 400)// si la lecture a marcher
+        {
+            if (this->methode == "GET")
+                this->GET(conf);
+            else if (this->methode == "POST")
+                this->POST(conf);
+            else if (this->methode == "DELETE")
+                this->DELETE();
+        }
         if (this->code >= 400)
             this->HandleError(conf);
     }
@@ -622,7 +728,10 @@ void Answer::Reset()
     this->cgi_env_var.clear();
     this->header_map.clear();
     this->request_body.clear();
-
+    this->sum_len = 0;
+    this->remaining_part.clear();
+    this->step = 0;
+                 
     // peut etre qu'on reset aussi l'auto index
     this->match_location.clear();
 }

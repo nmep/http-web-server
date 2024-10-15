@@ -55,8 +55,14 @@ class Answer
         size_t nb_readfile;
         int cgi_pid;
 
+        size_t sum_len;
+        std::string remaining_part;
+        int step;// 0 pour la ligne d'etat
+                 // 1 pour le header
+                 // 2 pour le body
+        std::string piece_of_request;
+
         void DoneWithRequest(Configuration const &conf);
-        void ParseRequest();
         void find_ressource_path(Configuration const &conf);
         int is_that_a_directory();
         void find_good_index_or_autoindex(Configuration const &conf);
@@ -76,6 +82,12 @@ class Answer
         void date();
         void taille();
         void Reset();
+
+        void first_step(size_t bytesRead);
+        void second_step(size_t bytesRead);
+        void third_step(size_t bytesRead);
+        void parse_state_line(std::string state_line);
+        void parse_header(std::string header);
 
         void GET(Configuration const &conf);
         void POST(Configuration const &conf);

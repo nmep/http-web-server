@@ -31,3 +31,35 @@ ajouter la gestion des cookies dans la reponse depuis send et depuis cgi
 je suis oblige de free pour les strdup, on peut le faire ??
 voir si on est oblige de mettre la taille pour les responses cgi
 mettre la date au dernier moment en php
+bloquer quand on a attaint limit size body
+si on a une erreur on ne lit pas la requete en entier
+est ce qu'on a forecement un max size body preciser, ca taille est forecement en M, tu me le passes sous quelle unite ?
+
+
+void Answer::ReadRequest(Configuration const &conf, int socket_fd)
+{
+    std::cout << RED << "Debut de ReadRequest" << WHITE << std::endl;
+
+    if (this->socket_fd == -2)
+        this->socket_fd = socket_fd;
+    char buffer[READ_SIZE];
+    ssize_t bytesRead = recv(this->socket_fd, buffer, READ_SIZE, 0);
+    if (bytesRead == -1) {
+        this->code = 500;//error server
+    }
+
+    buffer[bytesRead] = '\0';
+    this->request.append(buffer);
+    if (bytesRead < READ_SIZE || this->code == 500)// si on a fini de lire la requete
+    {
+        if (this->code != 500)// si la lecture a marcher
+            this->DoneWithRequest(conf);
+        if (this->code >= 400)
+            this->HandleError(conf);
+    }
+    if (bytesRead < READ_SIZE)// juste pour l'affichage
+        std::cout << YELLOW << "Complete," << std::endl << this->request << WHITE;
+    else
+        std::cout << YELLOW << "Uncomplete," << WHITE << std::endl;
+    std::cout << RED << "Fin de ReadRequest" << WHITE << std::endl;
+}
