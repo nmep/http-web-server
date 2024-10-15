@@ -7,6 +7,7 @@ Answer::Answer(int server_idx)
     this->status = 0;
     this->socket_fd = -2;
     this->code = 200;
+	this->isRandomName = false;
 
     this->mime_map[".html"] = "text/html";
     this->mime_map[".htm"] = "text/html";
@@ -302,7 +303,7 @@ void Answer::DoneWithRequest(Configuration const &conf)
     if (this->methode == "GET")
         this->GET(conf);
     else if (this->methode == "POST")
-        this->POST();
+        this->POST(conf);
     else if (this->methode == "DELETE")
         this->DELETE();
 
@@ -602,17 +603,10 @@ Content-Type: image/jpeg
 
 bool	Answer::parseBoundary(std::string line)
 {
-	size_t i = 0;
-	while (line[i] && line[i] == '-') {
-		i++;
-	}
+	if (line.find_last_of('\r') != (size_t) -1)
+		line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());
 
-	if (i < 2) {
-		std::cerr << "Post upload file error: boundary syntax isn't valid" << std::endl;
-		this->code = 400;
-		return false;
-	}
-	this->beginBoundary = line.substr(i - 2, (size_t) line.length());
+	this->beginBoundary = line;
 	this->endBoundary = this->beginBoundary + "--";
 	return true;
 }
@@ -621,8 +615,9 @@ bool	Answer::parseFileName(std::string line) {
 
 
 	if (line.find("filename=\"") == (size_t) -1) {
-		std::cout << "filename n'a pas de quote ou error avec file name" << std::endl;
-		return 2;
+		std::cerr << "filename n'a pas de quote ou error avec file name" << std::endl;
+		this->code = 400;
+		return false;
 	}
 	std::cout << line << std::endl;
 	this->fileName = line.substr(line.find("filename=\"") + std::strlen("filename=\""), line.size());
@@ -630,7 +625,8 @@ bool	Answer::parseFileName(std::string line) {
 
 	if (this->fileName.find_last_of('"') == (size_t) -1) {
 		std::cerr << "il n'y a pas de quote fermante" << std::endl;
-		return 2;
+		this->code = 400;
+		return false;
 	}
 	std::cout << "name size apres = " << this->fileName.size() << std::endl;
 	std::cout << "name lat of \" = " << (this->fileName.find_last_of('"')) << std::endl;
@@ -638,9 +634,11 @@ bool	Answer::parseFileName(std::string line) {
 	this->fileName = this->fileName.substr(0,this->fileName.find_last_of('"'));
 	std::cout << "name final du fichier = [" << this->fileName << ']' << std::endl;
 	
-	if (this->fileName.empty())
+	if (this->fileName.empty()) {
+
 		std::cout << "file name est vide je dois en creer un" << std::endl;
-	return 0;
+		this->isRandomName = true;
+	}
 	return true;
 }
 
@@ -650,10 +648,9 @@ bool	Answer::parseContentDisposition(std::string line)
 
 	contentDispotion = split(line);
 
-	printVector(contentDispotion, std::cout);
 	if (contentDispotion.size() < 4) {
 		std::cerr << "Post upload file error: Content Disposition isn't valid" << std::endl;
-		this->code = 400;
+		this->code = 415;
 		return false;
 	}
 
@@ -664,21 +661,28 @@ bool	Answer::parseContentDisposition(std::string line)
 			case 0:
 				if (*it != "Content-Disposition:") {
 					std::cerr << "Post upload file error: Content Disposition isn't valid" << std::endl;
-					this->code = 400;
+					this->code = 415;
 					return false;
 				}
 				break;
 			case 1:
-				if (*it != "form-data;") {
+				if (*it != "form-data;" && *it != "multipart/form-data;") {
 					std::cerr << "Post upload file error: Content Disposition isn't valid" << std::endl;
-					this->code = 400;
+					this->code = 415;
+					return false;
+				}
+				break;
+			case 2:
+				if (it->find("name=") == (size_t) -1) {
+					std::cerr << "Post upload file error: Content Disposition isn't valid" << std::endl;
+					this->code = 415;
 					return false;
 				}
 				break;
 			case 3:
 				if (!parseFileName(line)) {
 					std::cerr << "Post upload file error: Content Disposition isn't valid" << std::endl;
-					this->code = 400;
+					this->code = 415;
 					return false;
 				}
 				break;
@@ -687,6 +691,55 @@ bool	Answer::parseContentDisposition(std::string line)
 				break;
 		}
 		it++;
+	}
+	return true;
+}
+
+
+// objectif de cette fonction: verifier si le content type est correctement entree et que le mime est valide
+// si le mime est valide on le garde en memoire
+
+static bool	findMimeType(std::string value, std::map<std::string, std::string> mimeMap, std::string *mimeStr)
+{
+	value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
+	for (std::map<std::string, std::string>::iterator it = mimeMap.begin(); it != mimeMap.end(); it++) {
+		if (it->second == value) {
+			*mimeStr = it->first;
+			return true;
+		}
+	}
+	return false;
+}
+
+bool	Answer::parseContentType(std::string line)
+{
+	std::vector<std::string> contentType = split(line);
+	printVector(contentType, std::cout);
+
+	if (contentType.empty() || contentType.size() < 2) {
+		std::cerr << "Post upload file error: Content type is empty or < 2" << std::endl;
+		this->code = 400;
+		return false;
+	}
+
+	int i = 0;
+	for (std::vector<std::string>::iterator it = contentType.begin(); it != contentType.end(); it++) {
+		if (it == contentType.begin() && *it != "Content-Type:") {
+			std::cerr << "Post upload file error: the first value of content type is different from \"Content-Type:\"" << std::endl;
+			this->code = 415;
+			return false;
+		}
+		if (i == 1) {
+			std::cout << "le mime du body = " << *it << std::endl;
+			if (!findMimeType(*it, this->mime_map, &this->mimeStr)) {
+				std::cerr << "Post upload file error: the file mime is endifined" << std::endl;
+				this->code = 415;
+				return false;
+			}
+			else
+				this->mimeFile = *it;
+		}
+		i++;
 	}
 	return true;
 }
@@ -715,7 +768,8 @@ bool	Answer::parseBodyHeader()
 					return false;
 				break;
 			case 2:
-				// parse content type
+				if (!parseContentType(line))
+					return false;
 				break;
 			default:
 				break;
@@ -724,8 +778,71 @@ bool	Answer::parseBodyHeader()
 	return true;
 }
 
-void Answer::POST()
+inline bool	Answer::changeFileName(int FileNameIndex)
 {
+	std::stringstream ss;
+	std::string fileNameWihtoutMime;
+
+	if (fileName.find('.') == fileName.npos) {
+		std::cout << "point pas trouve" << std::endl;
+		return false;
+	}
+	ss << FileNameIndex;
+	fileNameWihtoutMime = this->fileName.substr(0, this->fileName.find('.'));
+
+	while (access(this->fileName.c_str(), F_OK) == 0) {
+		std::cout << "le fichier teste = " << this->fileName.c_str() << " existe deja\n\n" << std::endl;
+		
+		this->fileName = fileNameWihtoutMime + '(' + ss.str() + ')' + this->mimeStr;
+
+		std::cout << "file name without mime = " << fileNameWihtoutMime << std::endl;
+		std::cout << "mime str = " << this->mimeStr << std::endl;
+		std::cout << "file name END = " << this->fileName << std::endl;
+		ss.str("");
+		FileNameIndex++;
+		ss << FileNameIndex;
+	}
+	return true;
+}
+
+bool	Answer::openFile()
+{
+	// TO DO il faut trouver dans qu'elle location je dois placer le fichier
+	int fileNameIndex = 1;
+	std::cout << "QWEHROQWEHRJKOEWQHRJILWEQHRIEWQHRIWEQHRIOUHWQEHRIQWEHRWEIQHRWEI" << std::endl;
+	std::cout << "file name = " << this->fileName << std::endl;
+	if (access(fileName.c_str(), F_OK) == 0) {
+		this->changeFileName(fileNameIndex);
+		// to do si ca renvoit false il faut sortir un nom random
+		sleep(1);
+		// if (!this->changeFileName(fileNameIndex))
+		// 	// trouver un nom random;
+		// if (fileNameIndex == INT_MAX)
+		// 	;
+			// trouver un nom random
+		fileNameIndex++;
+	}
+	std::cout << "file name = [" << this->fileName.c_str() << "]" << std::endl;
+	this->uploadFileFd = open(this->fileName.c_str(), O_CREAT, 0644);
+	if (uploadFileFd == -1) {
+		std::cerr << "Error while opening for the upload file " << this->fileName << ": " << strerror(errno) << std::endl;
+		this->code = 500;
+		return false;
+	}
+	std::cout << "JAI OPEN" << std::endl;
+	return true;
+}
+
+bool	Answer::readFile()
+{
+	// std::cout << RED << this->request_body << RESET << std::endl;
+
+	return true;
+}
+
+void Answer::POST(Configuration const &conf)
+{
+	(void)conf;
     std::cout << MAGENTA << this->code << RESET << std::endl;
     if (this->isScript() == true)
     {
@@ -747,16 +864,29 @@ void Answer::POST()
 
 		// si "is uploadfile accepted dans la location"
     std::cout << GREEN << this->ressource << RESET << std::endl; // savoir si c'est un /upload ou /update
-    // std::cout << this->request_body << RESET << std::endl; // body
-	// exit (2);
+    // std::cout << GREEN << this->request_body << RESET << std::endl; // body
 	std::cout << "BODY SIZE = " << this->request_body.size() << std::endl;
     this->code = 201;//quand post marche
-	if (this->ressource == "/upload") {
+	std::cout << "resource = " << this->ressource << std::endl;
+	if (this->ressource == "/upload" || this->ressource == "/") {
 		// est ce que je peux faire un upload file si oui ou je dois le televerser ???? TO DO
 		// parse body
 		if (!this->parseBodyHeader())
 			return ;
 	}
+	std::cout << "LA FINALITE EST QUE" << std::endl;
+	std::cout << "begin boundary = " << this->beginBoundary << std::endl;
+	std::cout << "end boundary = " << this->endBoundary << std::endl;
+	std::cout << "LE FILE NAME = " << this->fileName << std::endl;
+	std::cout << "le mime file = " << this->mimeFile << std::endl;
+	std::cout << "le mime ext = " << this->mimeStr << std::endl;
+
+	// ouvrir le fichier 
+	if (!this->openFile() || !this->readFile()) {
+		return ;
+	}
+	// ecrire le fichier
+
     this->status = 2; // si il faut ecrire quelque chose (la fonction writefile est vide tu peux faire la suite la bas)	
 }
 

@@ -43,10 +43,18 @@ class Answer
 		std::string request_body;
 
 		// upload file
+		// 1 first line
 		std::string beginBoundary;
 		std::string endBoundary;
+		// 2 nd line
 		std::string fileName;
-
+		bool		isRandomName;
+		// 3rd line mime type
+		std::string mimeFile;
+		std::string mimeStr;
+		
+		int uploadFileFd;
+		//
 		// tools
 		std::map<std::string, std::string> mime_map;
 		std::map<int, std::string> code_map;
@@ -78,13 +86,17 @@ class Answer
 		void Reset();
 
 		void GET(Configuration const &conf);
-		void POST();
+		void POST(Configuration const &conf);
 		void DELETE();
 		// upload file
 		bool	parseBodyHeader();
 		bool	parseBoundary(std::string line);
 		bool	parseContentDisposition(std::string line);
 		bool	parseFileName(std::string line);
+		bool	parseContentType(std::string line);
+		bool	openFile();
+		inline bool	changeFileName(int FileNameIndex);
+		bool	readFile();
 		//
 
     public:

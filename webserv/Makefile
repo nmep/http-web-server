@@ -4,14 +4,16 @@ NAME = webserv
 SRC = $(shell find -type f -name "*.cpp" | cut -c 3-)
 OBJ = $(addprefix obj/, $(SRC:.cpp=.o))
 OBJ_DIR = $(addprefix ./obj/, $(notdir $(shell find ./ -type d -not -path ./conf -not -path ./include -not -path ./obj)))
+DEP = $(OBJ:%.o=%.d)
 
 # COMPILATION
 CC = g++
 CXXFLAGS = -Wall -Wextra -Werror -std=c++98 -I./include -g3
 
+
 # RULES
 ./obj/%.o: %.cpp | create_dir
-	$(CC) $(CXXFLAGS) $< -c -o $@
+	$(CC) $(CXXFLAGS) $< -c -o $@ -MMD -MP
 
 $(NAME): $(OBJ)
 	$(CC) $(CXXFLAGS) $(OBJ) -o $@
@@ -19,7 +21,7 @@ $(NAME): $(OBJ)
 all: $(NAME)
 
 clean:
-	rm -rf $(OBJ) $(OBJ_DIR) ./obj
+	rm -rf $(OBJ) $(OBJ_DIR) $(DEP) ./obj
 
 fclean: clean
 	rm -f $(NAME)
@@ -33,5 +35,7 @@ test:
 	@echo src $(SRC)
 	@echo obj $(OBJ)
 	@echo objDir $(OBJ_DIR)
+
+-include $(DEP)
 
 .PHONY: all clean fclean re
