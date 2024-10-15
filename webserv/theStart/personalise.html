@@ -8,30 +8,31 @@
     <script src="script.js"></script>
 </head>
 <body>
-    <header id="header">
+    <header class="custom_color">
         <nav>
             <ul class="menu">
                 <li><a href="acceuil.html">Home</a></li>
                 <li><a href="calculette.html">Cgi Test</a></li>
                 <li><a href="upload_tester.html">Upload Test</a></li>
                 <li><a href="personalise.html">Customize</a></li>
-                <li><a href="morpion.html">TicTacToe</a></li>
             </ul>
         </nav>
     </header>
 
     <main>
-        <p id="prenom">no one</p>
-        <form action="/cgi/cgi_set_cookies.py" method="POST">
-            <label for="username"></label>
-            <input type="string" name="username" required>
-            <label for="color"></label>
-            <input type="color" name="color" required>
-            <input type="submit" value="Confirm">
-        </form>
+        <div class="form-section">
+            <h1>Customize your page and choose a username</h1>
+            <form action="/cgi/cgi_set_cookies.py" method="POST">
+                <label for="username">Username:</label>
+                <input type="string" name="username" required>
+                <label for="color">Color:</label>
+                <input id="color_button" type="color" name="color" required>
+                <input class="custom_color" type="submit" value="Confirm" onclick="before_actu()">
+            </form>
+        </div>
     </main>
 
-    <footer>
+    <footer class="custom_color">
         <p>&copy; 2024 Our Site. All rights reserved.</p>
     </footer>
 </body>

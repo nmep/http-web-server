@@ -1,21 +1,15 @@
 question sans reponse pour l'instant
-    on peut se connecter au port 8080 de quelqu'un d'autre ??
     comment faire pour faire savoir qu'on a fail execve, doit on le faire savoir (on a pas le droit a exit)
     est ce qu'il faut indiquer un nom de domaine dans l'url ??
     a quoi sert host dans les fichier de config
     je suis oblige de free pour les strdup, on peut le faire ??
-    est ce qu'on limite la taille du header, dans le cas ou on nous envoie un header infinie, mais on bloque a combien
+    est ce qu'on limite la taille du header, dans le cas ou on nous envoie un header infinie, mais on bloque a combien todo
     si le max body size est abusurde, beaucoup trop grand pour les ressources de notre pc, on doit le bloquer mais a combien
-
-question pour garfi
-    l'index location correspond au nombre total de location et pas au nb de location de son server, ca ma induie en erreur mais c'est peut etre normal, si oui pk
-    la condition dans serveraction c'est pour quoi ? un test ?
 
 todo garfi
     mettre tous les truc par default si ils ne sont pas preciser, comme le server name
     keep-alive pour eviter de creer une nouvelle connexion a chaque requete, quand il y a keep alive moi je ne dois pas close le fd, ca veut dire qu'on vas le reutiliser
     me passer le max body size avec la taille en octet
-    modifier le makefile
 
 
 cgi
@@ -29,9 +23,8 @@ trouver quoi faire quand l'erreur arrive apres l'etapes de lecture des fichiers 
 ne pas blocker quand on a post et que la ressource ne mene a rien
 fusionner l auto index
 gerer les redirections
-cookie
+afficher le username des cookies
+faire en sorte que la page n'est pas besoin d'etre recharge pour prendre en compte les cookies
 signaux
 delete
 gerer si l'extenstion n;est pas reconnu on renvoie l'erreur correspondante et virer le defaut notfound
-    faire les cookies
-    ajouter la gestion des cookies dans la reponse depuis send et depuis cgi

@@ -139,5 +139,6 @@ button {
 }
 
 button:hover {
-    background-color: #333;
+    background: rgba(0, 0, 0, 0.8);
+    box-shadow: 0 4px 15px rgb(24, 24, 24);
 }

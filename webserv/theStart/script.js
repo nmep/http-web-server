@@ -4,16 +4,28 @@ function getCookie(name) {
     if (parts.length === 2) return parts.pop().split(';').shift();
 }
 
-function appliquerCouleursDepuisCookies() {
+function change_color() {
     const couleur = getCookie('color');
     if (couleur) {
-        let head = document.getElementById('header');
-        head.style.backgroundColor = couleur;
-
-
+        let elements = document.getElementsByClassName("custom_color");
+        for (let i = 0; i < elements.length; i++) {
+            elements[i].style.backgroundColor = couleur;
+        }
     }
 }
 
 window.onload = function() {
-    appliquerCouleursDepuisCookies();
+    change_color();
 };
+
+function before_actu(){
+    let element = document.getElementById("color_button");
+    const couleur = element.value;
+    if (couleur) {
+        let elements = document.getElementsByClassName("custom_color");
+        for (let i = 0; i < elements.length; i++) {
+            elements[i].style.backgroundColor = couleur;
+        }
+    }
+}
+

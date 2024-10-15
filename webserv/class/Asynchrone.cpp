@@ -17,8 +17,6 @@ void Asynchrone::Server_action(Configuration const &conf, int server_idx, int so
 	// std::cout << "case " << this->Answers_instances[server_idx].GetStatus() << std::endl;
 	// sleep(1);
 	// // server_idx = 105;
-	if (server_idx == -1)// pour un test ??
-		return ;
     switch (this->Answers_instances[server_idx].GetStatus())
     {
         case 0:
