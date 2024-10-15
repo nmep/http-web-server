@@ -14,7 +14,7 @@
 #include <wait.h>// pour wait
 
 
-#define READ_SIZE 4096 // pour l'instant choisi arbitrairement, on verra si on le change pour plus de performance
+#define READ_SIZE 5 // pour l'instant choisi arbitrairement, on verra si on le change pour plus de performance
 
 class Answer
 {
@@ -60,6 +60,7 @@ class Answer
         int step;// 0 pour la ligne d'etat
                  // 1 pour le header
                  // 2 pour le body
+                 // 3 quand on veut se barrer de force (pour get et delete quand on arrive au \r\n\r\n)
         std::string piece_of_request;
 
         void DoneWithRequest(Configuration const &conf);
