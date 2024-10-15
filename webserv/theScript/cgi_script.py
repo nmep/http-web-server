@@ -1,6 +1,6 @@
 import cgi
 import os
-import datetime
+from datetime import datetime, timezone
 
 print("HTTP/1.1 200 OK")
 print("Content-Type: text/html")
@@ -9,7 +9,7 @@ if 'HTTP_CONNECTION' in os.environ:
 if 'SERVER_NAME' in os.environ:
     print(f"Server: {os.environ['SERVER_NAME']}")
 
-current_date = datetime.datetime.now().strftime("%a, %d %b %Y %H:%M:%S GMT")
+current_date = datetime.now(timezone.utc).strftime("%a, %d %b %Y %H:%M:%S GMT")
 print(f"Date: {current_date}")
 print()
 
@@ -39,6 +39,7 @@ print(f"""<!DOCTYPE html>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Calculator</title>
         <link rel="stylesheet" href="../calculette.css">
+        <script src="../script.js"></script>
     </head>
     <body>
         <header>

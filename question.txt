@@ -1,65 +1,37 @@
-quelle taille choisir pour le buffer de lecture de la socket ? 4096 ? pourquoi ?
-si pas http 1.1 on refuse ?
-si on ne reconnai pas l'extention on affiche quand meme sous format html ou on gere pas ?
-on peut se connecter au port 8080 de quelqu'un d'autre ??
+question sans reponse pour l'instant
+    on peut se connecter au port 8080 de quelqu'un d'autre ??
+    comment faire pour faire savoir qu'on a fail execve, doit on le faire savoir (on a pas le droit a exit)
+    est ce qu'il faut indiquer un nom de domaine dans l'url ??
+    a quoi sert host dans les fichier de config
+    je suis oblige de free pour les strdup, on peut le faire ??
+    est ce qu'on limite la taille du header, dans le cas ou on nous envoie un header infinie, mais on bloque a combien
+    si le max body size est abusurde, beaucoup trop grand pour les ressources de notre pc, on doit le bloquer mais a combien
+
+question pour garfi
+    l'index location correspond au nombre total de location et pas au nb de location de son server, ca ma induie en erreur mais c'est peut etre normal, si oui pk
+    la condition dans serveraction c'est pour quoi ? un test ?
+
+todo garfi
+    mettre tous les truc par default si ils ne sont pas preciser, comme le server name
+    keep-alive pour eviter de creer une nouvelle connexion a chaque requete, quand il y a keep alive moi je ne dois pas close le fd, ca veut dire qu'on vas le reutiliser
+    me passer le max body size avec la taille en octet
+    modifier le makefile
 
 
-gerer si l'extenstion n;est pas reconnu on renvoie l'erreur correspondante et virer le defaut notfound
-limiter la longueur de l'url (2000 dans les navigateur classique)
-est ce qu'on affiche forecement la page d'erreur quand il y a une erreur (exemple 404 et .ico)
-limiter la lecture du body dans le requete
-keep-alive pour eviter de creer une nouvelle connexion a chaque requete, quand il y a keep alive moi je ne dois pas close le fd, ca veut dire qu'on vas le reutiliser
-reussir a parser GET /cgi-bin/script.py?name=John&age=25 HTTP/1.1
-est ce qu'il faut indiquer un nom de domaine dans l'url ??
-comment faire pour faire savoir qu'on a fail execve, doit on le faire savoir
-ne pas blocker quand on a post et que la ressource ne mene a rien
+cgi
+    mettre la date au dernier moment en php
+    quoi faire quand on a pas le /usr/bin/python3
+    est ce qu'on close les sockets dans l'enfant ?
+    faire passer les arguments avec post pour php
 
-l'index location correspond au nombre total de location et pas au nb de location de son server
-a quoi sert host dans les fichier de config
-la condition dans serveraction c'est pour quoi ? un test ?
-est ce qu'on close les sockets dans l'enfant ?
-write en plusieurs fois ?
-faire les cookies
-gerer les redirections
-parser et lire en meme temps, au fur et a mesure
-quoi faire quand on a pas le /usr/bin/python3
+
 trouver quoi faire quand l'erreur arrive apres l'etapes de lecture des fichiers d'erreurs
-faire en sort que le cgi soit une response entiere, pas un bon, ajouter la ligne d'en tete
-faire passer les arguments avec post pour php
-mettre tous les truc par default si ils ne sont pas preciser, comme le server name
-ajouter la gestion des cookies dans la reponse depuis send et depuis cgi
-je suis oblige de free pour les strdup, on peut le faire ??
-voir si on est oblige de mettre la taille pour les responses cgi
-mettre la date au dernier moment en php
-bloquer quand on a attaint limit size body
-si on a une erreur on ne lit pas la requete en entier
-est ce qu'on a forecement un max size body preciser, ca taille est forecement en M, tu me le passes sous quelle unite ?
-
-
-void Answer::ReadRequest(Configuration const &conf, int socket_fd)
-{
-    std::cout << RED << "Debut de ReadRequest" << WHITE << std::endl;
-
-    if (this->socket_fd == -2)
-        this->socket_fd = socket_fd;
-    char buffer[READ_SIZE];
-    ssize_t bytesRead = recv(this->socket_fd, buffer, READ_SIZE, 0);
-    if (bytesRead == -1) {
-        this->code = 500;//error server
-    }
-
-    buffer[bytesRead] = '\0';
-    this->request.append(buffer);
-    if (bytesRead < READ_SIZE || this->code == 500)// si on a fini de lire la requete
-    {
-        if (this->code != 500)// si la lecture a marcher
-            this->DoneWithRequest(conf);
-        if (this->code >= 400)
-            this->HandleError(conf);
-    }
-    if (bytesRead < READ_SIZE)// juste pour l'affichage
-        std::cout << YELLOW << "Complete," << std::endl << this->request << WHITE;
-    else
-        std::cout << YELLOW << "Uncomplete," << WHITE << std::endl;
-    std::cout << RED << "Fin de ReadRequest" << WHITE << std::endl;
-}
+ne pas blocker quand on a post et que la ressource ne mene a rien
+fusionner l auto index
+gerer les redirections
+cookie
+signaux
+delete
+gerer si l'extenstion n;est pas reconnu on renvoie l'erreur correspondante et virer le defaut notfound
+    faire les cookies
+    ajouter la gestion des cookies dans la reponse depuis send et depuis cgi

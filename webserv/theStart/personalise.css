@@ -1,0 +1,133 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+
+body {
+    font-family: 'Arial', sans-serif;
+    line-height: 1.5;
+    background-color: #f4f4f4;
+    color: #333;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+
+header {
+    background-color: #333;
+    padding: 3vh 0;
+}
+
+nav .menu {
+    display: flex;
+    justify-content: center;
+    list-style: none;
+}
+
+nav .menu li {
+    margin: 0 1vw;
+}
+
+nav .menu a {
+    color: white;
+    text-decoration: none;
+    font-weight: bold;
+    padding: 1vh 1vw;
+    transition: box-shadow 0.3s ease;
+    border-radius: 5px;
+}
+
+nav .menu a:hover {
+    box-shadow: 0 4px 15px rgb(24, 24, 24);
+    animation: buttonAnimation 0.4s forwards;
+}
+
+@keyframes buttonAnimation {
+    0% {
+        background: linear-gradient(to right, white, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.2));
+    }
+    17% {
+        background: linear-gradient(to right, white, white, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.2));
+    }
+    33% {
+        background: linear-gradient(to right, rgba(255, 255, 255, 0.2), white, white, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.2));
+    }
+    50% {
+        background: linear-gradient(to right, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.2), white, white, rgba(255, 255, 255, 0.2));
+    }
+    67% {
+        background: linear-gradient(to right, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.2), white, white);
+    }
+    83% {
+        background: linear-gradient(to right, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.2), white);
+    }
+    100% {
+        background: linear-gradient(to right, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.2));
+    }
+}
+
+main {
+    flex-grow: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.content {
+    text-align: center;
+}
+
+.content h1 {
+    font-size: 2.5rem;
+    margin-bottom: 2vh;
+}
+
+.content p {
+    font-size: 1.2rem;
+    margin-bottom: 3vh;
+}
+
+.boutton {
+    background-color: #333;
+    color: white;
+    padding: 1.2vh 1.8vw;
+    border: none;
+    border-radius: 5px;
+    text-decoration: none;
+    font-weight: bold;
+    transition: background-color 0.5s ease, box-shadow 0.5s ease;
+}
+
+.boutton:hover {
+    background-color: #555;
+    box-shadow: 0 4px 15px rgb(24, 24, 24);
+}
+
+footer {
+    background-color: #333;
+    color: white;
+    text-align: center;
+    padding: 2vh;
+}
+
+@media (max-width: 768px) {
+    nav .menu {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    nav .menu li {
+        margin: 1vh 0;
+    }
+
+    .content h1 {
+        font-size: 2rem;
+    }
+
+    .content p {
+        font-size: 1rem;
+    }
+}

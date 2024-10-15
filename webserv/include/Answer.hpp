@@ -14,7 +14,7 @@
 #include <wait.h>// pour wait
 
 
-#define READ_SIZE 5 // pour l'instant choisi arbitrairement, on verra si on le change pour plus de performance
+#define READ_SIZE 4096 // pour l'instant choisi arbitrairement, on verra si on le change pour plus de performance
 
 class Answer
 {

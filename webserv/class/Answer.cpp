@@ -566,6 +566,8 @@ char** Answer::ft_build_env(Configuration const &conf) {
     env_vars.push_back("SERVER_NAME=" + conf.getServer(server_idx).GetServerName());
     if(this->header_map.find("Connection") != this->header_map.end() && this->header_map["Connection"] == "keep-alive")
         env_vars.push_back("CONNECTION=keep-alive");
+    else if(this->header_map.find("Connection") != this->header_map.end() && this->header_map["Connection"] == "close")
+        env_vars.push_back("CONNECTION=close");
     char date[1000];
     time_t now = time(0) + 7200;//7200 ca vaut 2h en secondes
     struct tm tm = *gmtime(&now);
@@ -718,6 +720,8 @@ void Answer::connection()
 {
     if(this->header_map.find("Connection") != this->header_map.end() && this->header_map["Connection"] == "keep-alive")
         this->answer.append("Connection: keep-alive\r\n");
+    else if(this->header_map.find("Connection") != this->header_map.end() && this->header_map["Connection"] == "close")
+        this->answer.append("Connection: close\r\n");
 }
 
 void Answer::server(Configuration const &conf)
@@ -741,15 +745,7 @@ void Answer::date()
 
 void Answer::taille()
 {
-    size_t len;
-    if (this->cgi == true)// quand c'est le retour d'un cgi, answer body a aussi les headers que le cgi a renvoyer
-    {
-        if (this->answer_body.find("\n\n") != std::string::npos)
-        len = this->answer_body.substr(this->answer_body.find("\n\n")).size();
-
-    }
-    else
-        len = this->answer_body.size();
+    size_t len = this->answer_body.size();
     std::stringstream tmp;
     tmp << len;
     this->answer.append("Content-Length: " + tmp.str() + "\r\n");

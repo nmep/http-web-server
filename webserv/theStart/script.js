@@ -1,16 +1,19 @@
-var on = true
+function getCookie(name) {
+    let value = `; ${document.cookie}`;
+    let parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+}
 
-function changerCouleur() {
-    let texte = document.getElementById("texte");
+function appliquerCouleursDepuisCookies() {
+    const couleur = getCookie('color');
+    if (couleur) {
+        let head = document.getElementById('header');
+        head.style.backgroundColor = couleur;
 
-    if (on == true)
-    {
-        texte.style.color = "blue";
-        on = false;
-    }
-    else
-    {
-        texte.style.color = "red";
-        on = true;
+
     }
 }
+
+window.onload = function() {
+    appliquerCouleursDepuisCookies();
+};
