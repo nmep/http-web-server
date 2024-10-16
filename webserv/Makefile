@@ -10,6 +10,7 @@ DEP = $(OBJ:%.o=%.d)
 CC = g++
 CXXFLAGS = -Wall -Wextra -Werror -std=c++98 -I./include -g3
 
+
 # RULES
 ./obj/%.o: %.cpp | create_dir
 	$(CC) $(CXXFLAGS) $< -c -o $@ -MMD -MP
@@ -20,7 +21,7 @@ $(NAME): $(OBJ)
 all: $(NAME)
 
 clean:
-	rm -rf $(OBJ) $(DEP) $(OBJ_DIR) ./obj
+	rm -rf $(OBJ) $(OBJ_DIR) $(DEP) ./obj
 
 fclean: clean
 	rm -f $(NAME)

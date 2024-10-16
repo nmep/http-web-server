@@ -11,20 +11,17 @@ if (isset($_SERVER['DATE'])) {
     echo "Date: " . $_SERVER['DATE'] . "\r\n";
 }
 echo "\r\n";
-// plus les cookies quand ce sera fait todo
 
-// Récupération des valeurs envoyées via POST
-$val1 = isset($_GET['val1']) ? $_GET['val1'] : 'Inconnu';
-$val2 = isset($_GET['val2']) ? $_GET['val2'] : 'Inconnu';
+$query_string = $_SERVER['QUERY_STRING'];
+parse_str($query_string, $output);
 
-echo "Method: " . $_SERVER['QUERY_STRING'] . "<br>";
-echo "$val1  et   $val2\n"; // virer todo
-// Fonction pour vérifier si la valeur est un nombre
+$val1 = isset($output['val1']) ? $output['val1'] : 'Inconnu';
+$val2 = isset($output['val2']) ? $output['val2'] : 'Inconnu';
+
 function is_number($s) {
     return is_numeric($s);
 }
 
-// Calcul du résultat si les valeurs sont des nombres
 if (is_number($val1) && is_number($val2)) {
     $res = floatval($val1) * floatval($val2);
     if (intval($res) == $res) {
@@ -42,17 +39,22 @@ echo "<!DOCTYPE html>
         <meta charset=\"UTF-8\">
         <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">
         <title>Calculator</title>
-        <link rel=\"stylesheet\" href=\"calculette.css\">
-        <script src=\"script.js\"></script>
+        <link rel=\"stylesheet\" href=\"../calculette.css\">
+        <script src=\"../script.js\"></script>
     </head>
     <body>
         <header class=\"custom_color\">
+            <div class=\"user-info\">
+                <img src=\"../images.png\" alt=\"Logo de l'ecole 42\" class=\"user-logo\">
+                <p id=\"username-display\"></p>
+            </div>
             <nav>
                 <ul class=\"menu\">
-                    <li><a href=\"acceuil.html\">Home</a></li>
-                    <li><a href=\"calculette.html\">Cgi Test</a></li>
-                    <li><a href=\"upload_tester.html\">Upload Test</a></li>
-                    <li><a href=\"personalise.html\">Customize</a></li>
+                    <li><a href=\"../acceuil.html\">Home</a></li>
+                    <li><a href=\"../calculette.html\">Cgi Test</a></li>
+                    <li><a href=\"../upload_tester.html\">Upload Test</a></li>
+                    <li><a href=\"../delete.html\">Delete Test</a></li>
+                    <li><a href=\"../personalise.html\">Customize</a></li>
                 </ul>
             </nav>
         </header>

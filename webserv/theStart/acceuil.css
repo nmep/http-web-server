@@ -131,3 +131,30 @@ footer {
         font-size: 1rem;
     }
 }
+
+.user-info {
+    display: flex;
+    align-items: center;
+    position: absolute;
+    left: 10px;
+    top: 20px;
+}
+
+.user-logo {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+}
+
+#username-display {
+    margin-left: 0.7vw;
+    font-size: 18px;
+    font-weight: bold;
+    color: white;
+}
+
+.menu {
+    display: flex;
+    justify-content: flex-end;
+    padding-right: 20px;
+}

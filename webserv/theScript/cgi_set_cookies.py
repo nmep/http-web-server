@@ -13,8 +13,8 @@ current_date = datetime.now(timezone.utc).strftime("%a, %d %b %Y %H:%M:%S GMT")
 print(f"Date: {current_date}")
 
 form = cgi.FieldStorage()
-username = form.getvalue("username", "Inconnu")
-color = form.getvalue("color", "Inconnu")
+username = form.getvalue("username", "Unknown")
+color = form.getvalue("color", "#ffffff")
 
 current_date = datetime.now(timezone.utc).strftime("%a, %d %b %Y %H:%M:%S GMT")
 expiration_date = datetime.now(timezone.utc) + timedelta(days=30)
@@ -33,11 +33,16 @@ print(f"""<!DOCTYPE html>
 </head>
 <body>
     <header class="custom_color">
+        <div class="user-info">
+            <img src="../images.png" alt="Logo de l'ecole 42" class="user-logo">
+            <p id="username-display"></p>
+        </div>
         <nav>
             <ul class="menu">
                 <li><a href="../acceuil.html">Home</a></li>
                 <li><a href="../calculette.html">Cgi Test</a></li>
                 <li><a href="../upload_tester.html">Upload Test</a></li>
+                <li><a href="../delete.html">Delete Test</a></li>
                 <li><a href="../personalise.html">Customize</a></li>
             </ul>
         </nav>
@@ -48,7 +53,7 @@ print(f"""<!DOCTYPE html>
             <h1>Customize your page and choose a username</h1>
             <form action="/cgi/cgi_set_cookies.py" method="POST" onsubmit="before_actu()">
                 <label for="username">Username:</label>
-                <input type="string" name="username" required>
+                <input type="string" name="username" required maxlength="15">
                 <label for="color">Color:</label>
                 <input id="color_button" type="color" name="color" required>
                 <input class="custom_color" type="submit" value="Confirm">

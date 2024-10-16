@@ -38,17 +38,22 @@ print(f"""<!DOCTYPE html>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Calculator</title>
-        <link rel="stylesheet" href="calculette.css">
-        <script src="script.js"></script>
+        <link rel="stylesheet" href="../calculette.css">
+        <script src="../script.js"></script>
     </head>
     <body>
         <header class="custom_color">
+            <div class="user-info">
+                <img src="../images.png" alt="Logo de l'ecole 42" class="user-logo">
+                <p id="username-display"></p>
+            </div>
             <nav>
                 <ul class="menu">
-                    <li><a href="acceuil.html">Home</a></li>
-                    <li><a href="calculette.html">Cgi Test</a></li>
-                    <li><a href="upload_tester.html">Upload Test</a></li>
-                    <li><a href="personalise.html">Customize</a></li>
+                    <li><a href="../acceuil.html">Home</a></li>
+                    <li><a href="../calculette.html">Cgi Test</a></li>
+                    <li><a href="../upload_tester.html">Upload Test</a></li>
+                    <li><a href="../delete.html">Delete Test</a></li>
+                    <li><a href="../personalise.html">Customize</a></li>
                 </ul>
             </nav>
         </header>

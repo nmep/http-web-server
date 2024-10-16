@@ -14,18 +14,27 @@ function change_color() {
     }
 }
 
-window.onload = function() {
-    change_color();
-};
-
-function before_actu(){
-    let element = document.getElementById("color_button");
-    const couleur = element.value;
-    if (couleur) {
-        let elements = document.getElementsByClassName("custom_color");
-        for (let i = 0; i < elements.length; i++) {
-            elements[i].style.backgroundColor = couleur;
-        }
+function change_username() {
+    const username = getCookie('username');
+    if (username) {
+        let element = document.getElementById("username-display");
+        element.textContent = username;
     }
 }
+
+window.onload = function() {
+    change_color();
+    change_username();
+};
+
+// function before_actu(){
+//     let element = document.getElementById("color_button");
+//     const couleur = element.value;
+//     if (couleur) {
+//         let elements = document.getElementsByClassName("custom_color");
+//         for (let i = 0; i < elements.length; i++) {
+//             elements[i].style.backgroundColor = couleur;
+//         }
+//     }
+// }
 

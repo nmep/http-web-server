@@ -2,6 +2,7 @@
 
 Answer::Answer(int server_idx)
 {
+	std::cout << YELLOW << "constructeur called" << RESET << std::endl;
     this->server_idx = server_idx;
     this->status = 0;
     this->socket_fd = -2;
@@ -10,6 +11,7 @@ Answer::Answer(int server_idx)
     this->nb_readfile = 0;
     this->sum_len = 0;
     this->step = 0;
+	this->isRandomName = false;
 
     this->mime_map[".html"] = "text/html";
     this->mime_map[".htm"] = "text/html";
@@ -154,6 +156,7 @@ void Answer::find_ressource_path(Configuration const &conf)
             }
         }
         // std::cout << YELLOW << it->first << " et " << it ->second << " " << this->ressource << " " << this->match_location << " " << this->ressource_path << WHITE << std::endl;
+        // std::cout << YELLOW << ressource << " " << this->match_location << " " << this->ressource_path << " " << this->ressource_path << RESET << std::endl;
     }
     if (depth == -1 && this->methode == "GET")
     {
@@ -467,8 +470,8 @@ void Answer::ReadRequest(Configuration const &conf, int socket_fd)
         this->code = 500;//error server
     }
     buffer[bytesRead] = '\0';
-    this->request.append(buffer);
-    this->piece_of_request.append(buffer);
+    this->request.append(buffer, bytesRead);// a voir pour le -1 todo
+    this->piece_of_request.append(buffer, bytesRead);
     sum_len += bytesRead;
 
     if (this->step == 0)
@@ -509,10 +512,10 @@ void Answer::ReadRequest(Configuration const &conf, int socket_fd)
             this->HandleError(conf);
     }
     if (bytesRead < READ_SIZE)// juste pour l'affichage
-        std::cout << YELLOW << "Complete," << std::endl << this->request << WHITE;
+        std::cout << YELLOW << "Complete\n" << this->request << RESET << std::endl;
     else
-        std::cout << YELLOW << "Uncomplete," << WHITE << std::endl;
-    std::cout << RED << "Fin de ReadRequest" << WHITE << std::endl;
+        std::cout << YELLOW << "Uncomplete," << RESET << std::endl;
+    std::cout << RED << "Fin de ReadRequest" << RESET << std::endl;
 }
 
 // on lit le fichier demander, que ce soit la ressource ou un fichier d'erreur
@@ -541,26 +544,27 @@ void Answer::ReadFile()
         return ;
     }
     buffer[bytesRead] = '\0';
-    this->answer_body.append(buffer);// dans le cas d'un cgi c'est pas vraiment le body, il y a aussi des headers
+    this->answer_body.append(buffer, bytesRead);// a voir pour le -1 todo
     if (bytesRead < READ_SIZE)
     {
         close(this->fd_read);
         this->status = 3;
     }
 
+	// std::cout << "request lu = " << this->answer_body << " size = " << this->answer_body.size() << std::endl;
     if (bytesRead < READ_SIZE)// juste pour l'affichage
-        std::cout << YELLOW << "Complete," << std::endl << this->answer_body << WHITE << std::endl;
+        std::cout << YELLOW << "Complete," << std::endl << this->answer_body << RESET << std::endl;
     else
-        std::cout << YELLOW << "Uncomplete," << WHITE << std::endl;
-    std::cout << RED << "Fin de ReadFile" << WHITE << std::endl;
+        std::cout << YELLOW << "Uncomplete," << RESET << std::endl;
+    std::cout << RED << "Fin de ReadFile" << RESET << std::endl;
 }
 
-char** Answer::ft_build_env(Configuration const &conf) {
+char** Answer::ft_build_env(Configuration const &conf, std::string extension) {
     std::vector<std::string> env_vars;
 
     env_vars.push_back("REQUEST_METHOD="+this->methode);
     env_vars.push_back("CONTENT_TYPE=application/x-www-form-urlencoded");
-    if (!cgi_env_var.empty() && this->methode == "GET") {
+    if (!cgi_env_var.empty() && (this->methode == "GET" || extension == ".php")) {
         env_vars.push_back("QUERY_STRING=" + cgi_env_var);
     }
     env_vars.push_back("SERVER_NAME=" + conf.getServer(server_idx).GetServerName());
@@ -586,7 +590,7 @@ char** Answer::ft_build_env(Configuration const &conf) {
 
 void Answer::WriteFile(Configuration const &conf)
 {
-    std::cout << RED << "Debut de WriteFile" << WHITE << std::endl;
+    std::cout << RED << "Debut de WriteFile" << RESET << std::endl;
 
     if (this->cgi == true)
     {
@@ -629,7 +633,7 @@ void Answer::WriteFile(Configuration const &conf)
             else
                 exec_path = (char*)"/usr/bin/php";
             char *argv[] = { exec_path, (char*)this->ressource_path.c_str(), NULL };
-            char **envp = this->ft_build_env(conf);
+            char **envp = this->ft_build_env(conf, extension);
             size_t x = 0;
             while (envp[x] != NULL)
             {
@@ -674,7 +678,7 @@ void Answer::WriteFile(Configuration const &conf)
 
 void Answer::SendAnswer(Configuration const &conf)
 {
-    std::cout << RED << "Debut de SendAnswer" << WHITE << std::endl;
+    std::cout << RED << "Debut de SendAnswer" << RESET << std::endl;
     std::stringstream tmp;
     tmp << this->code;
 
@@ -700,8 +704,8 @@ void Answer::SendAnswer(Configuration const &conf)
     // if(this->header_map.find("Connection") == this->header_map.end() || this->header_map["Connection"] != "keep-alive")
     //     close(this->socket_fd);// la close ailleur ou pas ?? normalement meme si on collapse avant on send quand meme donc non
     close(this->socket_fd);// la close ailleur ou pas ?? normalement meme si on collapse avant on send quand meme donc non
-    std::cout << YELLOW << this->answer << WHITE << std::endl;
-    std::cout << RED << "Fin de SendAnswer" << WHITE << std::endl;
+    std::cout << YELLOW << this->answer << RESET << std::endl;
+    std::cout << RED << "Fin de SendAnswer" << RESET << std::endl;
     this->Reset();
 }
 
@@ -868,8 +872,256 @@ void Answer::cgi_from_post()
     this->status = 2;
 }
 
+/*
+example de body header
+------WebKitFormBoundaryXATporBEzp3eUwCK
+Content-Disposition: form-data; name="file"; filename="ted.jpg"
+Content-Type: image/jpeg
+
+����JFIFHH��C <- a partir d'ici c'est le binaire de l'image
+*/
+
+bool	Answer::parseBoundary(std::string line)
+{
+	if (line.find_last_of('\r') != (size_t) -1)
+		line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());
+
+	this->beginBoundary = line;
+	this->endBoundary = this->beginBoundary + "--";
+	return true;
+}
+
+bool	Answer::parseFileName(std::string line) {
+
+
+	if (line.find("filename=\"") == (size_t) -1) {
+		std::cerr << "filename n'a pas de quote ou error avec file name" << std::endl;
+		this->code = 400;
+		return false;
+	}
+	std::cout << line << std::endl;
+	this->fileName = line.substr(line.find("filename=\"") + std::strlen("filename=\""), line.size());
+	std::cout << this->fileName << std::endl;
+
+	if (this->fileName.find_last_of('"') == (size_t) -1) {
+		std::cerr << "il n'y a pas de quote fermante" << std::endl;
+		this->code = 400;
+		return false;
+	}
+	std::cout << "name size apres = " << this->fileName.size() << std::endl;
+	std::cout << "name lat of \" = " << (this->fileName.find_last_of('"')) << std::endl;
+
+	this->fileName = this->fileName.substr(0,this->fileName.find_last_of('"'));
+	std::cout << "name final du fichier = [" << this->fileName << ']' << std::endl;
+	
+	if (this->fileName.empty()) {
+
+		std::cout << "file name est vide je dois en creer un" << std::endl;
+		this->isRandomName = true;
+	}
+	return true;
+}
+
+bool	Answer::parseContentDisposition(std::string line)
+{
+	std::vector<std::string> contentDispotion;
+
+	contentDispotion = split(line);
+
+	if (contentDispotion.size() < 4) {
+		std::cerr << "Post upload file error: Content Disposition isn't valid" << std::endl;
+		this->code = 415;
+		return false;
+	}
+
+	std::vector<std::string>::iterator it = contentDispotion.begin();
+	for (size_t i = 0; i < contentDispotion.size(); i++) {
+		switch (i)
+		{
+			case 0:
+				if (*it != "Content-Disposition:") {
+					std::cerr << "Post upload file error: Content Disposition isn't valid" << std::endl;
+					this->code = 415;
+					return false;
+				}
+				break;
+			case 1:
+				if (*it != "form-data;" && *it != "multipart/form-data;") {
+					std::cerr << "Post upload file error: Content Disposition isn't valid" << std::endl;
+					this->code = 415;
+					return false;
+				}
+				break;
+			case 2:
+				if (it->find("name=") == (size_t) -1) {
+					std::cerr << "Post upload file error: Content Disposition isn't valid" << std::endl;
+					this->code = 415;
+					return false;
+				}
+				break;
+			case 3:
+				if (!parseFileName(line)) {
+					std::cerr << "Post upload file error: Content Disposition isn't valid" << std::endl;
+					this->code = 415;
+					return false;
+				}
+				break;
+
+			default:
+				break;
+		}
+		it++;
+	}
+	return true;
+}
+
+
+// objectif de cette fonction: verifier si le content type est correctement entree et que le mime est valide
+// si le mime est valide on le garde en memoire
+
+static bool	findMimeType(std::string value, std::map<std::string, std::string> mimeMap, std::string *mimeStr)
+{
+	value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
+	for (std::map<std::string, std::string>::iterator it = mimeMap.begin(); it != mimeMap.end(); it++) {
+		if (it->second == value) {
+			*mimeStr = it->first;
+			return true;
+		}
+	}
+	return false;
+}
+
+bool	Answer::parseContentType(std::string line)
+{
+	std::vector<std::string> contentType = split(line);
+	printVector(contentType, std::cout);
+
+	if (contentType.empty() || contentType.size() < 2) {
+		std::cerr << "Post upload file error: Content type is empty or < 2" << std::endl;
+		this->code = 400;
+		return false;
+	}
+
+	int i = 0;
+	for (std::vector<std::string>::iterator it = contentType.begin(); it != contentType.end(); it++) {
+		if (it == contentType.begin() && *it != "Content-Type:") {
+			std::cerr << "Post upload file error: the first value of content type is different from \"Content-Type:\"" << std::endl;
+			this->code = 415;
+			return false;
+		}
+		if (i == 1) {
+			std::cout << "le mime du body = " << *it << std::endl;
+			if (!findMimeType(*it, this->mime_map, &this->mimeStr)) {
+				std::cerr << "Post upload file error: the file mime is endifined" << std::endl;
+				this->code = 415;
+				return false;
+			}
+			else
+				this->mimeFile = *it;
+		}
+		i++;
+	}
+	return true;
+}
+
+bool	Answer::parseBodyHeader()
+{
+	std::istringstream is(this->request_body);
+	std::string line;
+
+	std::cout << RED << "Getline Body\n" << RESET << std::endl;
+	for (int i = 0; getline(is, line) && i < 5; i++)
+	{
+		if (line.empty()) {
+			std::cout << "ligne vide rencontre je break" << std::endl;
+			break;
+		}
+		switch (i)
+		{
+			case 0:
+				// parse boundary
+				if (!parseBoundary(line))
+					return false;
+				break;
+			case 1:
+				if (!parseContentDisposition(line))
+					return false;
+				break;
+			case 2:
+				if (!parseContentType(line))
+					return false;
+				break;
+			default:
+				break;
+		}
+	}
+	return true;
+}
+
+inline bool	Answer::changeFileName(int FileNameIndex)
+{
+	std::stringstream ss;
+	std::string fileNameWihtoutMime;
+
+	if (fileName.find('.') == fileName.npos) {
+		std::cout << "point pas trouve" << std::endl;
+		return false;
+	}
+	ss << FileNameIndex;
+	fileNameWihtoutMime = this->fileName.substr(0, this->fileName.find('.'));
+
+	while (access(this->fileName.c_str(), F_OK) == 0) {
+		std::cout << "le fichier teste = " << this->fileName.c_str() << " existe deja\n\n" << std::endl;
+		
+		this->fileName = fileNameWihtoutMime + '(' + ss.str() + ')' + this->mimeStr;
+
+		std::cout << "file name without mime = " << fileNameWihtoutMime << std::endl;
+		std::cout << "mime str = " << this->mimeStr << std::endl;
+		std::cout << "file name END = " << this->fileName << std::endl;
+		ss.str("");
+		FileNameIndex++;
+		ss << FileNameIndex;
+	}
+	return true;
+}
+
+bool	Answer::openFile()
+{
+	// TO DO il faut trouver dans qu'elle location je dois placer le fichier
+	int fileNameIndex = 1;
+	std::cout << "QWEHROQWEHRJKOEWQHRJILWEQHRIEWQHRIWEQHRIOUHWQEHRIQWEHRWEIQHRWEI" << std::endl;
+	std::cout << "file name = " << this->fileName << std::endl;
+	if (access(fileName.c_str(), F_OK) == 0) {
+		this->changeFileName(fileNameIndex);
+		// to do si ca renvoit false il faut sortir un nom random
+		sleep(1);
+		// if (!this->changeFileName(fileNameIndex))
+		// 	// trouver un nom random;
+		// if (fileNameIndex == INT_MAX)
+		// 	;
+			// trouver un nom random
+		fileNameIndex++;
+	}
+	std::cout << "file name = [" << this->fileName.c_str() << "]" << std::endl;
+	this->uploadFileFd = open(this->fileName.c_str(), O_CREAT, 0644);
+	if (uploadFileFd == -1) {
+		std::cerr << "Error while opening for the upload file " << this->fileName << ": " << strerror(errno) << std::endl;
+		this->code = 500;
+		return false;
+	}
+	std::cout << "JAI OPEN" << std::endl;
+	return true;
+}
+
+bool	Answer::readFile()
+{
+	// std::cout << RED << this->request_body << RESET << std::endl;
+
+	return true;
+}
+
 void Answer::POST(Configuration const &conf)
-{   
+{
     this->find_ressource_path(conf);
     if (this->code >= 400)
         return ;
@@ -900,19 +1152,44 @@ void Answer::POST(Configuration const &conf)
         
         return ;
     }
-
-    this->status = 1;
+    
+    this->status = 1;// c'est toi qui a mis ca ?
     if (this->code >= 400)
     {
-        return ;
+		return ;
     }
 
-
     // met toi ici GARFI, tu peux faire l'upload file ici
-    std::cout << GREEN << this->ressource << std::endl;
-    std::cout << this->request_body << WHITE << std::endl;
+
+	// est ce qeue je dois set un dossier pour l'ipload par default ou bien 
+	// si resourcce est "/upload alors c'est qu'un fichier a ete envoye"
+
+		// si "is uploadfile accepted dans la location"
+    std::cout << GREEN << this->ressource << RESET << std::endl; // savoir si c'est un /upload ou /update
+    // std::cout << GREEN << this->request_body << RESET << std::endl; // body
+	std::cout << "BODY SIZE = " << this->request_body.size() << std::endl;
     this->code = 201;//quand post marche
-    this->status = 2; // si il faut ecrire quelque chose (la fonction writefile est vide tu peux faire la suite la bas)
+	std::cout << "resource = " << this->ressource << std::endl;
+	if (this->ressource == "/upload" || this->ressource == "/") {
+		// est ce que je peux faire un upload file si oui ou je dois le televerser ???? TO DO
+		// parse body
+		if (!this->parseBodyHeader())
+			return ;
+	}
+	std::cout << "LA FINALITE EST QUE" << std::endl;
+	std::cout << "begin boundary = " << this->beginBoundary << std::endl;
+	std::cout << "end boundary = " << this->endBoundary << std::endl;
+	std::cout << "LE FILE NAME = " << this->fileName << std::endl;
+	std::cout << "le mime file = " << this->mimeFile << std::endl;
+	std::cout << "le mime ext = " << this->mimeStr << std::endl;
+
+	// ouvrir le fichier 
+	if (!this->openFile() || !this->readFile()) {
+		return ;
+	}
+	// ecrire le fichier
+
+    this->status = 2; // si il faut ecrire quelque chose (la fonction writefile est vide tu peux faire la suite la bas)	
 }
 
 void Answer::DELETE()

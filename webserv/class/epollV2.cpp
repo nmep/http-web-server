@@ -36,11 +36,9 @@ int Socket::launchEpoll(Configuration const & conf) {
 			// connexion a un serveur sinon c'est un connexion cliente
 			std::cout << "events[i].data.fd " << events[i].data.fd << std::endl;
 			serverConnxionReceivedId = isAnServerFd(events[i].data.fd);
-			if (serverConnxionReceivedId != -1) {
-				std::cout << "j'accepte et j'ajoute " << events[i].data.fd << std::endl;
+			// serverConnxionReceivedId = -1;
+			if (serverConnxionReceivedId != -1)
 				accept_and_save_connexion(serverConnxionReceivedId);
-				serverConnxionReceivedId = -1;
-			}
 			else if (events[i].events & EPOLLIN || events[i].events & EPOLLOUT)
 			{
 				std::cout << "ici c soit un serveur soit une requete qui est lu" << std::endl;

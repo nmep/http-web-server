@@ -5,12 +5,13 @@ question sans reponse pour l'instant
     je suis oblige de free pour les strdup, on peut le faire ??
     est ce qu'on limite la taille du header, dans le cas ou on nous envoie un header infinie, mais on bloque a combien todo
     si le max body size est abusurde, beaucoup trop grand pour les ressources de notre pc, on doit le bloquer mais a combien
+    c'est quoi les parametres que l'on doit prendre en compte pour le cgi dans la config
+    le server pete quand on vire les usleep, avec des usleep a 1000 c'est bien je trouve
 
 todo garfi
     mettre tous les truc par default si ils ne sont pas preciser, comme le server name
     keep-alive pour eviter de creer une nouvelle connexion a chaque requete, quand il y a keep alive moi je ne dois pas close le fd, ca veut dire qu'on vas le reutiliser
     me passer le max body size avec la taille en octet
-
 
 cgi
     mettre la date au dernier moment en php
@@ -19,6 +20,7 @@ cgi
     faire passer les arguments avec post pour php
 
 
+le append de bytes read -1 ca casse les body, comme pour le body du cgi
 trouver quoi faire quand l'erreur arrive apres l'etapes de lecture des fichiers d'erreurs
 ne pas blocker quand on a post et que la ressource ne mene a rien
 fusionner l auto index

@@ -12,7 +12,7 @@
 #include <fstream>
 #include <signal.h> // pour kill
 #include <wait.h>// pour wait
-
+#include <sstream> //stringstream
 
 #define READ_SIZE 4096 // pour l'instant choisi arbitrairement, on verra si on le change pour plus de performance
 
@@ -22,36 +22,26 @@ class Answer
         int server_idx;
         int socket_fd;
         int status; // de longeur nb_serv,
-                    // 0 pour en cours de lecture de la requete,
-                    // 1 pour en cours de lecture d'un file,
-                    // 2 pour en cours d'ecriture d'un file,
-                    // 3 pour en cours d'envoie de la reponse
-                    // 4 pour en attente de reset
-        
-        // elements pour la response
-        int code;
-        std::string answer;
-        std::string answer_body;
+				// 0 pour en cours de lecture de la requete,
+				// 1 pour en cours de lecture d'un file,
+				// 2 pour en cours d'ecriture d'un file,
+				// 3 pour en cours d'envoie de la reponse
+				// 4 pour en attente de reset
 
-        // elements de la requete
-        std::string request;
-        std::string methode;
-        std::string ressource;// la ressource tel que dans la requete
-        std::string ressource_path;// le chemin de la ressource sur notre machine
-        std::string cgi_env_var;//les variables donnee dans l'url pour le cgi
-        std::map<std::string, std::string> header_map;// les elements du header associes a leur valeur
-        std::string request_body;
+		// elements pour la response
+		int code;
+		std::string answer;
+		std::string answer_body;
 
-        // tools
-        std::map<std::string, std::string> mime_map;
-        std::map<int, std::string> code_map;
+		// elements de la requete
+		// garfi
 
         bool autoindex; // faut que tu le mette dans la class serv pas dans location
         std::string match_location;
         int fd_read;// utiliser pour la ressource a lire ou le fichier d'erreure a lire aussi
         int fd_write;
-        std::ifstream *read_file;
         bool cgi;
+		std::ifstream *read_file;// pourquoi, on a pas le droit de read et write sans les fonctions en c todo
         size_t nb_readfile;
         int cgi_pid;
 
@@ -71,18 +61,32 @@ class Answer
         bool isScript();
         void HandleError(Configuration const &conf);
         void cgi_from_post();
-        char** ft_build_env(Configuration const &conf);
+        char** ft_build_env(Configuration const &conf, std::string extension);
+		std::string request;
+		std::string methode;
+		std::string ressource;// la ressource tel que dans la requete
+		std::string ressource_path;// le chemin de la ressource sur notre machine
+		std::string cgi_env_var;//les variables donnee dans l'url pour le cgi
+		std::map<std::string, std::string> header_map;// les elements du header associes a leur valeur
+		std::string request_body;
 
+		// upload file
+		// 1 first line
+		std::string beginBoundary;
+		std::string endBoundary;
+		// 2 nd line
+		std::string fileName;
+		bool		isRandomName;
+		// 3rd line mime type
+		std::string mimeFile;
+		std::string mimeStr;
+		
+		int uploadFileFd;
+		//
+		// tools
+		std::map<std::string, std::string> mime_map;
+		std::map<int, std::string> code_map;
 
-        std::string GetMime(std::string extansion);// prend l'extension du fichier en parametre et renvoie le type
-        std::string GetCodeSentence(int code);// on renvoie la phrase de raison associe au code d etat
-        void contentType();
-        void connection();// uniquement quand c'est preciser keep alive dans la requete
-        void server(Configuration const &conf);
-        void location();// on precise on location dans les cas 201 et 3xx
-        void date();
-        void taille();
-        void Reset();
 
         void first_step(size_t bytesRead);
         void second_step(size_t bytesRead);
@@ -93,9 +97,30 @@ class Answer
         void GET(Configuration const &conf);
         void POST(Configuration const &conf);
         void DELETE();
+		std::string GetMime(std::string extansion);// prend l'extension du fichier en parametre et renvoie le type
+		std::string GetCodeSentence(int code);// on renvoie la phrase de raison associe au code d etat
+		void contentType();
+		void connection();// uniquement quand c'est preciser keep alive dans la requete
+		void server(Configuration const &conf);
+		void location();// on precise on location dans les cas 201 et 3xx
+		void date();
+		void taille();
+		void Reset();
+
+		// upload file
+		bool	parseBodyHeader();
+		bool	parseBoundary(std::string line);
+		bool	parseContentDisposition(std::string line);
+		bool	parseFileName(std::string line);
+		bool	parseContentType(std::string line);
+		bool	openFile();
+		inline bool	changeFileName(int FileNameIndex);
+		bool	readFile();// je sais pas si c'est un fail du merge,
+		//
 
     public:
-        Answer(int server_idx);
+		Answer() {};
+		Answer(int server_idx);
         ~Answer();
 
         int GetStatus() const;
