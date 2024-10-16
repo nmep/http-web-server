@@ -1,10 +1,21 @@
 #include "configuration.hpp"
 #include "Socket.hpp"
+#include <csignal>
+
+int g_loop = 1;
+
+void handle_signal(int signal)
+{
+	if (signal == SIGQUIT)
+		g_loop = 0;
+}
 
 int	main(int ac, char **av)
 {
 	Configuration	conf;
 	Socket			socket;
+
+	signal(SIGQUIT, handle_signal);
 
 	if (ac == 1)
 	{

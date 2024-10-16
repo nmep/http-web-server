@@ -11,6 +11,8 @@ Answer::Answer(int server_idx)
     this->nb_readfile = 0;
     this->before_body_len = 0;
     this->step = 0;
+    this->fd_read = -2;
+    this->fd_write = -2;
 	this->isRandomName = false;
 
     this->mime_map[".html"] = "text/html";
@@ -471,7 +473,9 @@ void Answer::ReadRequest(Configuration const &conf, int socket_fd)
     ssize_t bytesRead = recv(this->socket_fd, buffer, READ_SIZE, 0);
     if (bytesRead == 0)
     {
-        // la socket a ete close de l'autre cote, faut gerer ca et close proprement todo
+        // la socket a ete close de l'autre cote
+        close(this->socket_fd);
+        this->socket_fd = -2;
     }
     else if (bytesRead == -1)
     {
@@ -522,18 +526,24 @@ void Answer::ReadFile()
     {
         this->nb_readfile = 1;
         int status;
-        std::cerr << "hereeee\n";
-        int result = waitpid(this->cgi_pid, &status, 0);
-        std::cerr << "outtt\n";
-        std::cout << RED << "result " << result << " fin" << WHITE << std::endl;
-        if (!WIFEXITED(status))
-            this->code = 500;// a voir comment on determine que ca a fail todo
+        waitpid(this->cgi_pid, &status, 0);
+        if (WIFEXITED(status))
+        {
+            status = WEXITSTATUS(status);
+            std::cout << status << std::endl;
+            if (status == 100)// on a pas la place de renvoyer 500
+                this->code = 500;
+            return ;
+        }
+        std::cout << "truc\n";
     }
+    std::cout << this->fd_read << std::endl;
     bytesRead = read(this->fd_read, buffer, READ_SIZE);
     if (bytesRead == -1) {
         std::cout << "error 500 2\n";
 		this->code = 500;//gerer comment on traiter la page d'erreur depuis ici ?
         close(this->fd_read);
+        this->fd_read = -2;
         return ;
     }
     buffer[bytesRead] = '\0';
@@ -541,6 +551,7 @@ void Answer::ReadFile()
     if (bytesRead < READ_SIZE)
     {
         close(this->fd_read);
+        this->fd_read = -2;
         this->status = 3;
     }
 
@@ -574,7 +585,8 @@ char** Answer::ft_build_env(Configuration const &conf, std::string extension) {
 
     char** envp = new char*[env_vars.size() + 1];
     for (size_t i = 0; i < env_vars.size(); ++i) {
-        envp[i] = strdup(env_vars[i].c_str());
+        envp[i] = new char[env_vars[i].size() + 1];
+        std::strcpy(envp[i], env_vars[i].c_str());
     }
     envp[env_vars.size()] = NULL;
 
@@ -639,30 +651,27 @@ void Answer::WriteFile(Configuration const &conf)
                 while (envp[size] != NULL)
                     size++;
                 for (size_t i = 0; i <= size; i++) {
-                    free(envp[i]);
+                    delete[] envp[i];
                 }
                 delete[] envp;
-                std::cerr << RED << "fail execve" << WHITE << std::endl;
-                // est ce qu'on close les sockets ?? todo
-                this->code = 500;// comment faire pour faire savoir qu'on a fail, doit on le faire savoir ?? to do
-                // kill(this->cgi_pid, SIGKILL);
-                exit(EXIT_FAILURE);// on a pas le droit a exit, a voir ce qu'on fait todo
+                // est ce qu'on close les sockets et on delete les truc allouer ?? todo
+                exit(100);// on a pas la place de renvoyer 500
             }
         }
         else
         {
-            close(pipe_in[0]); // Ferme le côté lecture
-            write(this->fd_write, this->cgi_env_var.c_str(), this->cgi_env_var.size());// a voir si on ecrit en plusieurs fois, je pense que oui mais je veux deja voir si ca marche
+            close(pipe_in[0]);
+            if (write(this->fd_write, this->cgi_env_var.c_str(), this->cgi_env_var.size()) == -1)
+                this->code = 500;
             close(this->fd_write);
-            std::cout << MAGENTA << "ici " << this->cgi_env_var << std::endl << WHITE;
-            
-            close(pipe_out[1]); // Ferme le côté écriture
+            this->fd_write = -2;
+            close(pipe_out[1]);
         }
-        
     }
     else
     {
         // ecrire un fichier classique
+        // c'est la suite pour toi garfi, c'est la que tu fais ton write quand tu sais quoi et ou ecrire
     }
 
 
@@ -697,6 +706,7 @@ void Answer::SendAnswer(Configuration const &conf)
     // if(this->header_map.find("Connection") == this->header_map.end() || this->header_map["Connection"] != "keep-alive")
     //     close(this->socket_fd);// la close ailleur ou pas ?? normalement meme si on collapse avant on send quand meme donc non
     close(this->socket_fd);// la close ailleur ou pas ?? normalement meme si on collapse avant on send quand meme donc non
+    this->socket_fd = -2; //a voir si ca te derrange
     std::cout << YELLOW << this->answer << RESET << std::endl;
     std::cout << RED << "Fin de SendAnswer" << RESET << std::endl;
     this->Reset();
@@ -785,7 +795,7 @@ void Answer::GET(Configuration const &conf)
     }
     if (this->code >= 400)
         return ;
-    // on a tout de pres pour savoir si l'extension
+    // on a tout de pres pour savoir si l'extension est reconnue
     size_t dot = this->ressource_path.find_last_of('.');
     if (dot == std::string::npos || (dot < this->ressource_path.size() && this->mime_map.find(this->ressource_path.substr(dot)) == this->mime_map.end()))
         this->code = 415;

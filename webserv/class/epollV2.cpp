@@ -22,7 +22,7 @@ int Socket::launchEpoll(Configuration const & conf) {
 
 	int	serverConnxionReceivedId; // il sert a avoir l'index du serv qui a recu une connexion
 
-	while (KAA) {
+	while (g_loop) {
 		std::cout << "epollwait" << std::endl;
 		usleep(100000);
 		this->nfd = epoll_wait(this->epfd, events, MAX_EVENTS, 0); // TO DO timout voir fichier de configuration

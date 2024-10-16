@@ -5,6 +5,11 @@
 	#include "tools.hpp"
 	#include "Server.hpp" // Server include location.hpp
 
+	#ifndef G_SIGNAL
+		#define G_SIGNAL
+		extern int g_loop;
+	#endif
+
 	// cette struct recupere les quelque info dont j'ai besoin pour gerer le parsing du fichier
 	typedef	struct s_syntaxParse {
 		int	OCB; // open curly brace

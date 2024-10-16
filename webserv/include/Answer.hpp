@@ -65,6 +65,8 @@ class Answer
         void HandleError(Configuration const &conf);
         void cgi_from_post();
         char** ft_build_env(Configuration const &conf, std::string extension);
+		void ft_exit();
+
 		std::string request;
 		std::string methode;
 		std::string ressource;// la ressource tel que dans la requete
