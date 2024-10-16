@@ -9,7 +9,7 @@ if 'HTTP_CONNECTION' in os.environ:
 if 'SERVER_NAME' in os.environ:
     print(f"Server: {os.environ['SERVER_NAME']}")
 
-current_date = datetime.now(timezone.utc).strftime("%a, %d %b %Y %H:%M:%S GMT")
+current_date = (datetime.now(timezone.utc) + timedelta(hours=2)).strftime("%a, %d %b %Y %H:%M:%S GMT")
 print(f"Date: {current_date}")
 
 form = cgi.FieldStorage()
