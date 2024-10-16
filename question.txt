@@ -17,7 +17,42 @@ todo garfi
 cgi
     est ce qu'on close les sockets dans l'enfant ?
 
+lire les images en binaire
+comment ca se passe pour les videos
+
 trouver quoi faire quand l'erreur arrive apres l'etapes de lecture des fichiers d'erreurs
 ne pas blocker quand on a post et que la ressource ne mene a rien
 gerer les redirections
 delete
+
+j'ai essaye de le strees test, jusqu a un certains point ca va mais au bout d'un moment ca fait ca
+Debut de Server_action, serv numero 0, socket_fd 6
+Debut de ReadRequest
+error 500 6 Resource temporarily unavailable
+**3087150** new/new[] failed and should throw an exception, but Valgrind
+**3087150**    cannot throw exceptions and so is aborting instead.  Sorry.
+==3087150==    at 0x484852C: ??? (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
+==3087150==    by 0x4849085: operator new(unsigned long) (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
+==3087150==    by 0x49C10BD: std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_mutate(unsigned long, unsigned long, char const*, unsigned long) (in /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.30)
+==3087150==    by 0x49C2B4F: std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_append(char const*, unsigned long) (in /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.30)
+==3087150==    by 0x123F70: Answer::ReadRequest(Configuration const&, int) (Answer.cpp:490)
+==3087150==    by 0x11CDE1: Asynchrone::Server_action(Configuration const&, int, int) (Asynchrone.cpp:20)
+==3087150==    by 0x12EB7A: Socket::launchEpoll(Configuration const&) (epollV2.cpp:48)
+==3087150==    by 0x12F0AC: main (main.cpp:56)
+==3087150== 
+==3087150== HEAP SUMMARY:
+==3087150==     in use at exit: 26,877 bytes in 267 blocks
+==3087150==   total heap usage: 4,519 allocs, 4,252 frees, 427,375 bytes allocated
+==3087150== 
+==3087150== LEAK SUMMARY:
+==3087150==    definitely lost: 0 bytes in 0 blocks
+==3087150==    indirectly lost: 0 bytes in 0 blocks
+==3087150==      possibly lost: 0 bytes in 0 blocks
+==3087150==    still reachable: 26,877 bytes in 267 blocks
+==3087150==                       of which reachable via heuristic:
+==3087150==                         newarray           : 560 bytes in 1 blocks
+==3087150==         suppressed: 0 bytes in 0 blocks
+==3087150== Rerun with --leak-check=full to see details of leaked memory
+==3087150== 
+==3087150== For lists of detected and suppressed errors, rerun with: -s
+==3087150== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)

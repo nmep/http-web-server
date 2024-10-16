@@ -541,6 +541,7 @@ void Answer::ReadFile()
         }
         std::cout << "truc\n";
     }
+
     std::cout << this->fd_read << std::endl;
     bytesRead = read(this->fd_read, buffer, READ_SIZE);
     if (bytesRead == -1) {
@@ -557,6 +558,11 @@ void Answer::ReadFile()
         close(this->fd_read);
         this->fd_read = -2;
         this->status = 3;
+    }
+    else if (this->answer_body.size() >= LIM_SIZE_READ_FILE)
+    {
+        this->code = 413;
+        return ;
     }
 
 	// std::cout << "request lu = " << this->answer_body << " size = " << this->answer_body.size() << std::endl;
@@ -1129,6 +1135,7 @@ bool	Answer::readFile()
 
 void Answer::POST(Configuration const &conf)
 {
+    this->code = 201;
     this->find_ressource_path(conf);
     if (this->code >= 400)
         return ;
