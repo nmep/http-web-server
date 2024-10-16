@@ -28,6 +28,6 @@
 			~AutoIndex();
 
 			std::string convertFileSizeBytesIntoStr(off_t fileSize);
-			std::string createHttpPage();
+			std::string createHttpPage(int &code);
 	};
 #endif

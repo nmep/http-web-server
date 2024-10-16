@@ -60,7 +60,7 @@ leurs contenue je dois faire
 
 	<a href=>
 */
-std::string	AutoIndex::createHttpPage()
+std::string	AutoIndex::createHttpPage(int &code)
 {
 	// page http a remplir avec le contenue du dossier
 	std::string	page = 
@@ -69,7 +69,7 @@ std::string	AutoIndex::createHttpPage()
 	<head>\n\
 	<meta charset=\"utf-8\" />\n\
 		<meta name=\"viewport\" content=\"width=device-width\" />\n\
-		<title>" + this->_rootName + "</title>\n\
+		<title>" + this->_urlName + "</title>\n\
 		<style>\n\
 			table { width: 100%; border-collapse: collapse; }\n\
 			th, td { padding: 8px 12px; border: 1px solid #ddd; text-align: left; }\n\
@@ -77,7 +77,7 @@ std::string	AutoIndex::createHttpPage()
 		</style>\n\
 	</head>\n\
 	<body>\n\
-		<h1>Auto Index of " + this->_rootName + "</h1>\n\
+		<h1>Auto Index of " + this->_urlName + "</h1>\n\
 		<hr width=\"100%\" size=\"5\" color=\"black\">\n\
 		<table>\n\
 			<tr>\n\
@@ -90,12 +90,14 @@ std::string	AutoIndex::createHttpPage()
 	// open le dossier
 	if ((this->_dirPath = opendir(this->_rootName.c_str())) == NULL) {
 		std::cerr << "Open dir failed: " << strerror(errno) << std::endl;
+		code = 500;
 		return std::string();
 	}
 
 	// open le dossier
 	if ((this->_file = opendir(this->_rootName.c_str())) == NULL) {
 		std::cerr << "Open dir failed: " << strerror(errno) << std::endl;
+		code = 500;
 		return std::string();
 	}
 

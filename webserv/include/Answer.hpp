@@ -5,6 +5,7 @@
 #include "configuration.hpp"
 #include "Socket.hpp"
 #include "Server.hpp"
+#include "autoIndex.hpp"
 #include <sys/stat.h> // pour stat
 #include <iostream> // les bools
 #include <string>

@@ -115,14 +115,19 @@ int Answer::is_that_a_directory()
 
     if (stat(this->ressource_path.c_str(), &info) == -1)
     {
-        std::cerr << "Erreur lors de l'accès au chemin. " << this->ressource_path.c_str() << std::endl;
-        return 2;
+        if (access(this->ressource_path.c_str(), F_OK) != 0)
+            this->code = 404;//not found
+        else if (access(this->ressource_path.c_str(), F_OK | R_OK) != 0)
+            this->code = 403;//forbidden
+        else if (this->isScript() == true && access(this->ressource_path.c_str(), F_OK | R_OK | X_OK) != 0)
+            this->code = 403;//forbidden
+        return 0;
     }
     if (S_ISREG(info.st_mode))
         return 0;//fichier
     else if (S_ISDIR(info.st_mode))
         return 1;//dossier
-    return 2;// ni l'un ni l'autre, j'ai pas bien compris a quoi ca correspond
+    return 0;// ni l'un ni l'autre
 }
 
 // on obtient l'emplacement de la ressource sur notre machine
@@ -207,10 +212,10 @@ void Answer::find_good_index_or_autoindex(Configuration const &conf)
     }
     if (this->autoindex == true)
     {
-        //c'est ici que tu pourras gere l'auto index, dans l'ideal tu me renvois le contenu de la page html sous une string
-        //this->answer_body = fonction_garfi_auto_index();
-        this->answer_body = "<!DOCTYPE html>\n<html lang=\"fr\">\n<head>\n<meta charset=\"UTF-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n<title>autoindex</title>\n</head>\n<body>\n<h1>example</h1>\n<h1>de</h1>\n<h1>dossier</h1>\n</body>\n</html>\n";
-        this->status = 3;
+        AutoIndex AI(this->ressource, this->ressource_path);
+        this->answer_body = AI.createHttpPage(this->code);
+        if (this->code < 400)
+            this->status = 3;
     }
     else
         this->code = 404;
@@ -787,9 +792,11 @@ void Answer::GET(Configuration const &conf)
     if (this->is_that_a_directory() == 1)
     {
         this->find_good_index_or_autoindex(conf);
-        if (this->status == 3)
+        if (this->status == 3 || this->code >= 400)
             return ;
     }
+    if (this->code >= 400)
+        return ;
     // on a tout de pres pour savoir si l'extension
     size_t dot = this->ressource_path.find_last_of('.');
     if (dot == std::string::npos || (dot < this->ressource_path.size() && this->mime_map.find(this->ressource_path.substr(dot)) == this->mime_map.end()))
@@ -797,9 +804,7 @@ void Answer::GET(Configuration const &conf)
 
     this->status = 1;
     if (this->code >= 400)
-    {
-        // si le chemin est un dossier sans autoindex et sans index qui marche
-    }
+        return ; // ca arrive quand le chemin est un dossier sans autoindex et sans index qui marche
     else
     {
         if (access(this->ressource_path.c_str(), F_OK) == -1)
