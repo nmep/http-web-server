@@ -73,5 +73,6 @@ int Socket::launchEpoll(Configuration const & conf) {
 			}
 		}
 	}
+	std::cout << "on est plus dans la boucle" << std::endl;
 	return 1;
 }

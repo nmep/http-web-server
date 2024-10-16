@@ -6,7 +6,7 @@ int g_loop = 1;
 
 void handle_signal(int signal)
 {
-	if (signal == SIGQUIT)
+	if (signal == SIGQUIT || signal == SIGINT || signal == SIGTERM || signal == SIGHUP || signal == SIGTSTP)
 		g_loop = 0;
 }
 
@@ -15,7 +15,12 @@ int	main(int ac, char **av)
 	Configuration	conf;
 	Socket			socket;
 
-	signal(SIGQUIT, handle_signal);
+	// si on fait plus de signaux il faudrait peut etre faire une boucle de 0 a X todo
+	signal(SIGQUIT, handle_signal); // ctrl backslash
+	signal(SIGINT, handle_signal); // ctrl c
+	signal(SIGTSTP, handle_signal); // ctrl z
+	signal(SIGTERM, handle_signal); // si on kill notre pid avec kill -15 PID
+	signal(SIGHUP, handle_signal); // si on kill notre pid avec kill -1 PID
 
 	if (ac == 1)
 	{

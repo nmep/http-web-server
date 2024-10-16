@@ -20,5 +20,4 @@ cgi
 trouver quoi faire quand l'erreur arrive apres l'etapes de lecture des fichiers d'erreurs
 ne pas blocker quand on a post et que la ressource ne mene a rien
 gerer les redirections
-signaux
 delete

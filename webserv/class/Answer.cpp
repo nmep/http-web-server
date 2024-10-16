@@ -89,6 +89,10 @@ Answer::Answer(int server_idx)
 
 Answer::~Answer()
 {
+    if (this->fd_read > 2)
+        close(this->fd_read);
+    if (this->fd_write > 2)
+        close(this->fd_write);
 }
 
 int Answer::GetStatus() const
