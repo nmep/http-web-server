@@ -16,14 +16,13 @@ cgi
     quoi faire quand on a pas le /usr/bin/python3
     est ce qu'on close les sockets dans l'enfant ?
 
-gere quand la fonction de l'autoindex fail
-    comment faire pour faire savoir qu'on a fail execve, doit on le faire savoir (on a pas le droit a exit)
-    je suis oblige de free pour les strdup, on peut le faire ??
-    est ce qu'on limite la taille du header, dans le cas ou on nous envoie un header infinie, mais on bloque a combien todo
-    si le max body size est abusurde, beaucoup trop grand pour les ressources de notre pc, on doit le bloquer mais a combien
+est ce qu'on limite la taille du header, dans le cas ou on nous envoie un header infinie, mais on bloque a combien todo
+si le max body size est abusurde, beaucoup trop grand pour les ressources de notre pc, on doit le bloquer mais a combien
+
+je suis oblige de free pour les strdup, on peut le faire ??
+comment faire pour faire savoir qu'on a fail execve, doit on le faire savoir (on a pas le droit a exit)
 trouver quoi faire quand l'erreur arrive apres l'etapes de lecture des fichiers d'erreurs
 ne pas blocker quand on a post et que la ressource ne mene a rien
-fusionner l auto index
 gerer les redirections
 signaux
 delete

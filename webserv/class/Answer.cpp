@@ -9,7 +9,7 @@ Answer::Answer(int server_idx)
     this->code = 200;
     this->cgi = false;
     this->nb_readfile = 0;
-    this->sum_len = 0;
+    this->before_body_len = 0;
     this->step = 0;
 	this->isRandomName = false;
 
@@ -363,6 +363,8 @@ void Answer::parse_header(std::string header)
 //quand on a pas encore eu la ligne d'etat en entier
 void Answer::first_step(size_t bytesRead)
 {
+    if (this->before_body_len  >= LIMIT_SIZE_BEFORE_BODY_SERVER)
+        this->code = 413;
     if (this->piece_of_request.find("\r\n\r\n") != std::string::npos)
     {
         this->step = 2;
@@ -404,6 +406,8 @@ void Answer::first_step(size_t bytesRead)
 
 void Answer::second_step(size_t bytesRead)
 {
+    if (this->before_body_len  >= LIMIT_SIZE_BEFORE_BODY_SERVER)
+        this->code = 413;
     std::cout << MAGENTA << this->methode << " + " << this->ressource << WHITE << std::endl;
     if (this->piece_of_request.find("\r\n\r\n") != std::string::npos)
     {
@@ -447,7 +451,7 @@ void Answer::second_step(size_t bytesRead)
 
 void Answer::third_step(size_t bytesRead)
 {
-    if (this->piece_of_request.size() >= 5000)//temporaire apres je pourrais prendre ta variable max size body todo
+    if (this->piece_of_request.size() >= LIMIT_SIZE_BODY_SERVER || this->piece_of_request.size() >= 5000)//temporaire apres je pourrais prendre ta variable max size body todo
         this->code = 413;
     if (bytesRead < READ_SIZE)
         this->request_body = this->piece_of_request;
@@ -477,30 +481,14 @@ void Answer::ReadRequest(Configuration const &conf, int socket_fd)
     buffer[bytesRead] = '\0';
     this->request.append(buffer, bytesRead);// a voir pour le -1 todo
     this->piece_of_request.append(buffer, bytesRead);
-    sum_len += bytesRead;
+    this->before_body_len += bytesRead;
 
     if (this->step == 0)
-    {
         this->first_step(bytesRead);
-        std::cout << "step1\n";
-    }
     else if (this->step == 1)
-    {
         this->second_step(bytesRead);
-        std::cout << "step2\n";
-    }
     else if (this->step == 2)
-    {
         this->third_step(bytesRead);
-        std::cout << "step3\n";
-    }
-
-    std::cout << GREEN << this->request << BLUE << std::endl;
-    for (std::map<std::string, std::string>::iterator it = this->header_map.begin(); it != this->header_map.end(); it++)
-    {
-        std::cout << it->first << " et " << it->second << std::endl;
-    }
-    std::cout << WHITE;
     
     if (bytesRead < READ_SIZE || this->code >= 400 || this->step == 3)// si on a fini de lire la requete
     {
@@ -776,7 +764,7 @@ void Answer::Reset()
     this->cgi_env_var.clear();
     this->header_map.clear();
     this->request_body.clear();
-    this->sum_len = 0;
+    this->before_body_len = 0;
     this->remaining_part.clear();
     this->step = 0;
                  

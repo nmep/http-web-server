@@ -16,6 +16,8 @@
 #include <sstream> //stringstream
 
 #define READ_SIZE 4096 // pour l'instant choisi arbitrairement, on verra si on le change pour plus de performance
+#define LIMIT_SIZE_BODY_SERVER 1048576 //equivalent a 1 Mo, pour ne pas saturer la memoire vive
+#define LIMIT_SIZE_BEFORE_BODY_SERVER 1048576 
 
 class Answer
 {
@@ -46,7 +48,7 @@ class Answer
         size_t nb_readfile;
         int cgi_pid;
 
-        size_t sum_len;
+		size_t before_body_len;
         std::string remaining_part;
         int step;// 0 pour la ligne d'etat
                  // 1 pour le header
