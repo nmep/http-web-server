@@ -20,7 +20,6 @@ comment ca se passe pour les videos
 
 my todo pour demain
     ne pas blocker quand on a post et que la ressource ne mene a rien
-    delete
 gerer les redirections
 
 j'ai essaye de le strees test, jusqu a un certains point ca va mais au bout d'un moment ca fait ca
