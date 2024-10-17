@@ -20,7 +20,7 @@ void Asynchrone::Server_action(Configuration const &conf, int server_idx, int so
             this->Answers_instances[server_idx].ReadRequest(conf, socket_fd);
             break;
         case 1:
-            this->Answers_instances[server_idx].ReadFile();
+            this->Answers_instances[server_idx].ReadFile(conf);
             break;
         case 2:
             this->Answers_instances[server_idx].WriteFile(conf);

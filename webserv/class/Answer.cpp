@@ -277,16 +277,13 @@ void Answer::HandleError(Configuration const &conf)
     if (map.find(tmp.str()) != map.end())
     {
         this->status = 1;
+        if (this->fd_read > 2)
+            close(this->fd_read);
         this->fd_read = open(map[tmp.str()].c_str(), O_RDONLY);
-        if (this->fd_read == -1)
-        {
-            std::cout << "error 500 1\n";
-            this->code = 500;// normalement les fichiers sont tester a la config et ne peuvent pas fail ici, c'est juste une precaution, a voir ce qu'on fait quand 500 est dans la liste des error page
-        }
-        else
+        if (this->fd_read != -1)
             return ;
     }
-    // si on a pas la page dans la config, on genere une page d'erreur par default
+    // si on a pas la page dans la config ou si ca page s'ouvre pas, on genere une page d'erreur par default
     this->status = 3;
     std::stringstream tmp2;
     tmp2 << this->code;
@@ -498,20 +495,17 @@ void Answer::ReadRequest(Configuration const &conf, int socket_fd)
     else if (this->step == 2)
         this->third_step(bytesRead);
     
-    if (bytesRead < READ_SIZE || this->code >= 400 || this->step == 3)// si on a fini de lire la requete
+    if (bytesRead < READ_SIZE || this->step == 3)// si on a fini de lire la requete
     {
-        if (this->code < 400)// si la lecture a marcher
-        {
-            if (this->methode == "GET")
-                this->GET(conf);
-            else if (this->methode == "POST")
-                this->POST(conf);
-            else if (this->methode == "DELETE")
-                this->DELETE();
-        }
-        if (this->code >= 400)
-            this->HandleError(conf);
+        if (this->methode == "GET")
+            this->GET(conf);
+        else if (this->methode == "POST")
+            this->POST(conf);
+        else if (this->methode == "DELETE")
+            this->DELETE();
     }
+    if (this->code >= 400)
+        this->HandleError(conf);
     if (bytesRead < READ_SIZE)// juste pour l'affichage
         std::cout << YELLOW << "Complete\n" << this->request << RESET << std::endl;
     else
@@ -520,7 +514,7 @@ void Answer::ReadRequest(Configuration const &conf, int socket_fd)
 }
 
 // on lit le fichier demander, que ce soit la ressource ou un fichier d'erreur
-void Answer::ReadFile()
+void Answer::ReadFile(Configuration const &conf)
 {
     std::cout << RED << "Debut de ReadFile" << WHITE << std::endl;
     char buffer[READ_SIZE];
@@ -564,6 +558,9 @@ void Answer::ReadFile()
         this->code = 413;
         return ;
     }
+    if (this->code >= 400)
+        this->HandleError(conf);
+    
 
 	// std::cout << "request lu = " << this->answer_body << " size = " << this->answer_body.size() << std::endl;
     if (bytesRead < READ_SIZE)// juste pour l'affichage
@@ -603,87 +600,91 @@ char** Answer::ft_build_env(Configuration const &conf, std::string extension) {
     return envp;
 }
 
+void Answer::write_for_cgi(Configuration const &conf)
+{
+    this->status = 1;
+    int pipe_in[2];
+    int pipe_out[2];
+    if (pipe(pipe_in) == -1)
+    {
+        this->code = 500;
+        this->status = 3;
+        return ;
+    }
+    if (pipe(pipe_out) == -1)
+    {
+        this->code = 500;
+        this->status = 3;
+        close(pipe_in[0]);
+        close(pipe_in[1]);
+        return ;
+    }
+    this->fd_read = pipe_out[0];
+    this->fd_write = pipe_in[1];
+    
+    this->cgi_pid = fork();
+    if (this->cgi_pid == -1)
+    {
+        this->code = 500;
+        return ;
+    }
+    if (this->cgi_pid == 0)
+    {
+        dup2(pipe_in[0], STDIN_FILENO); // Redirige l'entrée
+        dup2(pipe_out[1], STDOUT_FILENO); // Redirige la sortie
+        close(pipe_in[1]);
+        close(pipe_out[0]);
+        std::string extension = this->ressource_path.substr(this->ressource_path.find_last_of('.'));
+        char *exec_path;
+        if (extension == ".py")
+            exec_path = (char*)"/usr/bin/python3";
+        else
+            exec_path = (char*)"/usr/bin/php";
+        char *argv[] = { exec_path, (char*)this->ressource_path.c_str(), NULL };
+        char **envp = this->ft_build_env(conf, extension);
+        size_t x = 0;
+        while (envp[x] != NULL)
+        {
+            std::cerr << envp[x] << std::endl;
+            x++;
+        }
+        if (execve(exec_path, argv, envp) == -1)
+        {
+            size_t size = 0;
+            while (envp[size] != NULL)
+                size++;
+            for (size_t i = 0; i <= size; i++) {
+                delete[] envp[i];
+            }
+            delete[] envp;
+            // est ce qu'on close les sockets et on delete les truc allouer ?? todo
+            exit(100);// on a pas la place de renvoyer 500
+        }
+    }
+    else
+    {
+        close(pipe_in[0]);
+        if (write(this->fd_write, this->cgi_env_var.c_str(), this->cgi_env_var.size()) == -1)
+            this->code = 500;
+        close(this->fd_write);
+        this->fd_write = -2;
+        close(pipe_out[1]);
+    }
+}
+
 void Answer::WriteFile(Configuration const &conf)
 {
     std::cout << RED << "Debut de WriteFile" << RESET << std::endl;
 
     if (this->cgi == true)
-    {
-        this->status = 1;
-        int pipe_in[2];
-        int pipe_out[2];
-        if (pipe(pipe_in) == -1)
-        {
-            this->code = 500;
-            this->status = 3;
-            return ;
-        }
-        if (pipe(pipe_out) == -1)
-        {
-            this->code = 500;
-            this->status = 3;
-            close(pipe_in[0]);
-            close(pipe_in[1]);
-            return ;
-        }
-        this->fd_read = pipe_out[0];
-        this->fd_write = pipe_in[1];
-        
-        this->cgi_pid = fork();
-        if (this->cgi_pid == -1)
-        {
-            this->code = 500;
-            return ;
-        }
-        if (this->cgi_pid == 0)
-        {
-            dup2(pipe_in[0], STDIN_FILENO); // Redirige l'entrée
-            dup2(pipe_out[1], STDOUT_FILENO); // Redirige la sortie
-            close(pipe_in[1]);
-            close(pipe_out[0]);
-            std::string extension = this->ressource_path.substr(this->ressource_path.find_last_of('.'));
-            char *exec_path;
-            if (extension == ".py")
-                exec_path = (char*)"/usr/bin/python3";
-            else
-                exec_path = (char*)"/usr/bin/php";
-            char *argv[] = { exec_path, (char*)this->ressource_path.c_str(), NULL };
-            char **envp = this->ft_build_env(conf, extension);
-            size_t x = 0;
-            while (envp[x] != NULL)
-            {
-                std::cerr << envp[x] << std::endl;
-                x++;
-            }
-            if (execve(exec_path, argv, envp) == -1)
-            {
-                size_t size = 0;
-                while (envp[size] != NULL)
-                    size++;
-                for (size_t i = 0; i <= size; i++) {
-                    delete[] envp[i];
-                }
-                delete[] envp;
-                // est ce qu'on close les sockets et on delete les truc allouer ?? todo
-                exit(100);// on a pas la place de renvoyer 500
-            }
-        }
-        else
-        {
-            close(pipe_in[0]);
-            if (write(this->fd_write, this->cgi_env_var.c_str(), this->cgi_env_var.size()) == -1)
-                this->code = 500;
-            close(this->fd_write);
-            this->fd_write = -2;
-            close(pipe_out[1]);
-        }
-    }
+        this->write_for_cgi(conf);
     else
     {
         // ecrire un fichier classique
         // c'est la suite pour toi garfi, c'est la que tu fais ton write quand tu sais quoi et ou ecrire
     }
-
+    if (this->code >= 400)
+        this->HandleError(conf);
 
     std::cout << RED << "Fin de WriteFile" << WHITE << std::endl;
 }

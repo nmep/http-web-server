@@ -66,6 +66,7 @@ class Answer
         void HandleError(Configuration const &conf);
         void cgi_from_post();
         char** ft_build_env(Configuration const &conf, std::string extension);
+		void write_for_cgi(Configuration const &conf);
 
 		std::string request;
 		std::string methode;
@@ -123,15 +124,15 @@ class Answer
 		bool	readFile();// je sais pas si c'est un fail du merge,
 		//
 
+		Answer() {};// c'est toi qui l'as rajoute ?
     public:
-		Answer() {};
 		Answer(int server_idx);
         ~Answer();
 
         int GetStatus() const;
 
         void ReadRequest(Configuration const &conf, int socket_fd);
-        void ReadFile();
+        void ReadFile(Configuration const &conf);
         void WriteFile(Configuration const &conf);
         void SendAnswer(Configuration const &conf);
 
