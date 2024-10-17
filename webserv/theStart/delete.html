@@ -25,14 +25,16 @@
     </header>
 
     <main>
-        <div class="delete-section">
-            <h1>Delete File</h1>
-            <form action="/upload" method="POST" enctype="multipart/form-data">
-                <label for="file">Select a file :</label>
-                <input type="file" id="file" name="file" required>
-                <button type="submit" class="custom_color">Download</button>
-            </form>
-        </div>
+        <h1>Delete a Resource</h1>
+        <form id="deleteForm">
+            <label for="ressource">Select a resource to delete:</label>
+            <select id="ressource" name="ressource">
+                <option value="test_directory/page1.txt">test_directory/page1.txt</option>
+                <option value="test_directory/page2.html">test_directory/page2.html</option>
+                <option value="test_directory/empty_page.txt">test_directory/empty_page.txt</option>
+            </select>
+            <button type="button" class="button" onclick="deleteRessource()">Delete</button>
+        </form>
     </main>
 
     <footer class="custom_color">

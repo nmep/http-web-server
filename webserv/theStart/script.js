@@ -38,3 +38,9 @@ window.onload = function() {
 //     }
 // }
 
+function deleteRessource() {
+    const ressource = document.getElementById('ressource').value;
+
+    fetch('./theScript/cgi_delete_ressource.py?ressource=' + encodeURIComponent(ressource), { method: 'DELETE', })
+}
+

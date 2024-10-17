@@ -67,6 +67,7 @@ class Answer
         void cgi_from_post();
         char** ft_build_env(Configuration const &conf, std::string extension);
 		void write_for_cgi(Configuration const &conf);
+		void build_actual_cgi_env_var();
 
 		std::string request;
 		std::string methode;
@@ -92,6 +93,7 @@ class Answer
 		// tools
 		std::map<std::string, std::string> mime_map;
 		std::map<int, std::string> code_map;
+		std::map<std::string, std::string> carctere_special_map;
 
 
         void first_step(size_t bytesRead);

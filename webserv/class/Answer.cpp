@@ -85,6 +85,39 @@ Answer::Answer(int server_idx)
     this->code_map[507] = "Insufficient Storage";
     this->code_map[510] = "Not Extended";
     this->code_map[511] = "Network Authentication Required";
+
+    this->carctere_special_map[" "] = "%20";
+    this->carctere_special_map["\""] = "%22";
+    this->carctere_special_map["#"] = "%23";
+    this->carctere_special_map["$"] = "%24";
+    this->carctere_special_map["%"] = "%25";
+    this->carctere_special_map["&"] = "%26";
+    this->carctere_special_map["'"] = "%27";
+    this->carctere_special_map["("] = "%28";
+    this->carctere_special_map[")"] = "%29";
+    this->carctere_special_map["*"] = "%2A";
+    this->carctere_special_map["+"] = "%2B";
+    this->carctere_special_map[","] = "%2C";
+    this->carctere_special_map["-"] = "%2D";
+    this->carctere_special_map["."] = "%2E";
+    this->carctere_special_map["/"] = "%2F";
+    this->carctere_special_map[":"] = "%3A";
+    this->carctere_special_map[";"] = "%3B";
+    this->carctere_special_map["<"] = "%3C";
+    this->carctere_special_map["="] = "%3D";
+    this->carctere_special_map[">"] = "%3E";
+    this->carctere_special_map["?"] = "%3F";
+    this->carctere_special_map["@"] = "%40";
+    this->carctere_special_map["["] = "%5B";
+    this->carctere_special_map["\\"] = "%5C";
+    this->carctere_special_map["]"] = "%5D";
+    this->carctere_special_map["^"] = "%5E";
+    this->carctere_special_map["_"] = "%5F";
+    this->carctere_special_map["`"] = "%60";
+    this->carctere_special_map["{"] = "%7B";
+    this->carctere_special_map["|"] = "%7C";
+    this->carctere_special_map["}"] = "%7D";
+    this->carctere_special_map["~"] = "%7E";
 }
 
 Answer::~Answer()
@@ -323,6 +356,7 @@ void Answer::parse_state_line(std::string state_line)
     if (lim != std::string::npos && lim != 0 && lim != this->ressource.size())
     {
         this->cgi_env_var = this->ressource.substr(lim + 1);
+        this->build_actual_cgi_env_var();
         this->ressource = this->ressource.substr(0, lim);
     }
     state_line = state_line.substr(end + 1);
@@ -863,6 +897,20 @@ void Answer::GET(Configuration const &conf)
     }
 }
 
+
+// certains caracteres ne peuvent pas etre ecrit directement sous peine de mal etre interprete, on doit les remplacer nous meme
+void Answer::build_actual_cgi_env_var()
+{
+    for (std::map<std::string, std::string>::iterator it = this->carctere_special_map.begin(); it != this->carctere_special_map.end(); it++)
+    {
+        size_t pos = 0;
+        while ((pos = this->cgi_env_var.find(it->second)) != std::string::npos)
+        {
+            this->cgi_env_var.replace(pos, it->second.length(), it->first);
+        }
+    }
+}
+
 void Answer::cgi_from_post()
 {
     size_t start = 0;
@@ -878,6 +926,7 @@ void Answer::cgi_from_post()
 			if (first != std::string::npos && str.substr(first, last - first + 1).find('=') != std::string::npos)
             {
 				this->cgi_env_var = str.substr(first, last - first + 1);
+                this->build_actual_cgi_env_var();
                 break ;
             }
 		}
@@ -1209,5 +1258,5 @@ void Answer::POST(Configuration const &conf)
 
 void Answer::DELETE()
 {
-
+    std::cout << MAGENTA << "DELETE " << this->ressource << " + " << this->cgi_env_var << std::endl;
 }

@@ -3,6 +3,7 @@ question sans reponse pour l'instant
     a quoi sert host dans les fichier de config
     le server pete quand on vire les usleep, avec des usleep a 1000 c'est bien je trouve mais on a pas le droit a sleep
     le append de bytes read -1 ca casse les body, comme pour le body du cgi
+    est ce qu'on close les sockets dans l'enfant pour le cgi?
 
 question garfi
     c'est quoi les parametres que l'on doit prendre en compte pour le cgi dans la config
@@ -13,9 +14,6 @@ todo garfi
     mettre tous les truc par default si ils ne sont pas preciser, comme le server name
     keep-alive pour eviter de creer une nouvelle connexion a chaque requete, quand il y a keep alive moi je ne dois pas close le fd, ca veut dire qu'on vas le reutiliser
     me passer le max body size avec la taille en octet
-
-cgi
-    est ce qu'on close les sockets dans l'enfant ?
 
 lire les images en binaire
 comment ca se passe pour les videos
