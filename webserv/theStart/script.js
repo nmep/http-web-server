@@ -41,6 +41,12 @@ window.onload = function() {
 function deleteRessource() {
     const ressource = document.getElementById('ressource').value;
 
-    fetch('./theScript/cgi_delete_ressource.py?ressource=' + encodeURIComponent(ressource), { method: 'DELETE', })
+    fetch('./cgi/cgi_delete_ressource.py?ressource=' + encodeURIComponent(ressource), { method: 'DELETE', })
+    .then(response => {
+            return response.text();
+    })
+    .then(data => {
+        document.getElementById('responseMessage').innerText = data;
+    })
 }
 

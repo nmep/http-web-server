@@ -40,7 +40,7 @@ Answer::Answer(int server_idx)
     this->code_map[201] = "Created";
     this->code_map[202] = "Accepted";
     this->code_map[203] = "Non-Authoritative Information";
-    this->code_map[204] = "No Content";
+    this->code_map[204] = "No Content";// use
     this->code_map[205] = "Reset Content";
     this->code_map[206] = "Partial Content";
     this->code_map[300] = "Multiple Choice";
@@ -289,18 +289,6 @@ bool Answer::isBinary()
     }
     return false;
 }
-// quand on an fini de lire la request, on la parse et on indique quelle sera la prochaine etape
-void Answer::DoneWithRequest(Configuration const &conf)
-{
-    if (this->methode == "GET")
-        this->GET(conf);
-    else if (this->methode == "POST")
-        this->POST(conf);
-    else if (this->methode == "DELETE")
-        this->DELETE();
-
-    return ;
-}
 
 void Answer::HandleError(Configuration const &conf)
 {
@@ -496,7 +484,7 @@ void Answer::third_step(size_t bytesRead)
         this->remaining_part = this->piece_of_request;
 }
 
-// on lit la requete par tranche de READ_SIZE et quand on a fini on la parse avec DoneWithRequest
+// on lit la requete par tranche de READ_SIZE et parse le bout de requete qu on a et ainsi de suite
 void Answer::ReadRequest(Configuration const &conf, int socket_fd)
 {
     std::cout << RED << "Debut de ReadRequest" << WHITE << std::endl;
@@ -536,7 +524,7 @@ void Answer::ReadRequest(Configuration const &conf, int socket_fd)
         else if (this->methode == "POST")
             this->POST(conf);
         else if (this->methode == "DELETE")
-            this->DELETE();
+            this->DELETE(conf);
     }
     if (this->code >= 400)
         this->HandleError(conf);
@@ -609,7 +597,7 @@ char** Answer::ft_build_env(Configuration const &conf, std::string extension) {
 
     env_vars.push_back("REQUEST_METHOD="+this->methode);
     env_vars.push_back("CONTENT_TYPE=application/x-www-form-urlencoded");
-    if (!cgi_env_var.empty() && (this->methode == "GET" || extension == ".php")) {
+    if (!cgi_env_var.empty() && (this->methode == "GET" || this->methode == "DELETE" || extension == ".php")) {
         env_vars.push_back("QUERY_STRING=" + cgi_env_var);
     }
     env_vars.push_back("SERVER_NAME=" + conf.getServer(server_idx).GetServerName());
@@ -896,7 +884,6 @@ void Answer::GET(Configuration const &conf)
         }
     }
 }
-
 
 // certains caracteres ne peuvent pas etre ecrit directement sous peine de mal etre interprete, on doit les remplacer nous meme
 void Answer::build_actual_cgi_env_var()
@@ -1256,7 +1243,26 @@ void Answer::POST(Configuration const &conf)
     this->status = 2; // si il faut ecrire quelque chose (la fonction writefile est vide tu peux faire la suite la bas)	
 }
 
-void Answer::DELETE()
+void Answer::DELETE(Configuration const &conf)
 {
-    std::cout << MAGENTA << "DELETE " << this->ressource << " + " << this->cgi_env_var << std::endl;
+    this->find_ressource_path(conf);
+    if (this->code >= 400)
+        return ;
+    // on a tout de pres pour savoir si l'extension est reconnue
+    size_t dot = this->ressource_path.find_last_of('.');
+    if (dot == std::string::npos || (dot < this->ressource_path.size() && this->mime_map.find(this->ressource_path.substr(dot)) == this->mime_map.end()))
+        this->code = 415;
+
+    if (access(this->ressource_path.c_str(), F_OK) == -1)
+    {
+        this->code = 404;//not found
+        return ;
+    }
+    else if (access(this->ressource_path.c_str(), F_OK | X_OK) == -1)
+    {
+        this->code = 403;//forbidden
+        return ;
+    }
+    this->cgi = true;
+    this->status = 2;
 }

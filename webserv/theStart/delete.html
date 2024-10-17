@@ -29,12 +29,13 @@
         <form id="deleteForm">
             <label for="ressource">Select a resource to delete:</label>
             <select id="ressource" name="ressource">
-                <option value="test_directory/page1.txt">test_directory/page1.txt</option>
-                <option value="test_directory/page2.html">test_directory/page2.html</option>
-                <option value="test_directory/empty_page.txt">test_directory/empty_page.txt</option>
+                <option value="./theStart/test_directory/page1.txt">test_directory/page1.txt</option>
+                <option value="./theStart/test_directory/page2.html">test_directory/page2.html</option>
+                <option value="./theStart/test_directory/empty_page.txt">test_directory/empty_page.txt</option>
             </select>
             <button type="button" class="button" onclick="deleteRessource()">Delete</button>
         </form>
+        <p id="responseMessage"></p>
     </main>
 
     <footer class="custom_color">
