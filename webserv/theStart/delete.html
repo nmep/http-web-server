@@ -25,16 +25,18 @@
     </header>
 
     <main>
-        <h1>Delete a Resource</h1>
-        <form id="deleteForm">
-            <label for="ressource">Select a resource to delete:</label>
-            <select id="ressource" name="ressource">
-                <option value="./theStart/test_directory/page1.txt">test_directory/page1.txt</option>
-                <option value="./theStart/test_directory/page2.html">test_directory/page2.html</option>
-                <option value="./theStart/test_directory/empty_page.txt">test_directory/empty_page.txt</option>
-            </select>
-            <button type="button" class="button" onclick="deleteRessource()">Delete</button>
-        </form>
+        <div>
+            <h1>Delete a Resource</h1>
+            <form id="deleteForm">
+                <label for="ressource">Select a resource to delete:</label>
+                <select id="ressource" name="ressource">
+                    <option value="./theStart/test_directory/page1.txt">test_directory/page1.txt</option>
+                    <option value="./theStart/test_directory/page2.html">test_directory/page2.html</option>
+                    <option value="./theStart/test_directory/empty_page.txt">test_directory/empty_page.txt</option>
+                </select>
+                <button type="button" class="custom_color" onclick="deleteRessource()">Delete</button>
+            </form>
+        </div>
         <p id="responseMessage"></p>
     </main>
 
