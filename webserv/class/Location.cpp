@@ -206,10 +206,10 @@ bool	Location::handleRedirection(std::vector<std::string> lineSplit, int countLi
 		std::cerr << "Invalid redirection syntax: no value associate, at line " << countLine << std::endl;
 		return false;
 	}
-	// erase ;
-	*(lineSplit.end() - 1)->erase((lineSplit.end() - 1)->end() - 1);
-	if (!checkHtmlAccess(*(lineSplit.begin() + 2))) 
-		return false;
+	// // erase ;
+	// *(lineSplit.end() - 1)->erase((lineSplit.end() - 1)->end() - 1);
+	// if (!checkHtmlAccess(*(lineSplit.begin() + 2))) 
+	// 	return false; // j'ai commente ca, faut pas que tu verifies si ca existe, pour 2 raisons. c'est une url donc pas le chemin sur la machine et si elle existe quand meme pas il faut renvoyer 404
 
 	// erase le premier 
 	lineSplit.erase(lineSplit.begin());

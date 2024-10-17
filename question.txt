@@ -9,6 +9,8 @@ question garfi
     c'est quoi les parametres que l'on doit prendre en compte pour le cgi dans la config
     j'ai vu que t'avais un upload file fd, j'imagine que je le close dans le destructeur si il est pas deja close ? ca serai bien de mettre les fd a -2 apres les avoir close et de les inits a -2 avant de open
     this->isRandomName = false; tu l'initialise dans le constructeur mais j'imagine qui il faut qu il demarre a false a chaque nouvelle requete, si oui il faut aussi le mettre a flase dans reset()
+    j'ai commente la verification de return dans les locations. Ca impact rien d'autre ?? faut pas que tu verifies si ca existe, pour 2 raisons. c'est une url donc pas le chemin sur la machine et si elle existe quand meme pas il faut renvoyer 404
+    dans redirection[2] qui est dans location il y a le ; dans la loc 2, je fait avec mais regarde si ca arrive pas dans d'autre cas
 
 todo garfi
     mettre tous les truc par default si ils ne sont pas preciser, comme le server name
@@ -17,10 +19,8 @@ todo garfi
 
 lire les images en binaire
 comment ca se passe pour les videos
+les post peuvent commencer par /upload /update ... a voir lequels tu veux gerer mais si on precise rien dans action ca nous envoie le file html du formulaire
 
-my todo pour demain
-    ne pas blocker quand on a post et que la ressource ne mene a rien
-gerer les redirections
 
 j'ai essaye de le strees test, jusqu a un certains point ca va mais au bout d'un moment ca fait ca
 Debut de Server_action, serv numero 0, socket_fd 6

@@ -94,6 +94,7 @@ class Answer
 		std::map<std::string, std::string> mime_map;
 		std::map<int, std::string> code_map;
 		std::map<std::string, std::string> carctere_special_map;
+		std::string redirection;
 
 
         void first_step(size_t bytesRead);

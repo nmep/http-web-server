@@ -139,7 +139,7 @@ main div {
     padding: 1vh 1vw;
     border-radius: 8px;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    margin: 20px auto; /* Centrer le conteneur */
+    margin: 20px auto;
 }
 
 h1 {

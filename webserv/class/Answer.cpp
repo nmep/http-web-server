@@ -226,7 +226,20 @@ void Answer::find_ressource_path(Configuration const &conf)
         }
     }
     if (find == false)
+    {
         this->code = 405;//methode not allowed
+        return ;
+    }
+    if (conf.getServer(server_idx).getLocationMap()[match_location]->getRedirection("") != "")
+    {
+        std::string code = conf.getServer(server_idx).getLocationMap()[match_location]->getRedirection("CODE");
+        this->redirection = conf.getServer(server_idx).getLocationMap()[match_location]->getRedirection("");
+        if (this->redirection[this->redirection.size() - 1] == ';')
+            this->redirection = this->redirection.substr(0, this->redirection.length() - 1);
+        std::stringstream ss(code);
+        ss >> this->code;
+        this->status = 3;
+    }
     return ;
 }
 
@@ -771,6 +784,10 @@ void Answer::server(Configuration const &conf)
 
 void Answer::location()// on le met que pour 201 (post) et les redirections (300+)
 {
+    if (this->code >= 300 && this->code < 400)
+    {
+        this->answer.append("Location: " + this->redirection + "\r\n");
+    }
     //pour post on creer un nouveau file sauf si il existe deja et on genere son nom aleatoirement cf uuid ou alors incrementation
 }
 
@@ -810,6 +827,7 @@ void Answer::Reset()
     this->before_body_len = 0;
     this->remaining_part.clear();
     this->step = 0;
+    this->redirection.clear();
                  
     // peut etre qu'on reset aussi l'auto index
     this->match_location.clear();
@@ -818,7 +836,7 @@ void Answer::Reset()
 void Answer::GET(Configuration const &conf)
 {
     this->find_ressource_path(conf);
-    if (this->code >= 400)
+    if (this->code >= 300)
         return ;
     if (this->is_that_a_directory() == 1)
     {
@@ -1174,7 +1192,7 @@ void Answer::POST(Configuration const &conf)
 {
     this->code = 201;
     this->find_ressource_path(conf);
-    if (this->code >= 400)
+    if (this->code >= 300)
         return ;
     if (this->isScript() == true)
     {
@@ -1190,9 +1208,9 @@ void Answer::POST(Configuration const &conf)
             return ;
         }
         this->cgi = true;
-        this->find_ressource_path(conf);
-        if (this->code >= 400)
-            return ;
+        // this->find_ressource_path(conf);
+        // if (this->code >= 300)
+        //     return ;
         this->cgi_from_post();
         if (this->code >= 400)
         {
@@ -1246,7 +1264,7 @@ void Answer::POST(Configuration const &conf)
 void Answer::DELETE(Configuration const &conf)
 {
     this->find_ressource_path(conf);
-    if (this->code >= 400)
+    if (this->code >= 300)
         return ;
     // on a tout de pres pour savoir si l'extension est reconnue
     size_t dot = this->ressource_path.find_last_of('.');
