@@ -358,7 +358,8 @@ void Answer::ReadRequest(Configuration const &conf, int socket_fd)
             this->HandleError(conf);
     }
     if (bytesRead < READ_SIZE)// juste pour l'affichage
-        std::cout << YELLOW << "Complete\n" << this->request << RESET << std::endl;
+        std::cout << YELLOW << "Complete\n" << RESET << std::endl;
+        // std::cout << YELLOW << "Complete\n" << this->request << RESET << std::endl;
     else
         std::cout << YELLOW << "Uncomplete," << RESET << std::endl;
     std::cout << RED << "Fin de ReadRequest" << RESET << std::endl;
@@ -783,6 +784,7 @@ inline bool	Answer::changeFileName(int FileNameIndex)
 	std::stringstream ss;
 	std::string fileNameWihtoutMime;
 
+	this->fileName = "tedjpg"; //decommete
 	if (fileName.find('.') == fileName.npos) {
 		std::cout << "point pas trouve" << std::endl;
 		return false;
@@ -805,6 +807,49 @@ inline bool	Answer::changeFileName(int FileNameIndex)
 	return true;
 }
 
+inline void Answer::randomName(int fileNameIndex)
+{
+	std::cerr << "The file name upload has been send to the server in a bad format, the name will be assign randomly and the file will be a .txt" << std::endl;
+	int urandomFD = open("/dev/urandom", F_OK | R_OK);
+
+	if (urandomFD == -1) {
+		this->fileName = "randomName.txt";
+		std::cerr << "Open /dev/uradom in randomName: " << strerror(errno) << std::endl;
+		if (this->changeFileName(fileNameIndex) == false) {
+			this->fileName = "fuckIt.txt";
+			return ;
+		}
+	}
+
+	int	len = 0;
+
+	char buff[15];
+	len = read(urandomFD, buff, 10);
+	if (len == -1) {
+		this->fileName = "randomName.txt";
+		if (this->changeFileName(fileNameIndex) == false) {
+			this->fileName = "fuckIt.txt";
+			return ;
+		}
+	}
+	else if (len <= 0) {
+		this->fileName = "randomName.txt";
+		if (this->changeFileName(fileNameIndex) == false) {
+			this->fileName = "fuckIt.txt";
+			return ;
+		}
+	}
+	buff[10] = '.';
+	buff[11] = 't';
+	buff[12] = 'x';
+	buff[13] = 't';
+	buff[14] = '\0';
+
+	this->fileName = buff;
+	close(urandomFD);
+	return ;
+}
+
 bool	Answer::openFile()
 {
 	// TO DO il faut trouver dans qu'elle location je dois placer le fichier
@@ -812,24 +857,24 @@ bool	Answer::openFile()
 	std::cout << "QWEHROQWEHRJKOEWQHRJILWEQHRIEWQHRIWEQHRIOUHWQEHRIQWEHRWEIQHRWEI" << std::endl;
 	std::cout << "file name = " << this->fileName << std::endl;
 	if (access(fileName.c_str(), F_OK) == 0) {
-		this->changeFileName(fileNameIndex);
+		std::cout << "1" << std::endl;
+		// this->changeFileName(fileNameIndex);
 		// to do si ca renvoit false il faut sortir un nom random
-		sleep(1);
-		// if (!this->changeFileName(fileNameIndex))
-		// 	// trouver un nom random;
-		// if (fileNameIndex == INT_MAX)
-		// 	;
+		if (!this->changeFileName(fileNameIndex))
+			this->randomName(fileNameIndex);
+		sleep(2);
+		if (fileNameIndex == INT_MAX)
+			this->randomName(fileNameIndex);
 			// trouver un nom random
 		fileNameIndex++;
 	}
-	std::cout << "file name = [" << this->fileName.c_str() << "]" << std::endl;
 	this->uploadFileFd = open(this->fileName.c_str(), O_CREAT, 0644);
 	if (uploadFileFd == -1) {
 		std::cerr << "Error while opening for the upload file " << this->fileName << ": " << strerror(errno) << std::endl;
 		this->code = 500;
 		return false;
 	}
-	std::cout << "JAI OPEN" << std::endl;
+	std::cout << "JAI OPEN [" << this->fileName << std::endl;
 	return true;
 }
 

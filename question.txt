@@ -1,13 +1,34 @@
-quelle taille choisir pour le buffer de lecture de la socket ? 4096 ? pourquoi ?
-si pas http 1.1 on refuse ?
-si on ne reconnai pas l'extention on affiche quand meme sous format html ou on gere pas ?
-on peut se connecter au port 8080 de quelqu'un d'autre ??
+question sans reponse pour l'instant
+    comment faire pour faire savoir qu'on a fail execve, doit on le faire savoir (on a pas le droit a exit)
+    est ce qu'il faut indiquer un nom de domaine dans l'url ??
+    a quoi sert host dans les fichier de config
+    je suis oblige de free pour les strdup, on peut le faire ??
+    est ce qu'on limite la taille du header, dans le cas ou on nous envoie un header infinie, mais on bloque a combien todo
+    si le max body size est abusurde, beaucoup trop grand pour les ressources de notre pc, on doit le bloquer mais a combien
+
+todo garfi
+    mettre tous les truc par default si ils ne sont pas preciser, comme le server name
+    keep-alive pour eviter de creer une nouvelle connexion a chaque requete, quand il y a keep alive moi je ne dois pas close le fd, ca veut dire qu'on vas le reutiliser
+    me passer le max body size avec la taille en octet
 
 
+cgi
+    mettre la date au dernier moment en php
+    quoi faire quand on a pas le /usr/bin/python3
+    est ce qu'on close les sockets dans l'enfant ?
+    faire passer les arguments avec post pour php
+
+
+trouver quoi faire quand l'erreur arrive apres l'etapes de lecture des fichiers d'erreurs
+ne pas blocker quand on a post et que la ressource ne mene a rien
+fusionner l auto index
+gerer les redirections
+cookie
+signaux
+delete
 gerer si l'extenstion n;est pas reconnu on renvoie l'erreur correspondante et virer le defaut notfound
-limiter la longueur de l'url (2000 dans les navigateur classique)
-est ce qu'on affiche forecement la page d'erreur quand il y a une erreur (exemple 404 et .ico)
-limiter la lecture du body dans le requete
-keep-alive pour eviter de creer une nouvelle connexion a chaque requete, quand il y a keep alive moi je ne dois pas close le fd, ca veut dire qu'on vas le reutiliser
-reussir a parser GET /cgi-bin/script.py?name=John&age=25 HTTP/1.1
-est ce qu'il faut indiquer un nom de domaine dans l'url ??
+
+
+question pour pierre
+ curl -X POST -f "image=@./theStart/ted.jpg" 127.0.0.1:8081 envoie une requete poste sans bodysize elle est presque vide,
+ 		 est ce que c'es normal qu'elle soit traite dans poste ou il faut la refuser ?

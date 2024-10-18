@@ -96,6 +96,7 @@ class Answer
 		bool	parseContentType(std::string line);
 		bool	openFile();
 		inline bool	changeFileName(int FileNameIndex);
+		inline void	randomName(int fileNameIndex);
 		bool	readFile();
 		//
 
