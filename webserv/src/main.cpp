@@ -30,9 +30,7 @@ int	main(int ac, char **av)
 		std::cerr << "Usage: ./webserv [config file]" << std::endl;
 		return 2;
 	}
-
-	// std::cout << conf << std::endl;
-	// std::cout << conf << std::endl;
+	
 	if (!socket.initAllSockets(conf)) {
 		std::cout << "MARCHE PAS" << std::endl;
 		return 2;

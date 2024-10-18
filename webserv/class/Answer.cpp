@@ -2,7 +2,7 @@
 
 Answer::Answer(int server_idx)
 {
-	std::cout << YELLOW << "constructeur called" << RESET << std::endl;
+	std::cout << YELLOW << "Answer constructeur called" << RESET << std::endl;
     this->server_idx = server_idx;
     this->status = 0;
     this->socket_fd = -2;
@@ -234,11 +234,11 @@ void Answer::ParseRequest()
 
 void Answer::find_good_index_or_autoindex(Configuration const &conf)
 {
-    std::string fake_path = this->ressource_path;
-    if (this->ressource_path[this->ressource_path.size() - 1] != '/')
-        fake_path.append("/");
+	std::string fake_path = this->ressource_path;
+	if (this->ressource_path[this->ressource_path.size() - 1] != '/')
+	    fake_path.append("/");
     if (this->match_location != "None")
-    {   
+    {
         this->autoindex = conf.getServer(this->server_idx).getLocation(this->match_location)->getAutoIndex();
         std::vector<std::string> vec = conf.getServer(this->server_idx).getLocation(this->match_location)->getIndex();
         for (std::vector<std::string>::iterator it = vec.begin(); it != vec.end(); it++)
@@ -291,7 +291,7 @@ bool Answer::isBinary()
     return false;
 }
 // quand on an fini de lire la request, on la parse et on indique quelle sera la prochaine etape
-void Answer::DoneWithRequest(Configuration const &conf)
+void Answer::DoneWithRequest(Configuration const &conf, int server_idx)
 {
     this->ParseRequest();
     if (this->code >= 400)
@@ -303,7 +303,7 @@ void Answer::DoneWithRequest(Configuration const &conf)
     if (this->methode == "GET")
         this->GET(conf);
     else if (this->methode == "POST")
-        this->POST(conf);
+        this->POST(conf, server_idx);
     else if (this->methode == "DELETE")
         this->DELETE();
 
@@ -333,9 +333,9 @@ void Answer::HandleError(Configuration const &conf)
 }
 
 // on lit la requete par tranche de READ_SIZE et quand on a fini on la parse avec DoneWithRequest
-void Answer::ReadRequest(Configuration const &conf, int socket_fd)
+void Answer::ReadRequest(Configuration const &conf, int socket_fd, int server_idx)
 {
-	std::cout << RED << "Debut de ReadRequestJQWEORHJEORJHWQE" << RESET << std::endl;
+	std::cout << RED << "Debut de ReadRequest JQWEORHJEORJHWQE" << RESET << std::endl;
 
 	if (this->socket_fd == -2)
 		this->socket_fd = socket_fd;
@@ -353,7 +353,7 @@ void Answer::ReadRequest(Configuration const &conf, int socket_fd)
     if (bytesRead < READ_SIZE || this->code == 500)// si on a fini de lire la requete
     {
         if (this->code != 500)// si la lecture a marcher
-            this->DoneWithRequest(conf);
+            this->DoneWithRequest(conf, server_idx);
         if (this->code >= 400)
             this->HandleError(conf);
     }
@@ -608,7 +608,7 @@ bool	Answer::parseBoundary(std::string line)
 		line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());
 
 	this->beginBoundary = line;
-	this->endBoundary = this->beginBoundary + "--";
+	this->endBoundary = this->beginBoundary + "--\r";
 	return true;
 }
 
@@ -753,6 +753,7 @@ bool	Answer::parseBodyHeader()
 	std::cout << RED << "Getline Body\n" << RESET << std::endl;
 	for (int i = 0; getline(is, line) && i < 5; i++)
 	{
+		std::cout << "upload file line = " << line << std::endl;
 		if (line.empty()) {
 			std::cout << "ligne vide rencontre je break" << std::endl;
 			break;
@@ -784,7 +785,7 @@ inline bool	Answer::changeFileName(int FileNameIndex)
 	std::stringstream ss;
 	std::string fileNameWihtoutMime;
 
-	this->fileName = "tedjpg"; //decommete
+	// this->fileName = "tedjpg"; //decommete pour tester randomName
 	if (fileName.find('.') == fileName.npos) {
 		std::cout << "point pas trouve" << std::endl;
 		return false;
@@ -858,14 +859,11 @@ bool	Answer::openFile()
 	std::cout << "file name = " << this->fileName << std::endl;
 	if (access(fileName.c_str(), F_OK) == 0) {
 		std::cout << "1" << std::endl;
-		// this->changeFileName(fileNameIndex);
-		// to do si ca renvoit false il faut sortir un nom random
 		if (!this->changeFileName(fileNameIndex))
 			this->randomName(fileNameIndex);
 		sleep(2);
 		if (fileNameIndex == INT_MAX)
 			this->randomName(fileNameIndex);
-			// trouver un nom random
 		fileNameIndex++;
 	}
 	this->uploadFileFd = open(this->fileName.c_str(), O_CREAT, 0644);
@@ -874,20 +872,46 @@ bool	Answer::openFile()
 		this->code = 500;
 		return false;
 	}
-	std::cout << "JAI OPEN [" << this->fileName << std::endl;
 	return true;
 }
 
 bool	Answer::readFile()
 {
 	// std::cout << RED << this->request_body << RESET << std::endl;
+	std::string line;
+	std::istringstream  is(this->request_body);
+
+	getline(is, line);
+	std::cout << "premiere ligne avec la boucle = " << line << std::endl;
+	std::cout << "end boundary = " << this->endBoundary << std::endl;
+	while (line != this->endBoundary) {
+		
+		getline(is, line);
+
+		std::cout << "line = [" << line << ']' << std::endl;
+	}
+	std::cout << "sortie de boucle j'ai rencontre le end boundary" << std::endl;
+	/*
+		POST:
+			--------------------------60fe77ae56d6ef7b
+			Content-Disposition: form-data; name="image"; filename="ted.jpg"
+			Content-Type: image/jpeg
+
+			����JFIFHH��C
+
+		Internet:
+			------WebKitFormBoundaryeBaPTloLaLAzHbF8
+			Content-Disposition: form-data; name="file"; filename="ted.jpg"
+			Content-Type: image/jpeg
+
+			����JFIFHH��C
+	*/
 
 	return true;
 }
 
-void Answer::POST(Configuration const &conf)
+void Answer::POST(Configuration const &conf, int server_idx)
 {
-	(void)conf;
     std::cout << MAGENTA << this->code << RESET << std::endl;
     if (this->isScript() == true)
     {
@@ -902,37 +926,34 @@ void Answer::POST(Configuration const &conf)
 		return ;
     }
 
-    // met toi ici GARFI, tu peux faire l'upload file ici
+	// met toi ici GARFI, tu peux faire l'upload file ici
 
-	// est ce qeue je dois set un dossier pour l'ipload par default ou bien 
-	// si resourcce est "/upload alors c'est qu'un fichier a ete envoye"
-
-		// si "is uploadfile accepted dans la location"
     std::cout << GREEN << this->ressource << RESET << std::endl; // savoir si c'est un /upload ou /update
     // std::cout << GREEN << this->request_body << RESET << std::endl; // body
 	std::cout << "BODY SIZE = " << this->request_body.size() << std::endl;
-    this->code = 201;//quand post marche
 	std::cout << "resource = " << this->ressource << std::endl;
-	if (this->ressource == "/upload" || this->ressource == "/") {
+	this->code = 201;//quand post marche
+	if ((this->ressource == "/upload" || this->ressource == "/") && conf.getServer(server_idx).getIsUploadFileAccepted()) {
 		// est ce que je peux faire un upload file si oui ou je dois le televerser ???? TO DO
-		// parse body
 		if (!this->parseBodyHeader())
 			return ;
-	}
-	std::cout << "LA FINALITE EST QUE" << std::endl;
-	std::cout << "begin boundary = " << this->beginBoundary << std::endl;
-	std::cout << "end boundary = " << this->endBoundary << std::endl;
-	std::cout << "LE FILE NAME = " << this->fileName << std::endl;
-	std::cout << "le mime file = " << this->mimeFile << std::endl;
-	std::cout << "le mime ext = " << this->mimeStr << std::endl;
+		std::cout << "LA FINALITE EST QUE" << std::endl;
+		std::cout << "begin boundary = " << this->beginBoundary << std::endl;
+		std::cout << "end boundary = " << this->endBoundary << std::endl;
+		std::cout << "LE FILE NAME = " << this->fileName << std::endl;
+		std::cout << "le mime file = " << this->mimeFile << std::endl;
+		std::cout << "le mime ext = " << this->mimeStr << std::endl;
 
-	// ouvrir le fichier 
-	if (!this->openFile() || !this->readFile()) {
-		return ;
-	}
-	// ecrire le fichier
+		// ouvrir le fichier 
+		if (!this->openFile() || !this->readFile()) {
+			return ;
+		}
+		// ecrire le fichier
 
-    this->status = 2; // si il faut ecrire quelque chose (la fonction writefile est vide tu peux faire la suite la bas)	
+		this->status = 2; // si il faut ecrire quelque chose (la fonction writefile est vide tu peux faire la suite la bas)	
+	}
+	else
+		std::cerr << "Error: Upload was send but is not allowed in this server check conf file" << std::endl;
 }
 
 void Answer::DELETE()

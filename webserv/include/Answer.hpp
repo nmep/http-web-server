@@ -64,10 +64,10 @@ class Answer
 		int fd_read;// utiliser pour la ressource a lire ou le fichier d'erreure a lire aussi
 		std::ifstream *read_file;
 
-		void DoneWithRequest(Configuration const &conf);
+		void DoneWithRequest(Configuration const &conf, int server_idx);
 		void ParseRequest();
 		void find_ressource_path(Configuration const &conf);
-		int is_that_a_directory();
+		int	is_that_a_directory();
 		void find_good_index_or_autoindex(Configuration const &conf);
 		bool isBinary();
 		bool isScript();
@@ -86,7 +86,7 @@ class Answer
 		void Reset();
 
 		void GET(Configuration const &conf);
-		void POST(Configuration const &conf);
+		void POST(Configuration const &conf, int server_idx);
 		void DELETE();
 		// upload file
 		bool	parseBodyHeader();
@@ -107,7 +107,7 @@ class Answer
 
         int GetStatus() const;
 
-        void ReadRequest(Configuration const &conf, int socket_fd);
+        void ReadRequest(Configuration const &conf, int socket_fd, int server_idx);
         void ReadFile();
         void WriteFile();
         void SendAnswer(Configuration const &conf);

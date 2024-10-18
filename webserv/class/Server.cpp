@@ -3,9 +3,8 @@
 /* ----------------------------------------------------------------- */
 
 Server::Server() : _default_server(0), _port(8080), _serverName("server_name"),\
-	 _hostName("localhost"), _client_max_body_size(0), _autoIndex(false)
+	 _hostName("localhost"), _client_max_body_size(0), _autoIndex(false), _isUploadFileAccepted(false)
 {
-	std::cout << "def constructor autoindex = " << _autoIndex << std::endl;
 	std::cout << BLUE << "Server default COnstructor called" << RESET << std::endl;
 }
 
@@ -20,7 +19,8 @@ Server::~Server() {
 	_location.clear();
 }
 
-Server::Server(Server const & copy)
+Server::Server(Server const & copy) : _default_server(0), _port(8080), _serverName("server_name"),\
+	 _hostName("localhost"), _client_max_body_size(0), _autoIndex(false), _isUploadFileAccepted(false)
 {
 	std::cout << "Server copy constructor called" << std::endl;
 	*this = copy;
@@ -35,6 +35,7 @@ Server & Server::operator=(Server const & rhs)
 	_hostName = rhs._hostName;
 	_error_page = rhs._error_page;
 	_client_max_body_size = rhs._client_max_body_size;
+	_isUploadFileAccepted = rhs._isUploadFileAccepted;
 	// check si loc de rhs est vide 
 	if (rhs._location.size() > 0) {
 		std::map<std::string, Location*>::const_iterator it_rhs = rhs._location.begin();
@@ -99,6 +100,13 @@ bool Server::getAutoIndex() const {
 	return _autoIndex;
 }
 
+std::string Server::getUploadStore() const {
+	return _uploadStore;
+}
+
+bool Server::getIsUploadFileAccepted() const {
+	return _isUploadFileAccepted;
+}
 
 /* ----------------------------------------------------------------- */
 
@@ -153,7 +161,10 @@ void Server::SetHostName(std::string const & hostName) {
 	_hostName = hostName;
 }
 
-/* --------------------------- PARSING -------------------------------------- */
+void	Server::setUploadStore(std::string directoryUpload) {
+	_uploadStore = directoryUpload;
+}
+
 
 bool	Server::isLocationExisting(std::string const & locationName) const
 {
@@ -161,6 +172,12 @@ bool	Server::isLocationExisting(std::string const & locationName) const
 		return true;
 	return false;
 }
+
+void	Server::setIsUploadFileAccepted(bool value) {
+	_isUploadFileAccepted = value;
+}
+
+/* --------------------------- PARSING -------------------------------------- */
 
 bool	Server::handleListenParsing(std::vector<std::string> lineSplit, int countLine) {
 	uint16_t port = 0;
@@ -277,7 +294,6 @@ bool	Server::handleAutoIndex(std::vector<std::string> lineSplit, int countLine) 
 		return false;
 	}
 
-	std::cout << "je set autoindex dans serveur" << std::endl;
 	if (*(lineSplit.begin() + 1) == "on")
 		setAutoIndex(1);
 	else
@@ -285,13 +301,30 @@ bool	Server::handleAutoIndex(std::vector<std::string> lineSplit, int countLine) 
 	return true;
 }
 
+bool Server::handleUploadStore(std::vector<std::string> lineSplit, int countLine)
+{
+	if (lineSplit.size() != 2) {
+		std::cerr << "Invalid upload_store syntax: no value associate, at line " << countLine << std::endl;
+		return false;
+	}
+	*(lineSplit.end() - 1)->erase((lineSplit.end() - 1)->end() - 1);
+	// check if dir exist
+	if (!checkAccessFile(*(lineSplit.begin() + 1), F_OK | R_OK | W_OK)) {
+		std::cerr << "Invalid upload_store syntax: [" << *(lineSplit.begin() + 1) << "] " << strerror(errno) << " at line " << countLine << std::endl;
+		return false;
+	}
+	setUploadStore(*(lineSplit.begin() + 1));
+	setIsUploadFileAccepted(true);
+	return true;
+}
+
 bool Server::AssignToken(std::vector<std::string> lineSplit, int countLine) {
 	const std::string fTokens[] = {"listen", "server_name", "error_page"\
-							, "client_max_body_size", "autoindex"}; // pour location apelle directement getline dans
+							, "client_max_body_size", "autoindex", "upload_store"}; // pour location apelle directement getline dans
 							// la fonction de location parse et voir si ca marche
 
 	bool	(Server::*FuncPtr[]) (std::vector<std::string>, int) = {&Server::handleListenParsing, &Server::handleServerNameParsing\
-		, &Server::handleErrorPageParsing, &Server::handleClientMaxBodySizeParsing, &Server::handleAutoIndex}; //TO DO manque  hostname
+		, &Server::handleErrorPageParsing, &Server::handleClientMaxBodySizeParsing, &Server::handleAutoIndex, &Server::handleUploadStore}; //TO DO manque  hostname
 
 	// si une segment de directive et finit on return true et on passe au suivant
 	if (*(lineSplit.begin()) == "}")
@@ -352,12 +385,14 @@ std::ostream & operator<<(std::ostream & o, Server const & server)
     o << "serverName = " << server.GetServerName() << std::endl;
     o << "hostName = " << server.GetHostName() << std::endl;
 	o << "auto index = " << server.getAutoIndex() << std::endl;
+	o << "IsUploadFileAccepted = " << server.getIsUploadFileAccepted() << std::endl;
+	o << "upload store = " << server.getUploadStore() << std::endl;
 
-    o << "Error page:" << std::endl;
+	o << "Error page:" << std::endl;
 	printMap(server.getErrorPageMap(), o);
 
-    o << "Client max body size = " << server.GetClientMaxBodySize() << std::endl;
-
+	o << "Client max body size = " << server.GetClientMaxBodySize() << std::endl;
+	o << "Upload store = " << server.getUploadStore() << std::endl;
 	o << "Location" << std::endl;
 	if (server.getLocationMap().empty()) {
 		o << "No location for this serv" << std::endl;

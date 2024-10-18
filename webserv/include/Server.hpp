@@ -1,11 +1,11 @@
 # ifndef SERVER_HPP
 # define SERVER_HPP
 
-	#include "library_needed.hpp"
-	#include "print_tools.hpp"
-	#include "tools.hpp"
-	#include "Location.hpp"
-	#include "autoIndex.hpp"
+#include "library_needed.hpp"
+#include "print_tools.hpp"
+#include "tools.hpp"
+#include "Location.hpp"
+#include "autoIndex.hpp"
 
 class Server
 {
@@ -18,7 +18,8 @@ class Server
 		uint16_t								_client_max_body_size;
 		std::map<std::string, Location*>		_location;
 		bool									_autoIndex;
-
+		std::string								_uploadStore;
+		bool									_isUploadFileAccepted;
 
 	public:
 		Server();
@@ -34,9 +35,12 @@ class Server
 		std::string							GetErrorPage(std::string const & httpCode);
 		uint16_t							GetClientMaxBodySize(void) const;
 		std::map<std::string, std::string>	getErrorPageMap() const;
-		bool								getAutoIndex() const;
+		std::string 						getUploadStore() const;
+		bool								getIsUploadFileAccepted() const;
 
+		bool								getAutoIndex() const;
 		Location*							getLocation(std::string const & locationName);// ca cree une loc en plus quand le location name n'exite pas encore
+
 		bool								isLocationExisting(std::string const & locationName) const;
 		std::map<std::string, Location*>		getLocationMap() const;
 
@@ -48,6 +52,9 @@ class Server
 		void			SetClientMaxBodySize(uint16_t & val);
 		bool			SetErrorPage(std::vector<std::string> lineSplit, int countLine);
 		void			setAutoIndex(bool value);
+		void			setUploadStore(std::string directoryUpload);
+		void			setIsUploadFileAccepted(bool value);
+
 
 		// FONCTIONS DE GESTION DES MOTS CLES
 		bool	handleListenParsing(std::vector<std::string> lineSplit, int countLine);
@@ -56,6 +63,7 @@ class Server
 		bool	handleHostName(std::vector<std::string> lineSplit, int countLine);
 		bool	handleClientMaxBodySizeParsing(std::vector<std::string> lineSplit, int countLine);
 		bool	handleAutoIndex(std::vector<std::string> lineSplit, int countLine);
+		bool	handleUploadStore(std::vector<std::string> lineSplit, int countLine);
 		bool 	AssignToken(std::vector<std::string> lineSplit, int countLine);
 
 		// FONCTION PRINCIPALE DE PARSING DE SERVEUR
