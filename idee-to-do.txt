@@ -1,8 +1,6 @@
 IDEE FUTURE A AJOUTER OU PAS A WEBSERV
 
-
 faire un fichier de log de serveur (log.txt ou croissant.txt) et rediriger les erreurs dans ce fichier
-
 
 to do 
 
@@ -18,4 +16,3 @@ to do
 
 		- auto index doit il etre dans server ou location ou les deux
 			Il se met tjr a 0 ??
-
