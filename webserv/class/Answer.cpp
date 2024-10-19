@@ -885,7 +885,6 @@ bool	Answer::readFile()
 	std::cout << "premiere ligne avec la boucle = " << line << std::endl;
 	std::cout << "end boundary = " << this->endBoundary << std::endl;
 	while (line != this->endBoundary) {
-		
 		getline(is, line);
 
 		std::cout << "line = [" << line << ']' << std::endl;
