@@ -11,12 +11,6 @@ question garfi
     this->isRandomName = false; tu l'initialise dans le constructeur mais j'imagine qui il faut qu il demarre a false a chaque nouvelle requete, si oui il faut aussi le mettre a flase dans reset()
     j'ai commente la verification de return dans les locations. Ca impact rien d'autre ?? faut pas que tu verifies si ca existe, pour 2 raisons. c'est une url donc pas le chemin sur la machine et si elle existe quand meme pas il faut renvoyer 404
     dans redirection[2] qui est dans location il y a le ; dans la loc 2, je fait avec mais regarde si ca arrive pas dans d'autre cas
-    comment faire pour faire savoir qu'on a fail execve, doit on le faire savoir (on a pas le droit a exit)
-    est ce qu'il faut indiquer un nom de domaine dans l'url ??
-    a quoi sert host dans les fichier de config
-    je suis oblige de free pour les strdup, on peut le faire ??
-    est ce qu'on limite la taille du header, dans le cas ou on nous envoie un header infinie, mais on bloque a combien todo
-    si le max body size est abusurde, beaucoup trop grand pour les ressources de notre pc, on doit le bloquer mais a combien
 
 todo garfi
     mettre tous les truc par default si ils ne sont pas preciser, comme le server name
@@ -59,29 +53,3 @@ error 500 6 Resource temporarily unavailable
 ==3087150== 
 ==3087150== For lists of detected and suppressed errors, rerun with: -s
 ==3087150== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)
-
-
-cgi
-    mettre la date au dernier moment en php
-    quoi faire quand on a pas le /usr/bin/python3
-    est ce qu'on close les sockets dans l'enfant ?
-    faire passer les arguments avec post pour php
-
-
-trouver quoi faire quand l'erreur arrive apres l'etapes de lecture des fichiers d'erreurs
-ne pas blocker quand on a post et que la ressource ne mene a rien
-fusionner l auto index
-gerer les redirections
-cookie
-signaux
-delete
-gerer si l'extenstion n;est pas reconnu on renvoie l'erreur correspondante et virer le defaut notfound
-
-
-question pour pierre
- -curl -X POST -f "image=@./theStart/ted.jpg" 127.0.0.1:8081 envoie une requete poste sans bodysize elle est presque vide,
- 		 est ce que c'es normal qu'elle soit traite dans poste ou il faut la refuser ?
-
- -il y a une enorme pas d'erreur valgrind si je passe dans la requete (upload file par exemple)
-
- - si l'upload file est pas accepte sur un serveur et que je passe par la fonction donne with request, ca tourne dans le vide
