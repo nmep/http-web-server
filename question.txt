@@ -30,5 +30,9 @@ gerer si l'extenstion n;est pas reconnu on renvoie l'erreur correspondante et vi
 
 
 question pour pierre
- curl -X POST -f "image=@./theStart/ted.jpg" 127.0.0.1:8081 envoie une requete poste sans bodysize elle est presque vide,
+ -curl -X POST -f "image=@./theStart/ted.jpg" 127.0.0.1:8081 envoie une requete poste sans bodysize elle est presque vide,
  		 est ce que c'es normal qu'elle soit traite dans poste ou il faut la refuser ?
+
+ -il y a une enorme pas d'erreur valgrind si je passe dans la requete (upload file par exemple)
+
+ - si l'upload file est pas accepte sur un serveur et que je passe par la fonction donne with request, ca tourne dans le vide
