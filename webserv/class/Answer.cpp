@@ -302,25 +302,25 @@ bool Answer::isBinary()
     }
     return false;
 }
-// quand on an fini de lire la request, on la parse et on indique quelle sera la prochaine etape
-void Answer::DoneWithRequest(Configuration const &conf, int server_idx)
-{
-    this->ParseRequest();
-    if (this->code >= 400)
-        return ;
-    this->find_ressource_path(conf);
-    if (this->code >= 400)
-        return ;
+// quand on an fini de lire la request, on la parse et on indique quelle sera la prochaine etape // plus utilise ?
+// void Answer::DoneWithRequest(Configuration const &conf, int server_idx)
+// {
+//     this->ParseRequest();
+//     if (this->code >= 400)
+//         return ;
+//     this->find_ressource_path(conf);
+//     if (this->code >= 400)
+//         return ;
 
-    if (this->methode == "GET")
-        this->GET(conf);
-    else if (this->methode == "POST")
-        this->POST(conf, server_idx);
-    else if (this->methode == "DELETE")
-        this->DELETE();
+//     if (this->methode == "GET")
+//         this->GET(conf);
+//     else if (this->methode == "POST")
+//         this->POST(conf, server_idx);
+//     else if (this->methode == "DELETE")
+//         this->DELETE();
 
-    return ;
-}
+//     return ;
+// }
 
 void Answer::HandleError(Configuration const &conf)
 {
@@ -534,7 +534,7 @@ void Answer::ReadRequest(Configuration const &conf, int socket_fd, int server_id
     }
     else if (bytesRead == -1)
     {
-        std::cout << "error 500 6 " << strerror(errno) << std::endl;
+        std::cerr << "error 500 6 " << strerror(errno) << std::endl;
         this->code = 500;//error server
     }
     buffer[bytesRead] = '\0';
@@ -548,7 +548,7 @@ void Answer::ReadRequest(Configuration const &conf, int socket_fd, int server_id
         this->second_step(bytesRead);
     else if (this->step == 2)
         this->third_step(bytesRead);
-    
+
     if (bytesRead < READ_SIZE || this->step == 3)// si on a fini de lire la requete
     {
         if (this->methode == "GET")

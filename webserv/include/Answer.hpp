@@ -108,10 +108,8 @@ class Answer
         void parse_header(std::string header);
 
         void GET(Configuration const &conf);
-        void POST(Configuration const &conf);
         void POST(Configuration const &conf, int server_idx);
         void DELETE(Configuration const &conf);
-        void DELETE();
 		std::string GetMime(std::string extansion);// prend l'extension du fichier en parametre et renvoie le type
 		std::string GetCodeSentence(int code);// on renvoie la phrase de raison associe au code d etat
 		void contentType();

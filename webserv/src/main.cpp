@@ -25,8 +25,13 @@ int	main(int ac, char **av)
 	if (ac == 1)
 	{
 		// faire le serveur web avec une config par defaut
-		std::cout << "default webserv" << std::endl;
-		return 0;
+		const std::string defaultConfFileName("conf/default.conf");
+		if (!conf.launchServerConf(defaultConfFileName)) {
+			// conf.clearConfiguration();
+			std::cout << "la conf est pas ok" << std::endl;
+			return 2;
+		}
+		std::cout << "la default conf est ok" << std::endl;
 	}
 	else if (ac == 2)
 	{
