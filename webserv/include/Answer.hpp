@@ -40,8 +40,8 @@ class Answer
 		// elements de la requete
 		// garfi
 
-        bool autoindex; // faut que tu le mette dans la class serv pas dans location
         std::string match_location;
+		bool autoindex;
         int fd_read;// utiliser pour la ressource a lire ou le fichier d'erreure a lire aussi
         int fd_write;
         bool cgi;
@@ -87,32 +87,19 @@ class Answer
 		// 3rd line mime type
 		std::string mimeFile;
 		std::string mimeStr;
-		
+
 		int uploadFileFd;
 		//
 		// tools
 		std::map<std::string, std::string> mime_map;
 		std::map<int, std::string> code_map;
 
-		bool autoindex; // faut que tu le mette dans la class serv pas dans location
-		std::string match_location;
-		int fd_read;// utiliser pour la ressource a lire ou le fichier d'erreure a lire aussi
-		std::ifstream *read_file;
-
 		void DoneWithRequest(Configuration const &conf, int server_idx);
 		void ParseRequest();
-		void find_ressource_path(Configuration const &conf);
-		int	is_that_a_directory();
-		void find_good_index_or_autoindex(Configuration const &conf);
-		bool isBinary();
-		bool isScript();
-		void HandleError(Configuration const &conf);
-		void cgi_from_post();
 		void build_env_cgi(std::string data);
 
 		std::map<std::string, std::string> carctere_special_map;
 		std::string redirection;
-
 
         void first_step(size_t bytesRead);
         void second_step(size_t bytesRead);
@@ -122,7 +109,9 @@ class Answer
 
         void GET(Configuration const &conf);
         void POST(Configuration const &conf);
+        void POST(Configuration const &conf, int server_idx);
         void DELETE(Configuration const &conf);
+        void DELETE();
 		std::string GetMime(std::string extansion);// prend l'extension du fichier en parametre et renvoie le type
 		std::string GetCodeSentence(int code);// on renvoie la phrase de raison associe au code d etat
 		void contentType();
@@ -133,9 +122,6 @@ class Answer
 		void taille();
 		void Reset();
 
-		void GET(Configuration const &conf);
-		void POST(Configuration const &conf, int server_idx);
-		void DELETE();
 		// upload file
 		bool	parseBodyHeader();
 		bool	parseBoundary(std::string line);
@@ -155,7 +141,7 @@ class Answer
 
         int GetStatus() const;
 
-        void ReadRequest(Configuration const &conf, int socket_fd);
+        void ReadRequest(Configuration const &conf, int socket_fd, int server_idx);
         void ReadFile(Configuration const &conf);
         void WriteFile(Configuration const &conf);
         void SendAnswer(Configuration const &conf);

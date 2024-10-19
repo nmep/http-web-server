@@ -517,7 +517,7 @@ void Answer::third_step(size_t bytesRead)
 }
 
 // on lit la requete par tranche de READ_SIZE et parse le bout de requete qu on a et ainsi de suite
-void Answer::ReadRequest(Configuration const &conf, int socket_fd)
+void Answer::ReadRequest(Configuration const &conf, int socket_fd, int server_idx)
 {
     std::cout << RED << "Debut de ReadRequest" << WHITE << std::endl;
     this->piece_of_request.clear();
@@ -554,7 +554,7 @@ void Answer::ReadRequest(Configuration const &conf, int socket_fd)
         if (this->methode == "GET")
             this->GET(conf);
         else if (this->methode == "POST")
-            this->POST(conf);
+            this->POST(conf, server_idx);
         else if (this->methode == "DELETE")
             this->DELETE(conf);
     }
