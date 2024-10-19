@@ -93,6 +93,23 @@ class Answer
 		// tools
 		std::map<std::string, std::string> mime_map;
 		std::map<int, std::string> code_map;
+
+		bool autoindex; // faut que tu le mette dans la class serv pas dans location
+		std::string match_location;
+		int fd_read;// utiliser pour la ressource a lire ou le fichier d'erreure a lire aussi
+		std::ifstream *read_file;
+
+		void DoneWithRequest(Configuration const &conf, int server_idx);
+		void ParseRequest();
+		void find_ressource_path(Configuration const &conf);
+		int	is_that_a_directory();
+		void find_good_index_or_autoindex(Configuration const &conf);
+		bool isBinary();
+		bool isScript();
+		void HandleError(Configuration const &conf);
+		void cgi_from_post();
+		void build_env_cgi(std::string data);
+
 		std::map<std::string, std::string> carctere_special_map;
 		std::string redirection;
 
@@ -116,6 +133,9 @@ class Answer
 		void taille();
 		void Reset();
 
+		void GET(Configuration const &conf);
+		void POST(Configuration const &conf, int server_idx);
+		void DELETE();
 		// upload file
 		bool	parseBodyHeader();
 		bool	parseBoundary(std::string line);
@@ -124,7 +144,8 @@ class Answer
 		bool	parseContentType(std::string line);
 		bool	openFile();
 		inline bool	changeFileName(int FileNameIndex);
-		bool	readFile();// je sais pas si c'est un fail du merge,
+		inline void	randomName(int fileNameIndex);
+		bool	readFile();
 		//
 
 		Answer() {};// c'est toi qui l'as rajoute ?
