@@ -6,11 +6,13 @@ Location::Location() : _autoIndex(false), _isUploadFileAccepted(false)
 {
 	_locationIndex++;
 	_locationID = _locationIndex;
+	_allowedMethod = std::vector<std::string>(1);
 	std::cout << GREEN << "location default constructor de location id " << _locationIndex << " called" << RESET << std::endl;
 }
 
 Location::Location(Location const & copy) :_autoIndex(false), _isUploadFileAccepted(false)
 {
+	std::cout << "j'incremente location index" << std::endl;
 	_locationIndex++;
 	_locationID = _locationIndex;
 	*this = copy;
@@ -18,7 +20,10 @@ Location::Location(Location const & copy) :_autoIndex(false), _isUploadFileAccep
 
 Location & Location::operator=(Location const & rhs)
 {
-	_allowedMethod = rhs._allowedMethod;
+	if (rhs._allowedMethod.size()) {
+		_allowedMethod.insert(_allowedMethod.begin(), rhs._allowedMethod.begin(), rhs._allowedMethod.end());
+		_allowedMethod.resize(rhs._allowedMethod.size());
+	}
 	if (!rhs._redirection->empty()) {
 		_redirection[0] = rhs._redirection[0];
 	}
@@ -27,6 +32,7 @@ Location & Location::operator=(Location const & rhs)
 	_autoIndex = rhs._autoIndex;
 	_isUploadFileAccepted = rhs._isUploadFileAccepted;
 	_uploadStore = rhs._uploadStore;
+	_index = rhs._index;
 	return *this;
 }
 
@@ -55,7 +61,7 @@ std::string Location::getRoot() const {
 	return _root;
 }
 
-bool Location::getAutoInex() const {
+bool Location::getAutoIndex() const {
 	return _autoIndex;
 }
 
@@ -69,8 +75,28 @@ std::string Location::getUploadStore() const {
 	return _uploadStore;
 }
 
+
+// renvoie une vector empty si allowedMethods est vide
 std::vector<std::string> Location::getAllowedMethodVector() const {
+	std::vector<std::string> empty;
+
+	if (this->_allowedMethod.empty()) {
+		std::cout << "allowed est vide je renvoie un vector empty" << std::endl;
+		return empty;
+	}
 	return _allowedMethod;
+}
+
+// renvoie une vector empty si index est vide
+// pour eviter tout segfault, sil vous plait utiliser d'abord getlocation pour etre sur que ca existe
+std::vector<std::string> Location::getIndex() const {
+	std::vector<std::string> empty;
+
+	if (this->_index.empty()) {
+		std::cout << "index est vide je renvoie un vector empty" << std::endl;
+		return empty;
+	}
+	return _index;
 }
 
 /* -------------------------------------------------------------------- */
@@ -101,7 +127,7 @@ void	Location::setUploadStore(std::string directoryUpload) {
 }
 
 void	Location::setIndex(std::string const & indexFileName) {
-	_index = indexFileName;
+	_index.push_back(indexFileName);
 }
 
 /* -------------------------------------------------------------------- */
@@ -112,9 +138,9 @@ bool	Location::handleAutoIndex(std::vector<std::string> lineSplit, int countLine
 		return false;
 	}
 
-	std::cout << "line begin = " << *(lineSplit.begin() + 1) << " avant" << std::endl;
+	// std::cout << "line begin = " << *(lineSplit.begin() + 1) << " avant" << std::endl;
 	*(lineSplit.begin() + 1)->erase((lineSplit.begin() + 1)->end() - 1);
-	std::cout << "line begin = " << *(lineSplit.begin() + 1) << " apres" << std::endl;
+	// std::cout << "line begin = " << *(lineSplit.begin() + 1) << " apres" << std::endl;
 
 	if (*(lineSplit.begin() + 1) != "on" && *(lineSplit.begin() + 1) != "off") {
 		std::cerr << "Invalid AutoIndex Value at line " << countLine << " it must be on or off" << std::endl;
@@ -135,25 +161,20 @@ bool	Location::handleRoot(std::vector<std::string> lineSplit, int countLine)
 		return false;
 	}
 	(lineSplit.begin() + 1)->erase((lineSplit.begin() + 1)->end() - 1);
-	if (!checkAccessFile(*(lineSplit.begin() + 1), F_OK | R_OK)) {
-		std::cerr << "Invalid root path -> [" << *(lineSplit.begin() + 1) << "] " << strerror(errno) << " at line " << countLine << std::endl;
-		return false;
-	}
 	setRoot(*(lineSplit.begin() + 1));
 	return true;
 }
 
 bool	Location::handleIndex(std::vector<std::string> lineSplit, int countLine)
 {
-	if (lineSplit.size() != 2) {
+	if (lineSplit.size() == 1) {
 		std::cerr << "Invalid index syntax it must be index <index_path>, at line " << countLine << std::endl;
 		return false;
 	}
-	// erase ;
-	(lineSplit.begin() + 1)->erase((lineSplit.begin() + 1)->end() - 1);
-	if (!checkHtmlAccess(*(lineSplit.begin() + 1)))
-		return false;
-	setIndex(*(lineSplit.begin() + 1));
+	(lineSplit.end() - 1)->erase((lineSplit.end() - 1)->end() - 1);
+	for (std::vector<std::string>::iterator it = lineSplit.begin() + 1; it != lineSplit.end(); it++) {
+		setIndex(*it);
+	}
 	return true;
 }
 
@@ -166,7 +187,7 @@ bool	Location::handleAllowedMethods(std::vector<std::string> lineSplit, int coun
 	// erase le point virgule
 	(lineSplit.end() - 1)->erase((lineSplit.end() - 1)->end() - 1);
 	for (std::vector<std::string>::iterator it = (lineSplit.begin() + 1); it != lineSplit.end(); ++it) {
-		if (*it != "GET" && *it != "POST") {
+		if (*it != "GET" && *it != "POST" && *it != "DELETE") {
 			std::cerr << "Invalid Allowed methods syntax: [" << *it << "] isn't accepted it must be GET or POST, at line " << countLine << std::endl;
 			return false;
 		}
@@ -185,10 +206,10 @@ bool	Location::handleRedirection(std::vector<std::string> lineSplit, int countLi
 		std::cerr << "Invalid redirection syntax: no value associate, at line " << countLine << std::endl;
 		return false;
 	}
-	// erase ;
-	*(lineSplit.end() - 1)->erase((lineSplit.end() - 1)->end() - 1);
-	if (!checkHtmlAccess(*(lineSplit.begin() + 2))) 
-		return false;
+	// // erase ;
+	// *(lineSplit.end() - 1)->erase((lineSplit.end() - 1)->end() - 1);
+	// if (!checkHtmlAccess(*(lineSplit.begin() + 2))) 
+	// 	return false; // j'ai commente ca, faut pas que tu verifies si ca existe, pour 2 raisons. c'est une url donc pas le chemin sur la machine et si elle existe quand meme pas il faut renvoyer 404
 
 	// erase le premier 
 	lineSplit.erase(lineSplit.begin());
@@ -202,7 +223,7 @@ bool Location::handleUploadStore(std::vector<std::string> lineSplit, int countLi
 		std::cerr << "Invalid upload_store syntax: no value associate, at line " << countLine << std::endl;
 		return false;
 	}
-	*(lineSplit.end() - 1)->erase((lineSplit.end() - 1)->end() - 1);	
+	*(lineSplit.end() - 1)->erase((lineSplit.end() - 1)->end() - 1);
 	// check if dir exist
 	if (!checkAccessFile(*(lineSplit.begin() + 1), F_OK | R_OK | W_OK)) {
 		std::cerr << "Invalid upload_store syntax: [" << *(lineSplit.begin() + 1) << "] " << strerror(errno) << " at line " << countLine << std::endl;
@@ -216,15 +237,22 @@ bool Location::handleUploadStore(std::vector<std::string> lineSplit, int countLi
 
 bool	Location::LocationParsing(std::ifstream & file, int *countLine) {
 
-	std::string LocationKeyWord[] = {"root", "auto_index", "index", "allowedMethods", "return", "upload_store"};
+	std::string LocationKeyWord[] = {"root", "autoindex", "index", "allowedMethods",\
+							 "return", "upload_store"};
 	bool	(Location::*FuncPtr[]) (std::vector<std::string>, int) = {&Location::handleRoot, &Location::handleAutoIndex, \
 				&Location::handleIndex, &Location::handleAllowedMethods, &Location::handleRedirection, &Location::handleUploadStore};
 	std::string 				line;
 	std::vector<std::string>	lineSplit;
 
+	if (this->getAutoIndex()) {
+		std::cout << "auto index de location = 1" <<std::endl;
+	}
+	else
+		std::cout << "auto index de location = 0" <<std::endl;
+
 	while (getline(file, line)) {
 
-		if (line.empty() || isOnlyWithSpace(line)) {
+		if (line.empty() || isOnlyWithSpace(line) || isCommentary(line)) {
 			(*countLine)++;
 			continue ;
 		}
@@ -253,7 +281,7 @@ bool	Location::LocationParsing(std::ifstream & file, int *countLine) {
 			}
 			// si il n'y a aucune correspondance alors mess d'err et return
 			if (i + 1 == sizeof(LocationKeyWord) / sizeof(std::string)) {
-				std::cerr << "Invalid syntax: Location Invalid token [" << *(lineSplit.begin()) << ']' << std::endl;
+				std::cerr << "Invalid syntax: Location Invalid token [" << *(lineSplit.begin()) << ']' << " at line " << *countLine  << std::endl;
 				return false;
 			}
 		}
@@ -266,14 +294,19 @@ bool	Location::LocationParsing(std::ifstream & file, int *countLine) {
 // 	this->_allowedMethod.clear();
 // }
 
-std::ostream & operator<<(std::ostream & o, Location location) {
-		o << "LOCATION PRINTING" << std::endl;
-		o << "Allowed Method = "; printVector(location.getAllowedMethodVector(), o);
-		o << "Redirection HTTP CODE = " << location.getRedirection("CODE") << " Redirection PATH = " << location.getRedirection("") << std::endl;
-		o << "Root = " << location.getRoot() << std::endl;
-		o << "Auto Index = " << location.getAutoInex() << std::endl;
-		o << "IsUploadFileAccepted = " << location.getIsUploadFileAccepted() << std::endl;
-		o << "Upload store = " << location.getUploadStore() << std::endl;
-		o << "location index = " << location.getLocationID() << std::endl;
+std::ostream & operator<<(std::ostream & o, Location *location) {
+		if (!location) {
+			o << "Location est null (elle n'existe pas)" << std::endl;
+			return o;
+		}
+		o << GREEN << "LOCATION PRINTING" << RESET << std::endl;
+		o << "Allowed Method:" << std::endl; printVector(location->getAllowedMethodVector(), o);
+		o << "Index:" << std::endl; printVector(location->getIndex(), o);
+		o << "Redirection HTTP CODE = " << location->getRedirection("CODE") << " Redirection PATH = " << location->getRedirection("") << std::endl;
+		o << "Root = " << location->getRoot() << std::endl;
+		o << "Auto Index = " << location->getAutoIndex() << std::endl;
+		o << "IsUploadFileAccepted = " << location->getIsUploadFileAccepted() << std::endl;
+		o << "Upload store = " << location->getUploadStore() << std::endl;
+		o << "location index = " << location->getLocationID() << std::endl;
 	return o;
 }

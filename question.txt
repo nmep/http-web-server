@@ -1,0 +1,55 @@
+question sans reponse pour l'instant
+    est ce qu'il faut indiquer un nom de domaine dans l'url ??
+    a quoi sert host dans les fichier de config
+    le server pete quand on vire les usleep, avec des usleep a 1000 c'est bien je trouve mais on a pas le droit a sleep
+    le append de bytes read -1 ca casse les body, comme pour le body du cgi
+    est ce qu'on close les sockets dans l'enfant pour le cgi?
+
+question garfi
+    c'est quoi les parametres que l'on doit prendre en compte pour le cgi dans la config
+    j'ai vu que t'avais un upload file fd, j'imagine que je le close dans le destructeur si il est pas deja close ? ca serai bien de mettre les fd a -2 apres les avoir close et de les inits a -2 avant de open
+    this->isRandomName = false; tu l'initialise dans le constructeur mais j'imagine qui il faut qu il demarre a false a chaque nouvelle requete, si oui il faut aussi le mettre a flase dans reset()
+    j'ai commente la verification de return dans les locations. Ca impact rien d'autre ?? faut pas que tu verifies si ca existe, pour 2 raisons. c'est une url donc pas le chemin sur la machine et si elle existe quand meme pas il faut renvoyer 404
+    dans redirection[2] qui est dans location il y a le ; dans la loc 2, je fait avec mais regarde si ca arrive pas dans d'autre cas
+
+todo garfi
+    mettre tous les truc par default si ils ne sont pas preciser, comme le server name
+    keep-alive pour eviter de creer une nouvelle connexion a chaque requete, quand il y a keep alive moi je ne dois pas close le fd, ca veut dire qu'on vas le reutiliser
+    me passer le max body size avec la taille en octet
+
+lire les images en binaire
+comment ca se passe pour les videos
+les post peuvent commencer par /upload /update ... a voir lequels tu veux gerer mais si on precise rien dans action ca nous envoie le file html du formulaire
+
+
+j'ai essaye de le strees test, jusqu a un certains point ca va mais au bout d'un moment ca fait ca
+Debut de Server_action, serv numero 0, socket_fd 6
+Debut de ReadRequest
+error 500 6 Resource temporarily unavailable
+**3087150** new/new[] failed and should throw an exception, but Valgrind
+**3087150**    cannot throw exceptions and so is aborting instead.  Sorry.
+==3087150==    at 0x484852C: ??? (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
+==3087150==    by 0x4849085: operator new(unsigned long) (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
+==3087150==    by 0x49C10BD: std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_mutate(unsigned long, unsigned long, char const*, unsigned long) (in /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.30)
+==3087150==    by 0x49C2B4F: std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_append(char const*, unsigned long) (in /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.30)
+==3087150==    by 0x123F70: Answer::ReadRequest(Configuration const&, int) (Answer.cpp:490)
+==3087150==    by 0x11CDE1: Asynchrone::Server_action(Configuration const&, int, int) (Asynchrone.cpp:20)
+==3087150==    by 0x12EB7A: Socket::launchEpoll(Configuration const&) (epollV2.cpp:48)
+==3087150==    by 0x12F0AC: main (main.cpp:56)
+==3087150== 
+==3087150== HEAP SUMMARY:
+==3087150==     in use at exit: 26,877 bytes in 267 blocks
+==3087150==   total heap usage: 4,519 allocs, 4,252 frees, 427,375 bytes allocated
+==3087150== 
+==3087150== LEAK SUMMARY:
+==3087150==    definitely lost: 0 bytes in 0 blocks
+==3087150==    indirectly lost: 0 bytes in 0 blocks
+==3087150==      possibly lost: 0 bytes in 0 blocks
+==3087150==    still reachable: 26,877 bytes in 267 blocks
+==3087150==                       of which reachable via heuristic:
+==3087150==                         newarray           : 560 bytes in 1 blocks
+==3087150==         suppressed: 0 bytes in 0 blocks
+==3087150== Rerun with --leak-check=full to see details of leaked memory
+==3087150== 
+==3087150== For lists of detected and suppressed errors, rerun with: -s
+==3087150== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)

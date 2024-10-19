@@ -2,10 +2,11 @@
 
 Configuration::Configuration() : _nbServer(0)
 {
-	_syntaxData.OCB = 0;
-	_syntaxData.CCB = 0;
-	_syntaxData.CountLine = 1;
-	_servTab = NULL;
+	std::cout << RED << "Configuration Constructeur called" << RESET << std::endl;
+	this->_syntaxData.OCB = 0;
+	this->_syntaxData.CCB = 0;
+	this->_syntaxData.CountLine = 1;
+	this->_servTab = NULL;
 }
 
 Configuration::~Configuration()
@@ -64,10 +65,10 @@ void	Configuration::setNBServer(int nbServer)
 	_nbServer = nbServer;
 }
 
-bool	Configuration::syntaxParse(std::vector<std::string> const & lineSplit)
+bool	Configuration::syntaxParse(std::vector<std::string> lineSplit)
 {
 	const std::string cTokens[] = {"server", "listen", "server_name",
-	 "error_page", "client_max_body_size", "location", "allowedMethods", "autoindex", "}", "root", "return", "index", "upload_store"};
+	 "error_page", "client_max_body_size", "location", "allowedMethods", "autoindex", "}", "root", "return", "index", "upload_store", "//", "#"};
 
 	std::vector<std::string>::const_iterator ite = lineSplit.end();
 
@@ -90,7 +91,6 @@ bool	Configuration::syntaxParse(std::vector<std::string> const & lineSplit)
 				return false;
 		}
 	}
-
 	else
 	{
 		if (!StrSyntaxeCheck(*(ite - 1)))
@@ -116,34 +116,48 @@ bool	Configuration::syntaxParse(std::vector<std::string> const & lineSplit)
 
 /* ------------------------------------------------------------------------------------------------- */
 
+// lancer le read file, ca lit une premiere fois la syntax puis ca le refait et ca prend en memoire
 bool	Configuration::readFileSyntax()
 {
 	std::string line;
 	std::ifstream confFileFD(_confFileName.c_str());
 	std::vector<std::string> lineSplit;
 
+	int in_scope = 0;
 	while (getline(confFileFD, line))
 	{
-		if (line.empty() || isOnlyWithSpace(line)) {
+		// TO DO faire une fonction pour detecter les commentaires
+		if (line.empty() || isOnlyWithSpace(line) || isCommentary(line)) {
 			this->_syntaxData.CountLine++;
 			continue ;
 		}
 
 		lineSplit = split(line);
 
-		// check si la ligne est en dehors du scope des accolade, si oui mettre faux, ca sert a n'avoir que des directive principales de serveur
-		if ((this->_syntaxData.OCB == this->_syntaxData.CCB && this->_syntaxData.OCB > 0) && *(lineSplit.begin()) != "server") {
-			std::cerr << "Invalid syntax: element -> " << line << " isn't in the scope at the line " << this->_syntaxData.CountLine << std::endl;   
-			return false;
+		if (*(lineSplit.begin()) == "server") {
+			in_scope = 1;
+			this->_nbServer++;
 		}
 
-		if (*(lineSplit.begin()) == "server")
-			this->_nbServer++;
+
+		// check si la ligne est en dehors du scope des accolade, si oui mettre faux, ca sert a n'avoir que des directive principales de serveur
+		// si ocb et ccb s
+		// std::cout << "nb serv = " << this->getNbServer() << std::endl;
+		// if ((this->_syntaxData.OCB == this->_syntaxData.CCB && this->_syntaxData.OCB > 0) && *(lineSplit.begin()) != "server") {
+		if (in_scope == 0) {
+			std::cerr << "Invalid syntax: element -> \'" << line << "\' isn't in the scope at the line " << this->_syntaxData.CountLine << std::endl;   
+			return false;
+		}
 
 		// check si le premier mot est correct
 		if (!syntaxParse(lineSplit))
 			return false;
 		this->_syntaxData.CountLine++;
+
+		// dans le scope ?
+		if (this->_syntaxData.CCB == this->_syntaxData.OCB) {
+			in_scope = 0;
+		}
 	}
 
 	if (this->_syntaxData.OCB != this->_syntaxData.CCB) {
@@ -156,6 +170,7 @@ bool	Configuration::readFileSyntax()
 	return true;
 }
 
+// fonction principale du parsing
 bool	Configuration::launchServerConf(const std::string & confFileName)
 {
 	if (!checkAccessFile(confFileName, F_OK | R_OK)) {
@@ -169,7 +184,6 @@ bool	Configuration::launchServerConf(const std::string & confFileName)
 	int serverToConf = 0;
 	int countLine = 1;
 
-	// lancer le read file
 	if (!readFileSyntax())
 		return false;
 
@@ -177,7 +191,7 @@ bool	Configuration::launchServerConf(const std::string & confFileName)
 	// lancer la lecture de mot et si je trouve le mot server je lance la config d'un server
 	// 		(important: il faut que ce soit avec le meme fd pour etre sur la meme ligne)
 	while (getline(confFileFD, line)) {
-		if (line.empty() || isOnlyWithSpace(line)) {
+		if (line.empty() || isOnlyWithSpace(line) || isCommentary(line)) {
 			countLine++;
 			continue;
 		}
@@ -185,7 +199,7 @@ bool	Configuration::launchServerConf(const std::string & confFileName)
 		if (*(lineSplit.begin()) == "server") {
 			// mettre le premier serveur rencontre comme serveur par defaut
 			if (serverToConf == 0) {
-				_servTab[serverToConf].SetDefaultServer();
+				_servTab[serverToConf].SetDefaultServer(); // TO DO enlever ca
 			}
 			// lancer la conf du serveur
 			countLine++;

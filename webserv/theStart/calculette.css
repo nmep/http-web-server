@@ -1,0 +1,175 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+
+body {
+    font-family: 'Arial', sans-serif;
+    line-height: 1.5;
+    background-color: #f4f4f4;
+    color: #333;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+
+header {
+    background-color: #333;
+    padding: 3vh 0;
+}
+
+nav .menu {
+    display: flex;
+    justify-content: center;
+    list-style: none;
+}
+
+nav .menu li {
+    margin: 0 1vw;
+}
+
+nav .menu a {
+    color: white;
+    text-decoration: none;
+    font-weight: bold;
+    padding: 1vh 1vw;
+    transition: box-shadow 0.3s ease;
+    border-radius: 5px;
+}
+
+nav .menu a:hover {
+    box-shadow: 0 4px 15px rgb(24, 24, 24);
+    animation: buttonAnimation 0.4s forwards;
+}
+
+@keyframes buttonAnimation {
+    0% {
+        background: linear-gradient(to right, white, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.2));
+    }
+    17% {
+        background: linear-gradient(to right, white, white, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.2));
+    }
+    33% {
+        background: linear-gradient(to right, rgba(255, 255, 255, 0.2), white, white, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.2));
+    }
+    50% {
+        background: linear-gradient(to right, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.2), white, white, rgba(255, 255, 255, 0.2));
+    }
+    67% {
+        background: linear-gradient(to right, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.2), white, white);
+    }
+    83% {
+        background: linear-gradient(to right, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.2), white);
+    }
+    100% {
+        background: linear-gradient(to right, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.2));
+    }
+}
+
+main {
+    flex-grow: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+footer {
+    background-color: #333;
+    color: white;
+    text-align: center;
+    padding: 2vh;
+}
+
+@media (max-width: 768px) {
+    nav .menu {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    nav .menu li {
+        margin: 1vh 0;
+    }
+
+    .content h1 {
+        font-size: 2rem;
+    }
+
+    .content p {
+        font-size: 1rem;
+    }
+}
+
+.form-section {
+    flex: 1;
+    margin: 10px;
+    width: 20vw;
+    padding: 20px;
+    background-color: white;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    text-align: center;
+}
+
+h1 {
+    font-size: 24px;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+label {
+    display: block;
+    margin-bottom: 1vh;
+}
+
+input[type="number"], input[type="submit"] {
+    width: 80%;
+    padding: 1vh 1vw;
+    margin-bottom: 2vh;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+input[type="submit"] {
+    color: white;
+    border: none;
+    background: #555;
+}
+
+input[type="submit"]:hover {
+    background: rgba(0, 0, 0, 0.8);
+    box-shadow: 0 4px 15px rgb(24, 24, 24);
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    position: absolute;
+    left: 10px;
+    top: 20px;
+}
+
+.user-logo {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+}
+
+#username-display {
+    margin-left: 0.7vw;
+    font-size: 18px;
+    font-weight: bold;
+    color: white;
+}
+
+.menu {
+    display: flex;
+    justify-content: flex-end;
+    padding-right: 20px;
+}
