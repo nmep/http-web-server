@@ -508,7 +508,8 @@ void Answer::second_step(size_t bytesRead)
 
 void Answer::third_step(size_t bytesRead)
 {
-    if (this->piece_of_request.size() >= LIMIT_SIZE_BODY_SERVER || this->piece_of_request.size() >= 5000)//temporaire apres je pourrais prendre ta variable max size body todo
+    // if (this->piece_of_request.size() >= LIMIT_SIZE_BODY_SERVER || this->piece_of_request.size() >= 5000) {//temporaire apres je pourrais prendre ta variable max size body todo
+    if (this->piece_of_request.size() >= LIMIT_SIZE_BODY_SERVER)//temporaire apres je pourrais prendre ta variable max size body todo
         this->code = 413;
     if (bytesRead < READ_SIZE)
         this->request_body = this->piece_of_request;
@@ -538,16 +539,19 @@ void Answer::ReadRequest(Configuration const &conf, int socket_fd, int server_id
         this->code = 500;//error server
     }
     buffer[bytesRead] = '\0';
-    this->request.append(buffer, bytesRead);// a voir pour le -1 todo
+    this->request.append(buffer, bytesRead - 1);// a voir pour le -1 todo
     this->piece_of_request.append(buffer, bytesRead);
     this->before_body_len += bytesRead;
 
-    if (this->step == 0)
+    if (this->step == 0) {
         this->first_step(bytesRead);
-    else if (this->step == 1)
+	}
+    else if (this->step == 1) {
         this->second_step(bytesRead);
-    else if (this->step == 2)
+	}
+    else if (this->step == 2) {
         this->third_step(bytesRead);
+	}
 
     if (bytesRead < READ_SIZE || this->step == 3)// si on a fini de lire la requete
     {
@@ -987,21 +991,14 @@ bool	Answer::parseFileName(std::string line) {
 		this->code = 400;
 		return false;
 	}
-	std::cout << line << std::endl;
 	this->fileName = line.substr(line.find("filename=\"") + std::strlen("filename=\""), line.size());
-	std::cout << this->fileName << std::endl;
 
 	if (this->fileName.find_last_of('"') == (size_t) -1) {
 		std::cerr << "il n'y a pas de quote fermante" << std::endl;
 		this->code = 400;
 		return false;
 	}
-	std::cout << "name size apres = " << this->fileName.size() << std::endl;
-	std::cout << "name lat of \" = " << (this->fileName.find_last_of('"')) << std::endl;
-
 	this->fileName = this->fileName.substr(0,this->fileName.find_last_of('"'));
-	std::cout << "name final du fichier = [" << this->fileName << ']' << std::endl;
-	
 	if (this->fileName.empty()) {
 
 		std::cout << "file name est vide je dois en creer un" << std::endl;
@@ -1082,7 +1079,6 @@ static bool	findMimeType(std::string value, std::map<std::string, std::string> m
 bool	Answer::parseContentType(std::string line)
 {
 	std::vector<std::string> contentType = split(line);
-	printVector(contentType, std::cout);
 
 	if (contentType.empty() || contentType.size() < 2) {
 		std::cerr << "Post upload file error: Content type is empty or < 2" << std::endl;
@@ -1098,7 +1094,6 @@ bool	Answer::parseContentType(std::string line)
 			return false;
 		}
 		if (i == 1) {
-			std::cout << "le mime du body = " << *it << std::endl;
 			if (!findMimeType(*it, this->mime_map, &this->mimeStr)) {
 				std::cerr << "Post upload file error: the file mime is endifined" << std::endl;
 				this->code = 415;
@@ -1117,10 +1112,8 @@ bool	Answer::parseBodyHeader()
 	std::istringstream is(this->request_body);
 	std::string line;
 
-	std::cout << RED << "Getline Body\n" << RESET << std::endl;
 	for (int i = 0; getline(is, line) && i < 5; i++)
 	{
-		std::cout << "upload file line = " << line << std::endl;
 		if (line.empty()) {
 			std::cout << "ligne vide rencontre je break" << std::endl;
 			break;
@@ -1154,20 +1147,15 @@ inline bool	Answer::changeFileName(int FileNameIndex)
 
 	// this->fileName = "tedjpg"; //decommete pour tester randomName
 	if (fileName.find('.') == fileName.npos) {
-		std::cout << "point pas trouve" << std::endl;
+		std::cerr << "Change File Name point pas trouve" << std::endl;
 		return false;
 	}
 	ss << FileNameIndex;
 	fileNameWihtoutMime = this->fileName.substr(0, this->fileName.find('.'));
 
 	while (access(this->fileName.c_str(), F_OK) == 0) {
-		std::cout << "le fichier teste = " << this->fileName.c_str() << " existe deja\n\n" << std::endl;
-		
 		this->fileName = fileNameWihtoutMime + '(' + ss.str() + ')' + this->mimeStr;
-
-		std::cout << "file name without mime = " << fileNameWihtoutMime << std::endl;
-		std::cout << "mime str = " << this->mimeStr << std::endl;
-		std::cout << "file name END = " << this->fileName << std::endl;
+		// this->fileName = fileNameWihtoutMime + '(' + ss.str() + ')' + ".txt";
 		ss.str("");
 		FileNameIndex++;
 		ss << FileNameIndex;
@@ -1177,7 +1165,6 @@ inline bool	Answer::changeFileName(int FileNameIndex)
 
 inline void Answer::randomName(int fileNameIndex)
 {
-	std::cerr << "The file name upload has been send to the server in a bad format, the name will be assign randomly and the file will be a .txt" << std::endl;
 	int urandomFD = open("/dev/urandom", F_OK | R_OK);
 
 	if (urandomFD == -1) {
@@ -1222,18 +1209,15 @@ bool	Answer::openFile()
 {
 	// TO DO il faut trouver dans qu'elle location je dois placer le fichier
 	int fileNameIndex = 1;
-	std::cout << "QWEHROQWEHRJKOEWQHRJILWEQHRIEWQHRIWEQHRIOUHWQEHRIQWEHRWEIQHRWEI" << std::endl;
-	std::cout << "file name = " << this->fileName << std::endl;
 	if (access(fileName.c_str(), F_OK) == 0) {
-		std::cout << "1" << std::endl;
 		if (!this->changeFileName(fileNameIndex))
 			this->randomName(fileNameIndex);
-		sleep(2);
 		if (fileNameIndex == INT_MAX)
 			this->randomName(fileNameIndex);
 		fileNameIndex++;
 	}
-	this->uploadFileFd = open(this->fileName.c_str(), O_CREAT, 0644);
+	this->uploadFileFd = open(this->fileName.c_str(), O_CREAT | R_OK | W_OK, 0644);
+	std::cout << "a open: upload file fd = " << this->uploadFileFd << std::endl;
 	if (uploadFileFd == -1) {
 		std::cerr << "Error while opening for the upload file " << this->fileName << ": " << strerror(errno) << std::endl;
 		this->code = 500;
@@ -1242,37 +1226,65 @@ bool	Answer::openFile()
 	return true;
 }
 
+void	removeLine(std::string & source) {
+	std::cout << "avant " << std::endl << source << std::endl;
+	size_t end = source.find('\n');
+	std::cout << "end = " << end << std::endl;
+	
+	source.erase(0, end + 1);
+
+	std::cout << "apres\n\n\n" << std::endl;
+
+	std::cout << source << std::endl;
+}
+
 bool	Answer::readFile()
 {
 	// std::cout << RED << this->request_body << RESET << std::endl;
 	std::string line;
+	int writeSize = 0;
 	std::istringstream  is(this->request_body);
 
-	getline(is, line);
-	std::cout << "premiere ligne avec la boucle = " << line << std::endl;
-	std::cout << "end boundary = " << this->endBoundary << std::endl;
-	while (line != this->endBoundary) {
-		getline(is, line);
+	std::cout << RED << "request body size = " << this->request_body.size() << std::endl;
+	size_t bodyStart = this->request_body.find("\n\r");
+	std::cout << RED << "1 request body size = " << this->request_body.size() << RESET << std::endl;
 
-		std::cout << "line = [" << line << ']' << std::endl;
+	if (bodyStart == this->request_body.npos) {
+		std::cout << "body start est pas bon = " << bodyStart << std::endl;
+		// to do est ce quil y a un code d'erreur a mettre ici, ca le formattage de l'upload file est pas bon parce qu'il n'y a pas de delimiteur 
+		// entre le body header et le body
+		return false;
 	}
-	std::cout << "sortie de boucle j'ai rencontre le end boundary" << std::endl;
-	/*
-		POST:
-			--------------------------60fe77ae56d6ef7b
-			Content-Disposition: form-data; name="image"; filename="ted.jpg"
-			Content-Type: image/jpeg
+	// size_t endBoundaryEndPos = endBoundaryPos + this->endBoundary.size() - 1;
 
-			����JFIFHH��C
+	std::cout << RED << "bodystart = " << bodyStart << RESET << std::endl;
 
-		Internet:
-			------WebKitFormBoundaryeBaPTloLaLAzHbF8
-			Content-Disposition: form-data; name="file"; filename="ted.jpg"
-			Content-Type: image/jpeg
+	std::cout << RED << "upload file = " << this->uploadFileFd << RESET << std::endl;
+	// std::cout << this->request_body << std::endl;
 
-			����JFIFHH��C
-	*/
+	// writeSize = write(this->uploadFileFd, "MON Q\n", 6);
+	this->request_body.erase(0, bodyStart + 4);
 
+	size_t endBoundaryPos = this->request_body.find(this->endBoundary);
+	if (endBoundaryPos == this->request_body.npos) {
+		std::cout << "endBoundaryPos est pas bon = " << endBoundary << std::endl;
+		// to do est ce quil y a un code d'erreur a mettre ici, ca le formattage de l'upload file est pas bon parce qu'il n'y a pas de delimiteur 
+		// entre le body header et le body
+		return false;
+	}
+
+	std::cout <<  "size = " << this->request_body.size() << std::endl;
+	this->request_body.erase(endBoundaryPos, this->endBoundary.size());
+	std::cout <<  "size = " << this->request_body.size() << std::endl;
+
+	std::cout << GREEN << this->request_body << std::endl;	
+	writeSize = write(this->uploadFileFd, this->request_body.c_str(), this->request_body.size());
+	if (writeSize == -1)
+		std::cout << "Write Error: " << strerror(errno) << std::endl;
+
+	std::cout << "writeSize = " << writeSize << std::endl;
+	close(this->uploadFileFd);
+	exit (2);
 	return true;
 }
 
@@ -1306,10 +1318,9 @@ void Answer::POST(Configuration const &conf, int server_idx)
             return ;
         }
         this->status = 2;
-        
         return ;
     }
-    
+
     this->status = 1;// c'est toi qui a mis ca ?
     if (this->code >= 400)
     {
@@ -1319,26 +1330,20 @@ void Answer::POST(Configuration const &conf, int server_idx)
 	// met toi ici GARFI, tu peux faire l'upload file ici
 
     std::cout << GREEN << this->ressource << RESET << std::endl; // savoir si c'est un /upload ou /update
-    // std::cout << GREEN << this->request_body << RESET << std::endl; // body
-	std::cout << "BODY SIZE = " << this->request_body.size() << std::endl;
-	std::cout << "resource = " << this->ressource << std::endl;
 	this->code = 201;//quand post marche
 	if ((this->ressource == "/upload" || this->ressource == "/") && conf.getServer(server_idx).getIsUploadFileAccepted()) {
-		// est ce que je peux faire un upload file si oui ou je dois le televerser ???? TO DO
 		if (!this->parseBodyHeader())
 			return ;
-		std::cout << "LA FINALITE EST QUE" << std::endl;
-		std::cout << "begin boundary = " << this->beginBoundary << std::endl;
-		std::cout << "end boundary = " << this->endBoundary << std::endl;
-		std::cout << "LE FILE NAME = " << this->fileName << std::endl;
-		std::cout << "le mime file = " << this->mimeFile << std::endl;
-		std::cout << "le mime ext = " << this->mimeStr << std::endl;
 
-	// ouvrir le fichier 
-	if (!this->openFile() || !this->readFile()) {
-		return ;
-	}
-	// ecrire le fichier
+		// ouvrir le fichier
+		if (!this->openFile()) {
+			std::cerr << "Open File error" << std::endl;
+			return ;
+		}
+		if (!this->readFile()) {
+			std::cerr << "Open file Error" << std::endl;
+		}
+		// ecrire le fichier
 
 		this->status = 2; // si il faut ecrire quelque chose (la fonction writefile est vide tu peux faire la suite la bas)	
 	}

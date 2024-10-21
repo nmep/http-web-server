@@ -16,7 +16,7 @@
 #include <sstream> //stringstream
 
 #define READ_SIZE 4096 // pour l'instant choisi arbitrairement, on verra si on le change pour plus de performance
-#define LIMIT_SIZE_BODY_SERVER 1048576 //equivalent a 1 Mo, pour ne pas saturer la memoire vive
+#define LIMIT_SIZE_BODY_SERVER 104857600000 //equivalent a 1 Mo, pour ne pas saturer la memoire vive
 #define LIMIT_SIZE_BEFORE_BODY_SERVER 1048576
 #define LIM_SIZE_READ_FILE 1048576
 
