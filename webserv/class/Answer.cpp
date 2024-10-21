@@ -1274,9 +1274,6 @@ bool	Answer::uploadFile()
 	std::istringstream is(this->request_body);
 	std::string line;
 
-	while (getline(is, line)) {
-		std::cout << "line = [" << line << "]" << std::endl;
-	}
 	// ecrir le fichier
 	outPutFile.write(this->request_body.c_str(), this->request_body.size());
 

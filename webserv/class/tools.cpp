@@ -25,7 +25,6 @@ bool	isCommentary(std::string const & line) {
 		i++;
 	}
 	return line[i] == '#' ? true : false;
-	// est ce qu'on est sur un # 
 }
 
 std::vector<std::string>	split(std::string & line) {
@@ -52,6 +51,7 @@ uint16_t	ft_atoi_port(uint16_t *ptr, std::string str) {
 	while ((str[i] > 9 && str[i] < 13) || str[i] == 32) {
 		i++;
 	}
+	
 	while (str[i] >= '0' && str[i] <= '9') {
 		if (*ptr > PORT_MAX / 10 || (*ptr > PORT_MAX / 10 && (str[i] - 48) > PORT_MAX % 10))
 			return false;

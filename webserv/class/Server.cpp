@@ -165,7 +165,6 @@ void	Server::setUploadStore(std::string directoryUpload) {
 	_uploadStore = directoryUpload;
 }
 
-
 bool	Server::isLocationExisting(std::string const & locationName) const
 {
 	if (_location.find(locationName) != _location.end())
@@ -247,17 +246,22 @@ bool	Server::handleClientMaxBodySizeParsing(std::vector<std::string> lineSplit, 
 		return false;
 	}
 
-	std::string clientmaxbodysize = (lineSplit.begin() + 1)->substr(0, MPos);
+	std::string clientmaxbodysize = (lineSplit.begin() + 1)->substr(MPos, 1); // to do enlever pour laisser l'user choisir le type qu'il veut
 
-	if (strIsNum(clientmaxbodysize)) {	
-		ft_atoi_port(&cmbs, clientmaxbodysize);
-		if (cmbs > 0 && cmbs <= 200) {
+	if (strIsNum(clientmaxbodysize)) {
+		if (ft_atoi_port(&cmbs, clientmaxbodysize)) { // to do changer cette fonction pour en faire une qui parse le client max body size directement et convertit sa valeurs en octect
+			if (cmbs > 0 && cmbs <= 200) {
 			SetClientMaxBodySize(cmbs);
+			}
 		}
 		else {
-			std::cerr << "Invalid Syntax: Max body client size " << cmbs << " is to large max 200" << std::endl;
+			std::cerr << "Invalid Syntax: Max body client size " << cmbs << " is to large max 200 or <= 0" << std::endl;
 			return false;
 		}
+	}
+	else {
+		std::cerr << "Error Parsing: Client max body size may be negative at line " << countLine << std::endl;
+		return false;
 	}
 	return true;
 }

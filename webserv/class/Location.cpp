@@ -171,7 +171,7 @@ bool	Location::handleAllowedMethods(std::vector<std::string> lineSplit, int coun
 	(lineSplit.end() - 1)->erase((lineSplit.end() - 1)->end() - 1);
 	for (std::vector<std::string>::iterator it = (lineSplit.begin() + 1); it != lineSplit.end(); ++it) {
 		if (*it != "GET" && *it != "POST" && *it != "DELETE") {
-			std::cerr << "Invalid Allowed methods syntax: [" << *it << "] isn't accepted it must be GET or POST, at line " << countLine << std::endl;
+			std::cerr << "Invalid Allowed methods syntax: [" << *it << "] isn't accepted it must be GET POST or DELETE, at line " << countLine << std::endl;
 			return false;
 		}
 	}
