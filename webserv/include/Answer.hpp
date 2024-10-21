@@ -88,7 +88,6 @@ class Answer
 		std::string mimeFile;
 		std::string mimeStr;
 
-		int uploadFileFd;
 		//
 		// tools
 		std::map<std::string, std::string> mime_map;
@@ -126,10 +125,9 @@ class Answer
 		bool	parseContentDisposition(std::string line);
 		bool	parseFileName(std::string line);
 		bool	parseContentType(std::string line);
-		bool	openFile();
+		bool	uploadFile();
 		inline bool	changeFileName(int FileNameIndex);
 		inline void	randomName(int fileNameIndex);
-		bool	readFile();
 		//
 
 		Answer() {};// c'est toi qui l'as rajoute ?

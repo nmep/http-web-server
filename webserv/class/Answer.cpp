@@ -594,7 +594,6 @@ void Answer::ReadFile(Configuration const &conf)
         }
         std::cout << "truc\n";
     }
-
     std::cout << this->fd_read << std::endl;
     bytesRead = read(this->fd_read, buffer, READ_SIZE);
     if (bytesRead == -1) {
@@ -1184,6 +1183,7 @@ inline void Answer::randomName(int fileNameIndex)
 		this->fileName = "randomName.txt";
 		if (this->changeFileName(fileNameIndex) == false) {
 			this->fileName = "fuckIt.txt";
+			close(urandomFD);
 			return ;
 		}
 	}
@@ -1191,6 +1191,7 @@ inline void Answer::randomName(int fileNameIndex)
 		this->fileName = "randomName.txt";
 		if (this->changeFileName(fileNameIndex) == false) {
 			this->fileName = "fuckIt.txt";
+			close(urandomFD);
 			return ;
 		}
 	}
@@ -1205,9 +1206,10 @@ inline void Answer::randomName(int fileNameIndex)
 	return ;
 }
 
-bool	Answer::openFile()
+bool	Answer::uploadFile()
 {
-	// TO DO il faut trouver dans qu'elle location je dois placer le fichier
+	// trouver le bon nom de fichier
+	std::cout << RED << "UploadFile" << RESET << std::endl;
 	int fileNameIndex = 1;
 	if (access(fileName.c_str(), F_OK) == 0) {
 		if (!this->changeFileName(fileNameIndex))
@@ -1216,13 +1218,71 @@ bool	Answer::openFile()
 			this->randomName(fileNameIndex);
 		fileNameIndex++;
 	}
-	this->uploadFileFd = open(this->fileName.c_str(), O_CREAT | R_OK | W_OK, 0644);
-	std::cout << "a open: upload file fd = " << this->uploadFileFd << std::endl;
-	if (uploadFileFd == -1) {
+
+	std::cout << this->request_body << std::endl;
+	sleep(2);
+	// open en creant le fichier si besoin
+	int fd = open(this->fileName.c_str(), O_CREAT | O_RDWR | W_OK, 0644);
+
+	if (fd == -1) {
 		std::cerr << "Error while opening for the upload file " << this->fileName << ": " << strerror(errno) << std::endl;
-		this->code = 500;
+		this->code = 500; // to do 500 je suis pas sur
 		return false;
 	}
+
+	// utiliser ofstream pour ouvrir en binaire
+	std::ofstream outPutFile(this->fileName.c_str(), std::ios::binary);
+	if (!outPutFile.is_open()) {
+		std::cerr << "Error while opening for the upload file " << this->fileName << ": " << strerror(errno) << std::endl;
+		this->code = 500; // to do 500 je suis pas sur
+		close(fd);
+		return false;
+	}
+
+	// parser le body pour enlever le header du body et les boundary
+	size_t bodyStart = this->request_body.find("\r\n\r\n");
+	if (bodyStart == this->request_body.npos) {
+		std::cout << "body start est pas bon = " << bodyStart << std::endl;
+		// to do est ce quil y a un code d'erreur a mettre ici, ca le formattage de l'upload file est pas bon parce qu'il n'y a pas de delimiteur 
+		// entre le body header et le body
+		close(fd);
+		return false;
+	}
+	this->request_body.erase(0, bodyStart + 4);
+
+	std::cout << "end boundary = " << this->endBoundary << std::endl;
+
+	size_t endBoundaryPos = this->request_body.find(this->endBoundary);
+
+	if (endBoundaryPos != this->request_body.npos) {
+		std::cout << "endBoundaryPos est pas bon = " << endBoundary << std::endl;
+		this->request_body.erase(endBoundaryPos, this->endBoundary.size());
+		// to do est ce quil y a un code d'erreur a mettre ici, ca le formattage de l'upload file est pas bon parce qu'il n'y a pas de delimiteur 
+		// entre le body header et le body
+		// close(fd);
+		// return false;
+	}
+
+	size_t lastNewLine = this->request_body.find_last_of('\n');
+	if (lastNewLine != this->request_body.npos) {
+		this->request_body.erase(lastNewLine, 1);
+	}
+
+	// std::cout << GREEN << this->request_body << std::endl;
+	// std::cout << "fin de request body" << std::endl;
+
+	std::istringstream is(this->request_body);
+	std::string line;
+
+	while (getline(is, line)) {
+		std::cout << "line = [" << line << "]" << std::endl;
+	}
+	// ecrir le fichier
+	outPutFile.write(this->request_body.c_str(), this->request_body.size());
+
+	close(fd);
+	exit (2);
+
 	return true;
 }
 
@@ -1230,62 +1290,12 @@ void	removeLine(std::string & source) {
 	std::cout << "avant " << std::endl << source << std::endl;
 	size_t end = source.find('\n');
 	std::cout << "end = " << end << std::endl;
-	
+
 	source.erase(0, end + 1);
 
 	std::cout << "apres\n\n\n" << std::endl;
 
 	std::cout << source << std::endl;
-}
-
-bool	Answer::readFile()
-{
-	// std::cout << RED << this->request_body << RESET << std::endl;
-	std::string line;
-	int writeSize = 0;
-	std::istringstream  is(this->request_body);
-
-	std::cout << RED << "request body size = " << this->request_body.size() << std::endl;
-	size_t bodyStart = this->request_body.find("\n\r");
-	std::cout << RED << "1 request body size = " << this->request_body.size() << RESET << std::endl;
-
-	if (bodyStart == this->request_body.npos) {
-		std::cout << "body start est pas bon = " << bodyStart << std::endl;
-		// to do est ce quil y a un code d'erreur a mettre ici, ca le formattage de l'upload file est pas bon parce qu'il n'y a pas de delimiteur 
-		// entre le body header et le body
-		return false;
-	}
-	// size_t endBoundaryEndPos = endBoundaryPos + this->endBoundary.size() - 1;
-
-	std::cout << RED << "bodystart = " << bodyStart << RESET << std::endl;
-
-	std::cout << RED << "upload file = " << this->uploadFileFd << RESET << std::endl;
-	// std::cout << this->request_body << std::endl;
-
-	// writeSize = write(this->uploadFileFd, "MON Q\n", 6);
-	this->request_body.erase(0, bodyStart + 4);
-
-	size_t endBoundaryPos = this->request_body.find(this->endBoundary);
-	if (endBoundaryPos == this->request_body.npos) {
-		std::cout << "endBoundaryPos est pas bon = " << endBoundary << std::endl;
-		// to do est ce quil y a un code d'erreur a mettre ici, ca le formattage de l'upload file est pas bon parce qu'il n'y a pas de delimiteur 
-		// entre le body header et le body
-		return false;
-	}
-
-	std::cout <<  "size = " << this->request_body.size() << std::endl;
-	this->request_body.erase(endBoundaryPos, this->endBoundary.size());
-	std::cout <<  "size = " << this->request_body.size() << std::endl;
-
-	std::cout << GREEN << this->request_body << std::endl;	
-	writeSize = write(this->uploadFileFd, this->request_body.c_str(), this->request_body.size());
-	if (writeSize == -1)
-		std::cout << "Write Error: " << strerror(errno) << std::endl;
-
-	std::cout << "writeSize = " << writeSize << std::endl;
-	close(this->uploadFileFd);
-	exit (2);
-	return true;
 }
 
 void Answer::POST(Configuration const &conf, int server_idx)
@@ -1336,12 +1346,9 @@ void Answer::POST(Configuration const &conf, int server_idx)
 			return ;
 
 		// ouvrir le fichier
-		if (!this->openFile()) {
+		if (!this->uploadFile()) {
 			std::cerr << "Open File error" << std::endl;
 			return ;
-		}
-		if (!this->readFile()) {
-			std::cerr << "Open file Error" << std::endl;
 		}
 		// ecrire le fichier
 
