@@ -51,12 +51,18 @@ uint16_t	ft_atoi_port(uint16_t *ptr, std::string str) {
 	while ((str[i] > 9 && str[i] < 13) || str[i] == 32) {
 		i++;
 	}
-	
+
 	while (str[i] >= '0' && str[i] <= '9') {
-		if (*ptr > PORT_MAX / 10 || (*ptr > PORT_MAX / 10 && (str[i] - 48) > PORT_MAX % 10))
+		if (*ptr > PORT_MAX / 10 || (*ptr > PORT_MAX / 10 && (str[i] - 48) > PORT_MAX % 10)) {
+			std::cerr << "Port set can't be more than " << PORT_MAX << std::endl;
 			return false;
+		}
 		*ptr = *ptr * 10 + (str[i] - 48);
 		i++;
+	}
+	if (*ptr <= 1042) {
+		std::cerr << "Port set can't be <= 1024" << std::endl;
+		return false;
 	}
 	return true;
 }
@@ -104,4 +110,26 @@ bool	StrIsContext(std::string const & str) {
 
 bool	StrSyntaxeCheck(std::string const & str) {
 	return str[str.size() - 1] == ';' ? true : false;
+}
+
+bool	ft_atoi_client_max_body_size(std::string const & str, unsigned long long *ptr) {
+	int i = 0;
+	
+	while (str[i] >= '0' && str[i] <= '9') {
+		if (*ptr > ULLONG_MAX / 10 || (*ptr == ULLONG_MAX / 10 && ((unsigned long long)(str[i] - 48) > ULLONG_MAX % 10)))
+			return false;
+		*ptr = *ptr * 10 + (str[i] - 48);
+		i++;
+	}
+	return true;
+}
+
+unsigned long long	convert_bytes_into_type(unsigned long long val, char type) {
+	if (type == 'M')
+		return val * 1048576;
+	else if (type == 'K')
+		return val * 1024;
+	else if (type == 'B')
+		return val;
+	return 0;
 }

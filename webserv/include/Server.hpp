@@ -15,7 +15,7 @@ class Server
 		std::string								_serverName;
 		std::string								_hostName;
 		std::map<std::string, std::string>		_error_page;
-		uint16_t								_client_max_body_size;
+		unsigned long long						_client_max_body_size;
 		std::map<std::string, Location*>		_location;
 		bool									_autoIndex;
 		std::string								_uploadStore;
@@ -49,7 +49,7 @@ class Server
 		void			SetPort(uint16_t & val);
 		void			SetServerName(std::string const & val);
 		void			SetHostName(std::string const & val);
-		void			SetClientMaxBodySize(uint16_t & val);
+		void			SetClientMaxBodySize(unsigned long long & val);
 		bool			SetErrorPage(std::vector<std::string> lineSplit, int countLine);
 		void			setAutoIndex(bool value);
 		void			setUploadStore(std::string directoryUpload);

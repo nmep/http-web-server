@@ -144,6 +144,10 @@ bool	Location::handleRoot(std::vector<std::string> lineSplit, int countLine)
 		return false;
 	}
 	(lineSplit.begin() + 1)->erase((lineSplit.begin() + 1)->end() - 1);
+	if (!checkAccessFile(*(lineSplit.begin() + 1), F_OK | R_OK | W_OK)) {
+		std::cerr << "Error Location parsing: Root " << *(lineSplit.begin() + 1) << " set a line " << countLine << ": " << strerror(errno) << std::endl;
+		return false;
+	}
 	setRoot(*(lineSplit.begin() + 1));
 	return true;
 }

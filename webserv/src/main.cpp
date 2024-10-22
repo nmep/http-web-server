@@ -25,6 +25,7 @@ int	main(int ac, char **av)
 	if (ac == 1)
 	{
 		// faire le serveur web avec une config par defaut
+		std::cout << "default conf" << std::endl;
 		const std::string defaultConfFileName("conf/default.conf");
 		if (!conf.launchServerConf(defaultConfFileName)) {
 			// conf.clearConfiguration();
@@ -35,29 +36,29 @@ int	main(int ac, char **av)
 	}
 	else if (ac == 2)
 	{
+		std::cout << "file gived conf" << std::endl;
 		const std::string confFileName(av[1]);
-
 		// lancer la config des serveur
 		if (!conf.launchServerConf(confFileName)) {
 			// conf.clearConfiguration();
-			std::cout << "la conf est pas ok" << std::endl;
+			std::cout << "2qwer la conf est pas ok" << std::endl;
 			return 2;
 		}
 		std::cout << "la conf est ok" << std::endl;
 	}
 	else
 	{
-		// ici je dois utiliser une config de base pour lancer le serveur donc le else n'a pas lui d'etre
-		std::cerr << "Usage: ./webserv [config file]" << std::endl;
+		std::cerr << "Usage: ./webserv [config file] " << std::endl;
 		return 2;
 	}
 	
+	// std::cout << conf << std::endl;
+	// exit(2);
 	if (!socket.initAllSockets(conf)) {
 		std::cout << "MARCHE PAS" << std::endl;
 		return 2;
 	}
 	socket.launchEpoll(conf);
-	// creation de la socket
 
 	return 0;
 }

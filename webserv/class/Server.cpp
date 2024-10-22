@@ -3,10 +3,24 @@
 /* ----------------------------------------------------------------- */
 
 Server::Server() : _default_server(0), _port(8080), _serverName("server_name"),\
-	 _hostName("localhost"), _client_max_body_size(0), _autoIndex(false), _isUploadFileAccepted(false)
+	 _hostName("localhost"), _client_max_body_size(1048576), _autoIndex(true), _isUploadFileAccepted(false)
 {
 	std::cout << BLUE << "Server default COnstructor called" << RESET << std::endl;
+
+	
+	std::cout << BLUE << "Server default COnstructor called end" << RESET << std::endl;
+
 }
+
+/*
+
+pour avoir le nom d'un dossier il faut que l'user l'entre dans le conf file
+
+si il n'est pas entree je ne peux pas le changer dans le constructeur, c'est trop tot encore
+
+si la conf est vide je peux 
+
+*/
 
 Server::~Server() {
 	std::cout << BLUE << "Server destructor called" << RESET << std::endl;
@@ -153,7 +167,7 @@ bool	Server::SetErrorPage(std::vector<std::string> lineSplit, int countLine) {
 	return true;
 }
 
-void	Server::SetClientMaxBodySize(uint16_t & val) {
+void	Server::SetClientMaxBodySize(unsigned long long & val) {
 	_client_max_body_size = val;
 }
 
@@ -234,35 +248,39 @@ bool	Server::handleErrorPageParsing(std::vector<std::string> lineSplit, int coun
 }
 
 bool	Server::handleClientMaxBodySizeParsing(std::vector<std::string> lineSplit, int countLine) {
-	if (lineSplit.size() <= 1) {
-		std::cerr << "Invalid syntax: Client_Max_Body_size need content at line " << countLine << std::endl;
+	if (lineSplit.size() != 2) {
+		std::cerr << "Invalid syntax: Client_Max_Body_size need to be: directive value " << countLine << std::endl;
 		return false;
 	}
 
-	uint16_t cmbs = 0;
-	int MPos = (lineSplit.begin() + 1)->find("M");
-	if (MPos <= 0) {
-		std::cerr << "Invalid syntax: Client max body size value [" << *(lineSplit.begin() + 1) << "] Need a value or a type of data (M)" << std::endl;
+	char type = (*(lineSplit.begin() + 1))[(lineSplit.begin() + 1)->size() - 2];
+	// check si le type est bon
+	if (type != 'M' && type != 'B' && type != 'K') {
+		std::cerr << "Invalid syntax: Client_Max_Body_size content type need to be: B K or M " << countLine << std::endl;
 		return false;
 	}
 
-	std::string clientmaxbodysize = (lineSplit.begin() + 1)->substr(MPos, 1); // to do enlever pour laisser l'user choisir le type qu'il veut
-
-	if (strIsNum(clientmaxbodysize)) {
-		if (ft_atoi_port(&cmbs, clientmaxbodysize)) { // to do changer cette fonction pour en faire une qui parse le client max body size directement et convertit sa valeurs en octect
-			if (cmbs > 0 && cmbs <= 200) {
-			SetClientMaxBodySize(cmbs);
-			}
-		}
-		else {
-			std::cerr << "Invalid Syntax: Max body client size " << cmbs << " is to large max 200 or <= 0" << std::endl;
+	// delete type and ;
+	(lineSplit.begin() + 1)->erase((lineSplit.begin() + 1)->size() - 2);
+	// str is num till last
+	for (size_t i = 0; i < (lineSplit.begin() + 1)->size(); i++) {
+		if ((*(lineSplit.begin() + 1))[i] < '0' || (*(lineSplit.begin() + 1))[i] > '9') {
+			std::cerr << "exept for the content type the max body size value most not contain non numeric character at line: " << countLine << std::endl;
 			return false;
 		}
 	}
-	else {
-		std::cerr << "Error Parsing: Client max body size may be negative at line " << countLine << std::endl;
+
+	unsigned long long val = 0;
+	if (!ft_atoi_client_max_body_size(*(lineSplit.begin() + 1), &val)) {
+		std::cerr << "Overflow detected on client max body size at line: " << countLine << std::endl;
 		return false;
 	}
+	val = convert_bytes_into_type(val, type);
+	if (!val) {
+		std::cerr << "Error detected on client max body size at line while converting the value: " << countLine << std::endl;
+		return false;
+	}
+	SetClientMaxBodySize(val);
 	return true;
 }
 
@@ -273,7 +291,7 @@ bool	Server::handleHostName(std::vector<std::string> lineSplit, int countLine)
 		std::cout << countLine << std::endl;
 		return false;
 	}
-	// SetHostName(*(lineSplit.begin() + 1));
+	SetHostName(*(lineSplit.begin() + 1));
 	return true;
 }
 
@@ -365,12 +383,12 @@ bool	Server::parseConfFile(std::ifstream & confFileFD, int *countLine) {
 				std::cerr << "Invalid Syntax: location need a match at line " << *countLine << std::endl;
 				return false;
 			}
-			// Location &location = _location[*(lineSplit.begin() + 1)];
 			(*countLine)++;
-			_location[*(lineSplit.begin() + 1)] = new Location();
-			// init autoindex de location de la meme valeur que celle d'autoindex de server
-			if (this->_autoIndex)
-				_location[*(lineSplit.begin() + 1)]->setAutoIndex(true);
+			if (!this->isLocationExisting(*(lineSplit.begin() + 1))) {
+				_location[*(lineSplit.begin() + 1)] = new Location();
+				if (this->_autoIndex)
+					_location[*(lineSplit.begin() + 1)]->setAutoIndex(true);
+			}
 			if (!_location[*(lineSplit.begin() + 1)]->LocationParsing(confFileFD, countLine))
 				return false;
 		}
