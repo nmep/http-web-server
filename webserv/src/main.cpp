@@ -51,14 +51,14 @@ int	main(int ac, char **av)
 		std::cerr << "Usage: ./webserv [config file] " << std::endl;
 		return 2;
 	}
-	
-	// std::cout << conf << std::endl;
-	// exit(2);
-	if (!socket.initAllSockets(conf)) {
-		std::cout << "MARCHE PAS" << std::endl;
-		return 2;
-	}
-	socket.launchEpoll(conf);
+
+	std::cout << conf << std::endl;
+	exit(2);
+	// if (!socket.initAllSockets(conf)) {
+	// 	std::cout << "MARCHE PAS" << std::endl;
+	// 	return 2;
+	// }
+	// socket.launchEpoll(conf);
 
 	return 0;
 }

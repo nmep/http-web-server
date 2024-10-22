@@ -116,13 +116,13 @@ void	Location::setIndex(std::string const & indexFileName) {
 /* -------------------------------------------------------------------- */
 
 bool	Location::handleAutoIndex(std::vector<std::string> lineSplit, int countLine) {
+	*(lineSplit.begin() + 1)->erase((lineSplit.begin() + 1)->end() - 1);
 	if (lineSplit.size() != 2) {
 		std::cerr << "Invalid syntax: at line " << countLine << " Autoindex need a value (on or off)" << std::endl;
 		return false;
 	}
 
 	// std::cout << "line begin = " << *(lineSplit.begin() + 1) << " avant" << std::endl;
-	*(lineSplit.begin() + 1)->erase((lineSplit.begin() + 1)->end() - 1);
 	// std::cout << "line begin = " << *(lineSplit.begin() + 1) << " apres" << std::endl;
 
 	if (*(lineSplit.begin() + 1) != "on" && *(lineSplit.begin() + 1) != "off") {

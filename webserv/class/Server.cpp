@@ -6,10 +6,6 @@ Server::Server() : _default_server(0), _port(8080), _serverName("server_name"),\
 	 _hostName("localhost"), _client_max_body_size(1048576), _autoIndex(true), _isUploadFileAccepted(false)
 {
 	std::cout << BLUE << "Server default COnstructor called" << RESET << std::endl;
-
-	
-	std::cout << BLUE << "Server default COnstructor called end" << RESET << std::endl;
-
 }
 
 /*
@@ -222,16 +218,18 @@ bool	Server::handleListenParsing(std::vector<std::string> lineSplit, int countLi
 }
 
 bool	Server::handleServerNameParsing(std::vector<std::string> lineSplit, int countLine) {
-	if (lineSplit.size() != 2) {
+	(lineSplit.end() - 1)->erase((lineSplit.end() - 1)->end() - 1);
+	if ((lineSplit.end() - 1)->empty()) {
+		lineSplit.erase(lineSplit.end() - 1);
+	}
+	std::cout << "server name avant = " << this->_serverName << std::endl;
+	std::cout << "linespli size = " << lineSplit.size() << std::endl;
+	if (lineSplit.size() == 1) {
 		std::cerr << "Invalid syntax: Server name need one value at line " << countLine << std::endl;
-		return false;
+		return true;
 	}
-	for (size_t i = 1; i < lineSplit.size(); i++) {
-		if (i == lineSplit.size() - 1) {
-			(lineSplit.begin() + i)->erase((lineSplit.begin() + i)->end() - 1);
-		}
-		SetServerName(*(lineSplit.begin() + i));
-	}
+
+	SetServerName(*(lineSplit.begin() + 1));
 	return true;
 }
 
