@@ -2,10 +2,11 @@
 
 /* ----------------------------------------------------------------- */
 
-Server::Server() : _default_server(0), _port(8080), _serverName("server_name"),\
+Server::Server() : _default_server(0), _serverName("server_name"),\
 	 _hostName("localhost"), _client_max_body_size(1048576), _autoIndex(true), _isUploadFileAccepted(false)
 {
 	std::cout << BLUE << "Server default COnstructor called" << RESET << std::endl;
+	// std::cout << "size de vector port = " << this->_port.size() << std::endl;
 }
 
 /*
@@ -65,7 +66,20 @@ bool	Server::GetDefaultServer() const
 	return _default_server;
 }
 
-uint16_t	Server::GetPort() const {
+/*
+Port est un vector
+il cherche si val est dans le vector
+	- si oui il le renvoit
+	- si non il renvoit 0
+*/
+
+uint16_t	Server::GetPort(uint16_t val) const {
+	 if (std::find(_port.begin(), _port.end(), val) != _port.end())
+	 	return val;
+	return 0;
+}
+
+std::vector<uint16_t>	Server::GetPortVector() const {
 	return _port;
 }
 
@@ -126,7 +140,7 @@ void	Server::SetDefaultServer()
 }
 
 void	Server::SetPort(uint16_t & val) {
-	_port = val;
+	_port.push_back(val);
 }
 
 void	Server::SetServerName(std::string const & serverName) {
@@ -188,32 +202,30 @@ void	Server::setIsUploadFileAccepted(bool value) {
 
 /* --------------------------- PARSING -------------------------------------- */
 
-bool	Server::handleListenParsing(std::vector<std::string> lineSplit, int countLine) {
-	uint16_t port = 0;
+bool	Server::handleListenParsing(std::vector<std::string>lineSplit, int countLine) {
 
-	if (lineSplit.size() != 2) {
-		std::cerr << "Invalid syntax: at line " << countLine << "should be listen	Port < 65535" << std::endl;
-		return false;
-	}
 	// get the port without colom
-	(lineSplit.begin() + 1)->erase((lineSplit.begin() + 1)->end() - 1);
-
-	// case where there is no value in config fileFD after listen only a ';'
-	if (*(lineSplit.begin() + 1) == "") {
-		std::cerr << "Invalid syntax: Port value is invalid at line " << countLine << std::endl;
-		return false;
+	(lineSplit.end() - 1)->erase((lineSplit.end() - 1)->end() - 1);
+	if ((lineSplit.end() - 1)->empty())
+		lineSplit.erase(lineSplit.end() - 1);
+	if (lineSplit.size() <= 1) {
+		std::cerr << "Invalid syntax: at line " << countLine << "should be listen Port < 65535" << std::endl;
+		return true;
 	}
 
-	if (!strIsNum((*(lineSplit.begin() + 1)))) {
-		std::cerr << "Invalid syntax: Listen Port " << *(lineSplit.begin() + 1) << "at line " << countLine << std::endl;
-		return false;
-	}
+	for (std::vector<std::string>::iterator it = lineSplit.begin() + 1; it != lineSplit.end(); it++) {
+		uint16_t port = 0;
+		if (!strIsNum(*it)) {
+			std::cerr << "Error Port settings : Listen Port " << *it << "at line " << countLine << std::endl;
+			continue;
+		}
 
-	if (!ft_atoi_port(&port, *(lineSplit.begin() + 1))) {
-		std::cerr << "Invalid syntax " << *(lineSplit.begin() + 1) << " at line " << countLine << std::endl;
-		return false;
+		if (!ft_atoi_port(&port, *it)) {
+			std::cerr << "Error Port settings : " << *it << " at line " << countLine << std::endl;
+			continue;
+		}
+		SetPort(port);
 	}
-	SetPort(port);
 	return true;
 }
 
@@ -222,9 +234,7 @@ bool	Server::handleServerNameParsing(std::vector<std::string> lineSplit, int cou
 	if ((lineSplit.end() - 1)->empty()) {
 		lineSplit.erase(lineSplit.end() - 1);
 	}
-	std::cout << "server name avant = " << this->_serverName << std::endl;
-	std::cout << "linespli size = " << lineSplit.size() << std::endl;
-	if (lineSplit.size() == 1) {
+	if (lineSplit.size() != 2) {
 		std::cerr << "Invalid syntax: Server name need one value at line " << countLine << std::endl;
 		return true;
 	}
@@ -401,7 +411,7 @@ std::ostream & operator<<(std::ostream & o, Server const & server)
 {
     o << "SERVER PRINTING\n" << std::endl;
     o << "Default Server = " << server.GetDefaultServer() << std::endl;
-    o << "Port = " << server.GetPort() << std::endl;
+    o << "Port = " << std::endl; printVector(server.GetPortVector(), o);
     o << "serverName = " << server.GetServerName() << std::endl;
     o << "hostName = " << server.GetHostName() << std::endl;
 	o << "auto index = " << server.getAutoIndex() << std::endl;

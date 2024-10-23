@@ -564,9 +564,10 @@ void Answer::ReadRequest(Configuration const &conf, int socket_fd, int server_id
     }
     if (this->code >= 400)
         this->HandleError(conf);
-    if (bytesRead < READ_SIZE)// juste pour l'affichage
+    if (bytesRead < READ_SIZE) { // juste pour l'affichage
         std::cout << YELLOW << "Complete\n" << RESET << std::endl;
-        // std::cout << YELLOW << "Complete\n" << this->request << RESET << std::endl;
+        std::cout << YELLOW << "Complete\n" << this->request << RESET << std::endl;
+	}
     else
         std::cout << YELLOW << "Uncomplete," << RESET << std::endl;
     std::cout << RED << "Fin de ReadRequest" << RESET << std::endl;

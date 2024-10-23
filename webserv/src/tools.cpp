@@ -53,15 +53,15 @@ uint16_t	ft_atoi_port(uint16_t *ptr, std::string str) {
 	}
 
 	while (str[i] >= '0' && str[i] <= '9') {
-		if (*ptr > PORT_MAX / 10 || (*ptr > PORT_MAX / 10 && (str[i] - 48) > PORT_MAX % 10)) {
+		if (*ptr > PORT_MAX / 10 || (*ptr == PORT_MAX / 10 && (str[i] - 48) > PORT_MAX % 10)) {
 			std::cerr << "Port set can't be more than " << PORT_MAX << std::endl;
 			return false;
 		}
 		*ptr = *ptr * 10 + (str[i] - 48);
 		i++;
 	}
-	if (*ptr <= 1042) {
-		std::cerr << "Port set can't be <= 1024" << std::endl;
+	if (*ptr <= 1024) {
+		std::cerr << "Port set can't be less than " << 1024 << std::endl;
 		return false;
 	}
 	return true;

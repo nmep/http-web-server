@@ -11,7 +11,7 @@ class Server
 {
 	private:
 		bool									_default_server;
-		uint16_t								_port;
+		std::vector<uint16_t>					_port;
 		std::string								_serverName;
 		std::string								_hostName;
 		std::map<std::string, std::string>		_error_page;
@@ -29,7 +29,8 @@ class Server
 
 		// GETTEUR
 		bool								GetDefaultServer() const;
-		uint16_t							GetPort() const;
+		uint16_t							GetPort(uint16_t port) const;
+		std::vector<uint16_t>				GetPortVector() const;
 		std::string							GetServerName() const;
 		std::string							GetHostName() const;
 		std::string							GetErrorPage(std::string const & httpCode);

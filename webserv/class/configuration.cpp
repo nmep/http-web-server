@@ -1,6 +1,6 @@
 #include "configuration.hpp"
 
-Configuration::Configuration() : _nbServer(0)
+Configuration::Configuration() : _nbServer(0), _nbPort(0)
 {
 	std::cout << RED << "Configuration Constructeur called" << RESET << std::endl;
 	this->_syntaxData.OCB = 0;
@@ -41,6 +41,11 @@ Configuration & Configuration::operator=(Configuration const & rhs)
 int	Configuration::getNbServer() const
 {
 	return _nbServer;
+}
+
+int	Configuration::getNbPort() const
+{
+	return _nbPort;
 }
 
 t_syntaxParse	Configuration::getSyntaxData() const
@@ -207,6 +212,11 @@ bool	Configuration::launchServerConf(const std::string & confFileName)
 			countLine++;
 		}
 	}
+	// conf finit
+	std::cout << "nb serv = " << _nbServer << std::endl;
+	for (int i = 0; i < _nbServer; i++) {
+		_nbPort += getServer(i).GetPortVector().size();
+	}
 	return true;
 }
 
@@ -218,6 +228,7 @@ std::ostream & operator<<(std::ostream & o, Configuration const & conf)
 	o << "Syntax Data -> Close curly brace = " << conf.getSyntaxData().CCB << std::endl;
 	o << "Syntax Data -> Count line = " << conf.getSyntaxData().CountLine << std::endl;
 	o << "Configuration file name = " << conf.getConfFileName() << std::endl;
+	o << "Nb Port = " << conf.getNbPort() << std::endl;
 	o << "Server info:" << std::endl;
 	for (int i = 0; i < conf.getNbServer(); i++) {
 		o << BLUE << "\tServer[" << i << "]: " << RESET << conf.getServer(i) << std::endl;

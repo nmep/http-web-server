@@ -17,7 +17,6 @@ Socket::~Socket()
 		delete[] this->sockets;
 	if (this->portListening)
 		delete[] this->portListening;
-	std::cout << "finish" << std::endl;
 }
 
 // renvoie le fd su serveur associe a "fd" sinon renvoie -1
@@ -43,26 +42,55 @@ static bool	checkIfPortIsSet(int *SokcetPort, int value, int length) {
 	Si je veux mettre un nouveau port sur ecoute je verfie avant si il ne l'est pas deja
 */
 int	Socket::initAllSockets(Configuration const & conf) {
-	this->sockets = new t_socket [conf.getNbServer()];
 
 	// faire un tableau de max port dispo pour y mettre les ports
-	this->portListening = new int [conf.getNbServer()];
+	this->portListening = new int [conf.getNbPort()];
 
 	this->portListeningLen = 0;
 	// remplir un tableau de port a mettre sur ecoute
 	for (int i = 0; i < conf.getNbServer(); i++) {
-		if (!checkIfPortIsSet(this->portListening, conf.getServer(i).GetPort(), this->portListeningLen)) {
-			this->portListening[this->portListeningLen] = conf.getServer(i).GetPort();
-			this->portListeningLen++;
+		for (size_t portVectorIndex = 0; portVectorIndex < conf.getServer(i).GetPortVector().size(); portVectorIndex++) {
+			if (!checkIfPortIsSet(this->portListening, *(conf.getServer(i).GetPortVector().begin() + portVectorIndex), this->portListeningLen)) {
+				this->portListening[this->portListeningLen] = *(conf.getServer(i).GetPortVector().begin() + portVectorIndex);
+				this->portListeningLen++;
+			}
 		}
 	}
-	// creer une socket pour chaque port
+
+	this->sockets = new t_socket [this->portListeningLen];
+	for (int i = 0; i < this->portListeningLen; i++) {
+		std::cout << this->portListening[i] << std::endl;
+	}
+
+	// // creer une socket pour chaque port
 	for (int i = 0; i < this->portListeningLen; i++) {
 		if (!initOneSocket(&this->sockets[i], this->portListening[i]))
 			return 0;
 	}
 	return 1;
 }
+
+// int	Socket::initAllSockets(Configuration const & conf) {
+// 	this->sockets = new t_socket [conf.getNbServer()];
+
+// 	// faire un tableau de max port dispo pour y mettre les ports
+// 	this->portListening = new int [conf.getNbServer()];
+
+// 	this->portListeningLen = 0;
+// 	// remplir un tableau de port a mettre sur ecoute
+// 	for (int i = 0; i < conf.getNbServer(); i++) {
+// 		if (!checkIfPortIsSet(this->portListening, 8081, this->portListeningLen)) {
+// 			this->portListening[this->portListeningLen] = 8081;
+// 			this->portListeningLen++;
+// 		}
+// 	}
+// 	// creer une socket pour chaque port
+// 	for (int i = 0; i < this->portListeningLen; i++) {
+// 		if (!initOneSocket(&this->sockets[i], this->portListening[i]))
+// 			return 0;
+// 	}
+// 	return 1;
+// }
 
 /*
 	init une socket qui sera place dans socketStruct qui sera bind au port 'port'
