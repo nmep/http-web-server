@@ -521,12 +521,13 @@ void Answer::third_step(size_t bytesRead)
 void Answer::ReadRequest(Configuration const &conf, int socket_fd, int server_idx)
 {
     std::cout << RED << "Debut de ReadRequest" << WHITE << std::endl;
+	ssize_t bytesRead = 0;
     this->piece_of_request.clear();
     this->piece_of_request.append(this->remaining_part);
     if (this->socket_fd == -2)
         this->socket_fd = socket_fd;
     char buffer[READ_SIZE];
-    ssize_t bytesRead = recv(this->socket_fd, buffer, READ_SIZE, 0);
+    bytesRead = recv(this->socket_fd, buffer, READ_SIZE, 0);
     if (bytesRead == 0)
     {
         // la socket a ete close de l'autre cote
@@ -539,6 +540,8 @@ void Answer::ReadRequest(Configuration const &conf, int socket_fd, int server_id
         this->code = 500;//error server
     }
     buffer[bytesRead] = '\0';
+	std::cout << GREEN << buffer << std::endl;
+	std::cout << "bytes read = " << bytesRead << std::endl;
     this->request.append(buffer, bytesRead - 1);// a voir pour le -1 todo
     this->piece_of_request.append(buffer, bytesRead);
     this->before_body_len += bytesRead;
