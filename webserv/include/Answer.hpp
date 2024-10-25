@@ -15,10 +15,10 @@
 #include <wait.h>// pour wait
 #include <sstream> //stringstream
 
-#define READ_SIZE 4096 // pour l'instant choisi arbitrairement, on verra si on le change pour plus de performance
+#define READ_SIZE 40960 // pour l'instant choisi arbitrairement, on verra si on le change pour plus de performance
 #define LIMIT_SIZE_BODY_SERVER 104857600000 //equivalent a 1 Mo, pour ne pas saturer la memoire vive
-#define LIMIT_SIZE_BEFORE_BODY_SERVER 1048576
-#define LIM_SIZE_READ_FILE 1048576
+#define LIMIT_SIZE_BEFORE_BODY_SERVER 1048576111111
+#define LIM_SIZE_READ_FILE 1048576111111
 
 class Answer
 {
@@ -136,6 +136,7 @@ class Answer
         ~Answer();
 
         int GetStatus() const;
+		void SetStatus(int status);
 
         void ReadRequest(Configuration const &conf, int socket_fd, int server_idx);
         void ReadFile(Configuration const &conf);

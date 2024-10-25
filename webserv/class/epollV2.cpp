@@ -49,7 +49,18 @@ int Socket::launchEpoll(Configuration const & conf) {
 				std::cout << "get = " << this->getFdAndServer(events[i].data.fd) << std::endl;
 				// asynch.Server_action(conf, this->sockets[serverConnxionReceivedId]., events[i].data.fd);
 				asynch.Server_action(conf, this->fdAndServer[events[i].data.fd], events[i].data.fd);
-
+				if (asynch.Answers_instances[ this->fdAndServer[events[i].data.fd]].GetStatus() == 4)
+				{
+					asynch.Answers_instances[ this->fdAndServer[events[i].data.fd]].SetStatus(0);
+					if (epoll_ctl(this->epfd, EPOLL_CTL_DEL, events[i].data.fd, NULL) == -1) {
+						std::cerr << "Epoll ctl del failed: " << strerror(errno) << std::endl;
+					}
+					close(events[i].data.fd);
+				}
+				// je peux close ?
+					// close le fd
+					// close le fd de epoll
+					// mettre le status du serveur a 0
 
 				// if (asynch.Answers_instances[this->fdAndServer[events[i].data.fd]].GetStatus() != 0) {
 				// 	std::cout << "je met EPOLLOUT" << std::endl;
