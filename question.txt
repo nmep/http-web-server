@@ -16,6 +16,20 @@ todo garfi
     mettre tous les truc par default si ils ne sont pas preciser, comme le server name
     keep-alive pour eviter de creer une nouvelle connexion a chaque requete, quand il y a keep alive moi je ne dois pas close le fd, ca veut dire qu'on vas le reutiliser
     me passer le max body size avec la taille en octet
+    pour l'autoindex, les liens marchent pas quand la location termine par un /, tu le rajoute quand meme
+
+tentative de casser le fichier de config
+    important
+        max body size negative sont acceptees (-1)
+        root doit etre un dossier qui existe sur la machine
+        leak quand deux locations on le meme chemin, la deuxieme ecrase la premiere sans que la premiere soit delete
+        return doit accepter seulement 301 et 302 et toujours avoir un chemin associer, exemple: "return 302 truc"
+        quand on fait deux server avec le meme port, ca cree deux server, je pensais que ca ecraser mais non, cf l'appel des destructeur
+    ca peut etre bien de les fix
+        listen	accepte 0
+    osef
+        server_name ; ca utilise pas le nom par defaut, ca en creer juste un vide, je pense pas que ca soit grave
+        quand les methodes allowed sont pas bonnes tu dis qu'il faut que ce soit get ou post, tu parles pas de delete
 
 lire les images en binaire
 comment ca se passe pour les videos

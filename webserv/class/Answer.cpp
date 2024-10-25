@@ -63,7 +63,7 @@ Answer::Answer(int server_idx)
     this->code_map[411] = "Length Required";
     this->code_map[412] = "Precondition Failed";
     this->code_map[413] = "Payload Too Large";//use
-    this->code_map[414] = "URI Too Long";
+    this->code_map[414] = "URI Too Long";//use
     this->code_map[415] = "Unsupported Media Type";// use
     this->code_map[416] = "Requested Range Not Satisfiable";
     this->code_map[417] = "Expectation Failed";
@@ -401,8 +401,8 @@ void Answer::parse_header(std::string header)
 //quand on a pas encore eu la ligne d'etat en entier
 void Answer::first_step(size_t bytesRead)
 {
-    if (this->before_body_len  >= LIMIT_SIZE_BEFORE_BODY_SERVER)
-        this->code = 413;
+    if (this->before_body_len >= LIMIT_SIZE_BEFORE_BODY_SERVER)
+        this->code = 414;
     if (this->piece_of_request.find("\r\n\r\n") != std::string::npos)
     {
         this->step = 2;
@@ -582,11 +582,13 @@ void Answer::ReadFile(Configuration const &conf)
     }
     buffer[bytesRead] = '\0';
     this->answer_body.append(buffer, bytesRead);// a voir pour le -1 todo
+    std::cout << bytesRead << std::endl;
     if (bytesRead < READ_SIZE)
     {
         close(this->fd_read);
         this->fd_read = -2;
         this->status = 3;
+        return ;
     }
     else if (this->answer_body.size() >= LIM_SIZE_READ_FILE)
     {
@@ -760,7 +762,7 @@ void Answer::SendAnswer(Configuration const &conf)
 
 void Answer::contentType()
 {
-    if(this->code >= 400 || this->cgi == true)// est ce qu'on affiche quand meme que c'est du html en cas de page d'erreur?? todo
+    if(this->code >= 300 || this->cgi == true)// est ce qu'on affiche quand meme que c'est du html en cas de page d'erreur?? todo
         return;
     this->answer.append("Content-Type: ");
     size_t dot = this->ressource_path.find_last_of('.');
