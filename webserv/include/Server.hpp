@@ -20,6 +20,7 @@ class Server
 		bool									_autoIndex;
 		std::string								_uploadStore;
 		bool									_isUploadFileAccepted;
+		int										_serverIdx;
 
 	public:
 		Server();
@@ -30,7 +31,7 @@ class Server
 		// GETTEUR
 		bool								GetDefaultServer() const;
 		uint16_t							GetPort(uint16_t port) const;
-		std::vector<uint16_t>				GetPortVector() const;
+		std::vector<uint16_t>				&GetPortVector();
 		std::string							GetServerName() const;
 		std::string							GetHostName() const;
 		std::string							GetErrorPage(std::string const & httpCode);
@@ -38,6 +39,7 @@ class Server
 		std::map<std::string, std::string>	getErrorPageMap() const;
 		std::string 						getUploadStore() const;
 		bool								getIsUploadFileAccepted() const;
+		int									getServerIndex() const;
 
 		bool								getAutoIndex() const;
 		Location*							getLocation(std::string const & locationName);// ca cree une loc en plus quand le location name n'exite pas encore
@@ -55,7 +57,7 @@ class Server
 		void			setAutoIndex(bool value);
 		void			setUploadStore(std::string directoryUpload);
 		void			setIsUploadFileAccepted(bool value);
-
+		void			setServerIdx(int servIdx);
 
 		// FONCTIONS DE GESTION DES MOTS CLES
 		bool	handleListenParsing(std::vector<std::string> lineSplit, int countLine);
@@ -72,6 +74,6 @@ class Server
 
 };
 
-std::ostream & operator<<(std::ostream& o, Server const & server);
+std::ostream & operator<<(std::ostream& o, Server & server);
 
 # endif

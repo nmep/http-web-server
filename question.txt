@@ -17,6 +17,8 @@ todo garfi
     keep-alive pour eviter de creer une nouvelle connexion a chaque requete, quand il y a keep alive moi je ne dois pas close le fd, ca veut dire qu'on vas le reutiliser
     me passer le max body size avec la taille en octet
 
+	si server 1 est sur 81 et 82 le 82 segfault a checke
+
 lire les images en binaire
 comment ca se passe pour les videos
 les post peuvent commencer par /upload /update ... a voir lequels tu veux gerer mais si on precise rien dans action ca nous envoie le file html du formulaire

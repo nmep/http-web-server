@@ -206,8 +206,13 @@ bool	Configuration::launchServerConf(const std::string & confFileName)
 			}
 			// lancer la conf du serveur
 			countLine++;
-			if (!_servTab[serverToConf].parseConfFile(confFileFD, &countLine))
+			if (!_servTab[serverToConf].parseConfFile(confFileFD, &countLine)) {
+				// ici set l'idx du serv
+				_servTab[serverToConf].setServerIdx(serverToConf);
 				return false;
+			}
+			// ici set l'idx du serv
+			_servTab[serverToConf].setServerIdx(serverToConf);
 			serverToConf++;
 			countLine++;
 		}

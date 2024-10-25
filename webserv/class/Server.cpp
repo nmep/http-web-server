@@ -3,7 +3,7 @@
 /* ----------------------------------------------------------------- */
 
 Server::Server() : _default_server(0), _serverName("server_name"),\
-	 _hostName("localhost"), _client_max_body_size(1048576), _autoIndex(true), _isUploadFileAccepted(false)
+	 _hostName("localhost"), _client_max_body_size(1048576), _autoIndex(true), _isUploadFileAccepted(false), _serverIdx(0)
 {
 	std::cout << BLUE << "Server default COnstructor called" << RESET << std::endl;
 	// std::cout << "size de vector port = " << this->_port.size() << std::endl;
@@ -79,7 +79,7 @@ uint16_t	Server::GetPort(uint16_t val) const {
 	return 0;
 }
 
-std::vector<uint16_t>	Server::GetPortVector() const {
+std::vector<uint16_t>	&Server::GetPortVector() {
 	return _port;
 }
 
@@ -130,6 +130,10 @@ std::string Server::getUploadStore() const {
 
 bool Server::getIsUploadFileAccepted() const {
 	return _isUploadFileAccepted;
+}
+
+int	Server::getServerIndex() const {
+	return _serverIdx;
 }
 
 /* ----------------------------------------------------------------- */
@@ -198,6 +202,10 @@ bool	Server::isLocationExisting(std::string const & locationName) const
 
 void	Server::setIsUploadFileAccepted(bool value) {
 	_isUploadFileAccepted = value;
+}
+
+void	Server::setServerIdx(int serverIdx) {
+	_serverIdx = serverIdx;
 }
 
 /* --------------------------- PARSING -------------------------------------- */
@@ -407,7 +415,7 @@ bool	Server::parseConfFile(std::ifstream & confFileFD, int *countLine) {
 	return true;
 }
 
-std::ostream & operator<<(std::ostream & o, Server const & server)
+std::ostream & operator<<(std::ostream & o, Server & server)
 {
     o << "SERVER PRINTING\n" << std::endl;
     o << "Default Server = " << server.GetDefaultServer() << std::endl;
@@ -417,6 +425,7 @@ std::ostream & operator<<(std::ostream & o, Server const & server)
 	o << "auto index = " << server.getAutoIndex() << std::endl;
 	o << "IsUploadFileAccepted = " << server.getIsUploadFileAccepted() << std::endl;
 	o << "upload store = " << server.getUploadStore() << std::endl;
+	o << "Server Index = " << server.getServerIndex() << std::endl;
 
 	o << "Error page:" << std::endl;
 	printMap(server.getErrorPageMap(), o);
@@ -438,3 +447,4 @@ std::ostream & operator<<(std::ostream & o, Server const & server)
 	}
 	return o;
 }
+

@@ -7,7 +7,7 @@ IDEE FUTURE A AJOUTER OU PAS A WEBSERV
 
 to do 
 
-	1 client body size peut accepter tout type de valeurs et doit etre convertit en octect comme ConvertPrintBytes
+	y'a un fonction handle qui est pas mise dans le ptr sur fct
 
 	class:
 	constructeur de copy de conf (OPTIONNEL)
@@ -15,5 +15,5 @@ to do
 	Dans le parsing :
 		- allowed methods doit accepte DELETE aussi et refuse tout les autres.
 
-		- auto index doit il etre dans server ou location ou les deux
-			Il se met tjr a 0 ??
+
+	cgi dans le parsing mettre le chemin des script accepte + mettre un timeout sur l'acceptation des script belek au script avec une boucle infinie 502.

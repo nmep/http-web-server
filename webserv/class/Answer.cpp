@@ -176,6 +176,7 @@ int Answer::is_that_a_directory()
 void Answer::find_ressource_path(Configuration const &conf)
 {
     int depth = -1;
+	std::cout << "Server index = " << server_idx << std::endl;
     std::map<std::string, Location*> map = conf.getServer(this->server_idx).getLocationMap();
     std::map<std::string, Location*>::iterator it = map.begin();
     for (; it != map.end(); it++) {
@@ -540,11 +541,15 @@ void Answer::ReadRequest(Configuration const &conf, int socket_fd, int server_id
         this->code = 500;//error server
     }
     buffer[bytesRead] = '\0';
-	std::cout << GREEN << buffer << std::endl;
+	std::cout << GREEN << buffer << RESET << std::endl;
 	std::cout << "bytes read = " << bytesRead << std::endl;
-    this->request.append(buffer, bytesRead - 1);// a voir pour le -1 todo
+    this->request.append(buffer, bytesRead);// a voir pour le -1 todo
+	std::cout << "1" << std::endl;
     this->piece_of_request.append(buffer, bytesRead);
+	std::cout << "2" << std::endl;
     this->before_body_len += bytesRead;
+	std::cout << "3" << std::endl;
+	std::cout << "bytes read = " << bytesRead << std::endl;
 
     if (this->step == 0) {
         this->first_step(bytesRead);
@@ -555,6 +560,7 @@ void Answer::ReadRequest(Configuration const &conf, int socket_fd, int server_id
     else if (this->step == 2) {
         this->third_step(bytesRead);
 	}
+	std::cout << "4" << std::endl;
 
     if (bytesRead < READ_SIZE || this->step == 3)// si on a fini de lire la requete
     {
@@ -565,8 +571,12 @@ void Answer::ReadRequest(Configuration const &conf, int socket_fd, int server_id
         else if (this->methode == "DELETE")
             this->DELETE(conf);
     }
-    if (this->code >= 400)
+	std::cout << "5" << std::endl;
+
+    if (this->code >= 400) {
         this->HandleError(conf);
+	}
+	std::cout << "6" << std::endl;
     if (bytesRead < READ_SIZE) { // juste pour l'affichage
         std::cout << YELLOW << "Complete\n" << RESET << std::endl;
         std::cout << YELLOW << "Complete\n" << this->request << RESET << std::endl;
