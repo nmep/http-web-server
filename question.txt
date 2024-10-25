@@ -31,6 +31,8 @@ tentative de casser le fichier de config
         server_name ; ca utilise pas le nom par defaut, ca en creer juste un vide, je pense pas que ca soit grave
         quand les methodes allowed sont pas bonnes tu dis qu'il faut que ce soit get ou post, tu parles pas de delete
 
+	si server 1 est sur 81 et 82 le 82 segfault a checke
+
 lire les images en binaire
 comment ca se passe pour les videos
 les post peuvent commencer par /upload /update ... a voir lequels tu veux gerer mais si on precise rien dans action ca nous envoie le file html du formulaire

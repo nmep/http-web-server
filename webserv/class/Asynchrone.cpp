@@ -17,7 +17,7 @@ void Asynchrone::Server_action(Configuration const &conf, int server_idx, int so
     switch (this->Answers_instances[server_idx].GetStatus())
     {
         case 0:
-            this->Answers_instances[server_idx].ReadRequest(conf, socket_fd);
+            this->Answers_instances[server_idx].ReadRequest(conf, socket_fd, server_idx);
             break;
         case 1:
             this->Answers_instances[server_idx].ReadFile(conf);

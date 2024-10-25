@@ -20,6 +20,7 @@
 	#include <exception> // exception
 	#include <stdint.h> // uint16_t
 	#include <string> // 
+	#include <algorithm> // std::find
 	#include <cstring> // 
 	#include <fstream> // inputfile
 	#include <string> // string manip

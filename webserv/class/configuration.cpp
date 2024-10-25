@@ -1,6 +1,6 @@
 #include "configuration.hpp"
 
-Configuration::Configuration() : _nbServer(0)
+Configuration::Configuration() : _nbServer(0), _nbPort(0)
 {
 	std::cout << RED << "Configuration Constructeur called" << RESET << std::endl;
 	this->_syntaxData.OCB = 0;
@@ -41,6 +41,11 @@ Configuration & Configuration::operator=(Configuration const & rhs)
 int	Configuration::getNbServer() const
 {
 	return _nbServer;
+}
+
+int	Configuration::getNbPort() const
+{
+	return _nbPort;
 }
 
 t_syntaxParse	Configuration::getSyntaxData() const
@@ -131,19 +136,13 @@ bool	Configuration::readFileSyntax()
 			this->_syntaxData.CountLine++;
 			continue ;
 		}
-
 		lineSplit = split(line);
-
 		if (*(lineSplit.begin()) == "server") {
 			in_scope = 1;
 			this->_nbServer++;
 		}
-
-
 		// check si la ligne est en dehors du scope des accolade, si oui mettre faux, ca sert a n'avoir que des directive principales de serveur
 		// si ocb et ccb s
-		// std::cout << "nb serv = " << this->getNbServer() << std::endl;
-		// if ((this->_syntaxData.OCB == this->_syntaxData.CCB && this->_syntaxData.OCB > 0) && *(lineSplit.begin()) != "server") {
 		if (in_scope == 0) {
 			std::cerr << "Invalid syntax: element -> \'" << line << "\' isn't in the scope at the line " << this->_syntaxData.CountLine << std::endl;   
 			return false;
@@ -187,6 +186,10 @@ bool	Configuration::launchServerConf(const std::string & confFileName)
 	if (!readFileSyntax())
 		return false;
 
+	if (_nbServer == 0) {
+		std::cerr << "Error parsing: No server scope detected, invalid configuration file" << std::endl;
+		return false;
+	}
 	_servTab = new Server[_nbServer];
 	// lancer la lecture de mot et si je trouve le mot server je lance la config d'un server
 	// 		(important: il faut que ce soit avec le meme fd pour etre sur la meme ligne)
@@ -203,11 +206,21 @@ bool	Configuration::launchServerConf(const std::string & confFileName)
 			}
 			// lancer la conf du serveur
 			countLine++;
-			if (!_servTab[serverToConf].parseConfFile(confFileFD, &countLine))
+			if (!_servTab[serverToConf].parseConfFile(confFileFD, &countLine)) {
+				// ici set l'idx du serv
+				_servTab[serverToConf].setServerIdx(serverToConf);
 				return false;
+			}
+			// ici set l'idx du serv
+			_servTab[serverToConf].setServerIdx(serverToConf);
 			serverToConf++;
 			countLine++;
 		}
+	}
+	// conf finit
+	std::cout << "nb serv = " << _nbServer << std::endl;
+	for (int i = 0; i < _nbServer; i++) {
+		_nbPort += getServer(i).GetPortVector().size();
 	}
 	return true;
 }
@@ -220,6 +233,7 @@ std::ostream & operator<<(std::ostream & o, Configuration const & conf)
 	o << "Syntax Data -> Close curly brace = " << conf.getSyntaxData().CCB << std::endl;
 	o << "Syntax Data -> Count line = " << conf.getSyntaxData().CountLine << std::endl;
 	o << "Configuration file name = " << conf.getConfFileName() << std::endl;
+	o << "Nb Port = " << conf.getNbPort() << std::endl;
 	o << "Server info:" << std::endl;
 	for (int i = 0; i < conf.getNbServer(); i++) {
 		o << BLUE << "\tServer[" << i << "]: " << RESET << conf.getServer(i) << std::endl;

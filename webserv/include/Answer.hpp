@@ -16,7 +16,7 @@
 #include <sstream> //stringstream
 
 #define READ_SIZE 4096 // pour l'instant choisi arbitrairement, on verra si on le change pour plus de performance
-#define LIMIT_SIZE_BODY_SERVER 1048576 //equivalent a 1 Mo, pour ne pas saturer la memoire vive
+#define LIMIT_SIZE_BODY_SERVER 104857600000 //equivalent a 1 Mo, pour ne pas saturer la memoire vive
 #define LIMIT_SIZE_BEFORE_BODY_SERVER 1048576
 #define LIM_SIZE_READ_FILE 1048576
 
@@ -40,8 +40,8 @@ class Answer
 		// elements de la requete
 		// garfi
 
-        bool autoindex; // faut que tu le mette dans la class serv pas dans location
         std::string match_location;
+		bool autoindex;
         int fd_read;// utiliser pour la ressource a lire ou le fichier d'erreure a lire aussi
         int fd_write;
         bool cgi;
@@ -87,15 +87,18 @@ class Answer
 		// 3rd line mime type
 		std::string mimeFile;
 		std::string mimeStr;
-		
-		int uploadFileFd;
+
 		//
 		// tools
 		std::map<std::string, std::string> mime_map;
 		std::map<int, std::string> code_map;
+
+		void DoneWithRequest(Configuration const &conf, int server_idx);
+		void ParseRequest();
+		void build_env_cgi(std::string data);
+
 		std::map<std::string, std::string> carctere_special_map;
 		std::string redirection;
-
 
         void first_step(size_t bytesRead);
         void second_step(size_t bytesRead);
@@ -104,7 +107,7 @@ class Answer
         void parse_header(std::string header);
 
         void GET(Configuration const &conf);
-        void POST(Configuration const &conf);
+        void POST(Configuration const &conf, int server_idx);
         void DELETE(Configuration const &conf);
 		std::string GetMime(std::string extansion);// prend l'extension du fichier en parametre et renvoie le type
 		std::string GetCodeSentence(int code);// on renvoie la phrase de raison associe au code d etat
@@ -122,9 +125,9 @@ class Answer
 		bool	parseContentDisposition(std::string line);
 		bool	parseFileName(std::string line);
 		bool	parseContentType(std::string line);
-		bool	openFile();
+		bool	uploadFile();
 		inline bool	changeFileName(int FileNameIndex);
-		bool	readFile();// je sais pas si c'est un fail du merge,
+		inline void	randomName(int fileNameIndex);
 		//
 
 		Answer() {};// c'est toi qui l'as rajoute ?
@@ -134,7 +137,7 @@ class Answer
 
         int GetStatus() const;
 
-        void ReadRequest(Configuration const &conf, int socket_fd);
+        void ReadRequest(Configuration const &conf, int socket_fd, int server_idx);
         void ReadFile(Configuration const &conf);
         void WriteFile(Configuration const &conf);
         void SendAnswer(Configuration const &conf);

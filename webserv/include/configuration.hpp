@@ -21,6 +21,7 @@
 	{
 		private:
 			int					_nbServer; // compte le nombre de server lors de la premiere lecture
+			int					_nbPort;
 			t_syntaxParse		_syntaxData;
 			Server*				_servTab;
 			std::string			_confFileName; // pas sur que ce soit utile
@@ -32,6 +33,7 @@
 			Configuration & operator=(Configuration const & rhs);
 
 			int				getNbServer() const;
+			int				getNbPort() const;
 			t_syntaxParse	getSyntaxData() const;
 			Server&			getServer(int index) const;
 			std::string		getConfFileName() const;
@@ -40,7 +42,6 @@
 			bool	syntaxParse(std::vector<std::string> v);
 			bool	readFileSyntax(); 
 			bool	launchServerConf(const std::string & confFileName);
-
 	};
 
 std::ostream & operator<<(std::ostream & o, Configuration const & conf);

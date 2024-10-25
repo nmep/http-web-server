@@ -17,7 +17,6 @@ Socket::~Socket()
 		delete[] this->sockets;
 	if (this->portListening)
 		delete[] this->portListening;
-	std::cout << "finish" << std::endl;
 }
 
 // renvoie le fd su serveur associe a "fd" sinon renvoie -1
@@ -42,27 +41,75 @@ static bool	checkIfPortIsSet(int *SokcetPort, int value, int length) {
 	je creer un tableau de int avec ecrit un port qui est mit sur ecoute. 
 	Si je veux mettre un nouveau port sur ecoute je verfie avant si il ne l'est pas deja
 */
+
+static int assignPortToServerIdx(Configuration const & conf, int Port) {
+	std::cout << "port = " << Port << std::endl;
+	std::cout << "vector de serveur 0 = " ;printVector( conf.getServer(0).GetPortVector(), std::cout);
+	for (int i = 0; i < conf.getNbServer(); i++) {
+		std::cout << "Server idx " << i << std::endl;
+		// std::vector<uint16_t> v = conf.getServer(i).GetPortVector();
+		std::vector<uint16_t>::const_iterator it = conf.getServer(i).GetPortVector().begin();
+		for (; it != conf.getServer(i).GetPortVector().end(); it++) {
+			std::cout << *it << " = " << Port << std::endl;
+			if (*it == Port)
+				return i;
+		}
+	}
+	return -1;
+}
+
 int	Socket::initAllSockets(Configuration const & conf) {
-	this->sockets = new t_socket [conf.getNbServer()];
 
 	// faire un tableau de max port dispo pour y mettre les ports
-	this->portListening = new int [conf.getNbServer()];
+	this->portListening = new int [conf.getNbPort()];
 
 	this->portListeningLen = 0;
 	// remplir un tableau de port a mettre sur ecoute
 	for (int i = 0; i < conf.getNbServer(); i++) {
-		if (!checkIfPortIsSet(this->portListening, conf.getServer(i).GetPort(), this->portListeningLen)) {
-			this->portListening[this->portListeningLen] = conf.getServer(i).GetPort();
-			this->portListeningLen++;
+		for (size_t portVectorIndex = 0; portVectorIndex < conf.getServer(i).GetPortVector().size(); portVectorIndex++) {
+			if (!checkIfPortIsSet(this->portListening, *(conf.getServer(i).GetPortVector().begin() + portVectorIndex), this->portListeningLen)) {
+				this->portListening[this->portListeningLen] = *(conf.getServer(i).GetPortVector().begin() + portVectorIndex);
+				this->portListeningLen++;
+			}
 		}
 	}
-	// creer une socket pour chaque port
+
+	this->sockets = new t_socket [this->portListeningLen];
+	for (int i = 0; i < this->portListeningLen; i++) {
+		std::cout << this->portListening[i] << std::endl;
+	}
+
+	// // creer une socket pour chaque port
 	for (int i = 0; i < this->portListeningLen; i++) {
 		if (!initOneSocket(&this->sockets[i], this->portListening[i]))
 			return 0;
+		this->sockets[i].serverIdx = assignPortToServerIdx(conf, this->portListening[i]);
+		std::cout << "le port " << this->portListening[i] << " est associe au serveur idx " << this->sockets[i].serverIdx << std::endl;
 	}
 	return 1;
 }
+
+// int	Socket::initAllSockets(Configuration const & conf) {
+// 	this->sockets = new t_socket [conf.getNbServer()];
+
+// 	// faire un tableau de max port dispo pour y mettre les ports
+// 	this->portListening = new int [conf.getNbServer()];
+
+// 	this->portListeningLen = 0;
+// 	// remplir un tableau de port a mettre sur ecoute
+// 	for (int i = 0; i < conf.getNbServer(); i++) {
+// 		if (!checkIfPortIsSet(this->portListening, 8081, this->portListeningLen)) {
+// 			this->portListening[this->portListeningLen] = 8081;
+// 			this->portListeningLen++;
+// 		}
+// 	}
+// 	// creer une socket pour chaque port
+// 	for (int i = 0; i < this->portListeningLen; i++) {
+// 		if (!initOneSocket(&this->sockets[i], this->portListening[i]))
+// 			return 0;
+// 	}
+// 	return 1;
+// }
 
 /*
 	init une socket qui sera place dans socketStruct qui sera bind au port 'port'
@@ -122,12 +169,12 @@ int	Socket::initOneSocket(t_socket *socketStruct, int port)
 	return 1;
 }
 
-int	Socket::accept_and_save_connexion(int servID) {
+int	Socket::accept_and_save_connexion(int servID, int sockFD) {
 	int	new_connexion;
 	struct epoll_event	ev;
 
 	std::cout << "serv id = " << servID << std::endl;
-	new_connexion = accept(this->sockets[servID].listenFd, \
+	new_connexion = accept(sockFD, \
 		(sockaddr *) &this->sockets[servID].addr, &this->sockets[servID].addrLen);
 	if (new_connexion == -1) {
 		std::cerr << "Accept failed on serveur n " << servID << ": " << strerror(errno) << std::endl;
@@ -139,7 +186,7 @@ int	Socket::accept_and_save_connexion(int servID) {
 	ev.data.fd = new_connexion;
 	std::cout << "j'ajoute new connexion qui est a " << new_connexion << std::endl;
 	if (epoll_ctl(this->epfd, EPOLL_CTL_ADD, new_connexion, &ev) == -1) {
-		std::cerr << "Epoll ctl failed sur socket " << this->sockets[servID].listenFd << ": " << strerror(errno) << std::endl;
+		std::cerr << "Epoll ctl failed sur socket " << sockFD << ": " << strerror(errno) << std::endl;
 		return 0;
 	}
 	return 1;
@@ -162,8 +209,10 @@ int	Socket::setNonBlockSocket(int socket) {
 
 int	Socket::isAnServerFd(int fd) {
 	for (int i = 0; i < this->portListeningLen; i++) {
-		if (this->sockets[i].listenFd == fd)
-			return i;
+		if (this->sockets[i].listenFd == fd) {
+			std::cout << "Server idx = " << this->sockets[i].serverIdx << std::endl;
+			return this->sockets[i].serverIdx;
+		}
 	}
 	return -1;
 }

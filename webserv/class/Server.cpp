@@ -2,12 +2,22 @@
 
 /* ----------------------------------------------------------------- */
 
-Server::Server() : _default_server(0), _port(8080), _serverName("server_name"),\
-	 _hostName("localhost"), _client_max_body_size(0), _autoIndex(false)
+Server::Server() : _default_server(0), _serverName("server_name"),\
+	 _hostName("localhost"), _client_max_body_size(1048576), _autoIndex(true), _isUploadFileAccepted(false), _serverIdx(0)
 {
-	std::cout << "def constructor autoindex = " << _autoIndex << std::endl;
 	std::cout << BLUE << "Server default COnstructor called" << RESET << std::endl;
+	// std::cout << "size de vector port = " << this->_port.size() << std::endl;
 }
+
+/*
+
+pour avoir le nom d'un dossier il faut que l'user l'entre dans le conf file
+
+si il n'est pas entree je ne peux pas le changer dans le constructeur, c'est trop tot encore
+
+si la conf est vide je peux 
+
+*/
 
 Server::~Server() {
 	std::cout << BLUE << "Server destructor called" << RESET << std::endl;
@@ -20,7 +30,8 @@ Server::~Server() {
 	_location.clear();
 }
 
-Server::Server(Server const & copy)
+Server::Server(Server const & copy) : _default_server(0), _port(8080), _serverName("server_name"),\
+	 _hostName("localhost"), _client_max_body_size(0), _autoIndex(false), _isUploadFileAccepted(false)
 {
 	std::cout << "Server copy constructor called" << std::endl;
 	*this = copy;
@@ -35,6 +46,7 @@ Server & Server::operator=(Server const & rhs)
 	_hostName = rhs._hostName;
 	_error_page = rhs._error_page;
 	_client_max_body_size = rhs._client_max_body_size;
+	_isUploadFileAccepted = rhs._isUploadFileAccepted;
 	// check si loc de rhs est vide 
 	if (rhs._location.size() > 0) {
 		std::map<std::string, Location*>::const_iterator it_rhs = rhs._location.begin();
@@ -54,7 +66,20 @@ bool	Server::GetDefaultServer() const
 	return _default_server;
 }
 
-uint16_t	Server::GetPort() const {
+/*
+Port est un vector
+il cherche si val est dans le vector
+	- si oui il le renvoit
+	- si non il renvoit 0
+*/
+
+uint16_t	Server::GetPort(uint16_t val) const {
+	 if (std::find(_port.begin(), _port.end(), val) != _port.end())
+	 	return val;
+	return 0;
+}
+
+std::vector<uint16_t>	&Server::GetPortVector() {
 	return _port;
 }
 
@@ -99,6 +124,17 @@ bool Server::getAutoIndex() const {
 	return _autoIndex;
 }
 
+std::string Server::getUploadStore() const {
+	return _uploadStore;
+}
+
+bool Server::getIsUploadFileAccepted() const {
+	return _isUploadFileAccepted;
+}
+
+int	Server::getServerIndex() const {
+	return _serverIdx;
+}
 
 /* ----------------------------------------------------------------- */
 
@@ -108,7 +144,7 @@ void	Server::SetDefaultServer()
 }
 
 void	Server::SetPort(uint16_t & val) {
-	_port = val;
+	_port.push_back(val);
 }
 
 void	Server::SetServerName(std::string const & serverName) {
@@ -145,7 +181,7 @@ bool	Server::SetErrorPage(std::vector<std::string> lineSplit, int countLine) {
 	return true;
 }
 
-void	Server::SetClientMaxBodySize(uint16_t & val) {
+void	Server::SetClientMaxBodySize(unsigned long long & val) {
 	_client_max_body_size = val;
 }
 
@@ -153,7 +189,9 @@ void Server::SetHostName(std::string const & hostName) {
 	_hostName = hostName;
 }
 
-/* --------------------------- PARSING -------------------------------------- */
+void	Server::setUploadStore(std::string directoryUpload) {
+	_uploadStore = directoryUpload;
+}
 
 bool	Server::isLocationExisting(std::string const & locationName) const
 {
@@ -162,46 +200,54 @@ bool	Server::isLocationExisting(std::string const & locationName) const
 	return false;
 }
 
-bool	Server::handleListenParsing(std::vector<std::string> lineSplit, int countLine) {
-	uint16_t port = 0;
+void	Server::setIsUploadFileAccepted(bool value) {
+	_isUploadFileAccepted = value;
+}
 
-	if (lineSplit.size() != 2) {
-		std::cerr << "Invalid syntax: at line " << countLine << "should be listen	Port < 65535" << std::endl;
-		return false;
-	}
+void	Server::setServerIdx(int serverIdx) {
+	_serverIdx = serverIdx;
+}
+
+/* --------------------------- PARSING -------------------------------------- */
+
+bool	Server::handleListenParsing(std::vector<std::string>lineSplit, int countLine) {
+
 	// get the port without colom
-	(lineSplit.begin() + 1)->erase((lineSplit.begin() + 1)->end() - 1);
-
-	// case where there is no value in config fileFD after listen only a ';'
-	if (*(lineSplit.begin() + 1) == "") {
-		std::cerr << "Invalid syntax: Port value is invalid at line " << countLine << std::endl;
-		return false;
+	(lineSplit.end() - 1)->erase((lineSplit.end() - 1)->end() - 1);
+	if ((lineSplit.end() - 1)->empty())
+		lineSplit.erase(lineSplit.end() - 1);
+	if (lineSplit.size() <= 1) {
+		std::cerr << "Invalid syntax: at line " << countLine << "should be listen Port < 65535" << std::endl;
+		return true;
 	}
 
-	if (!strIsNum((*(lineSplit.begin() + 1)))) {
-		std::cerr << "Invalid syntax: Listen Port " << *(lineSplit.begin() + 1) << "at line " << countLine << std::endl;
-		return false;
-	}
+	for (std::vector<std::string>::iterator it = lineSplit.begin() + 1; it != lineSplit.end(); it++) {
+		uint16_t port = 0;
+		if (!strIsNum(*it)) {
+			std::cerr << "Error Port settings : Listen Port " << *it << "at line " << countLine << std::endl;
+			continue;
+		}
 
-	if (!ft_atoi_port(&port, *(lineSplit.begin() + 1))) {
-		std::cerr << "Invalid syntax " << *(lineSplit.begin() + 1) << " at line " << countLine << std::endl;
-		return false;
+		if (!ft_atoi_port(&port, *it)) {
+			std::cerr << "Error Port settings : " << *it << " at line " << countLine << std::endl;
+			continue;
+		}
+		SetPort(port);
 	}
-	SetPort(port);
 	return true;
 }
 
 bool	Server::handleServerNameParsing(std::vector<std::string> lineSplit, int countLine) {
+	(lineSplit.end() - 1)->erase((lineSplit.end() - 1)->end() - 1);
+	if ((lineSplit.end() - 1)->empty()) {
+		lineSplit.erase(lineSplit.end() - 1);
+	}
 	if (lineSplit.size() != 2) {
 		std::cerr << "Invalid syntax: Server name need one value at line " << countLine << std::endl;
-		return false;
+		return true;
 	}
-	for (size_t i = 1; i < lineSplit.size(); i++) {
-		if (i == lineSplit.size() - 1) {
-			(lineSplit.begin() + i)->erase((lineSplit.begin() + i)->end() - 1);
-		}
-		SetServerName(*(lineSplit.begin() + i));
-	}
+
+	SetServerName(*(lineSplit.begin() + 1));
 	return true;
 }
 
@@ -218,30 +264,39 @@ bool	Server::handleErrorPageParsing(std::vector<std::string> lineSplit, int coun
 }
 
 bool	Server::handleClientMaxBodySizeParsing(std::vector<std::string> lineSplit, int countLine) {
-	if (lineSplit.size() <= 1) {
-		std::cerr << "Invalid syntax: Client_Max_Body_size need content at line " << countLine << std::endl;
+	if (lineSplit.size() != 2) {
+		std::cerr << "Invalid syntax: Client_Max_Body_size need to be: directive value " << countLine << std::endl;
 		return false;
 	}
 
-	uint16_t cmbs = 0;
-	int MPos = (lineSplit.begin() + 1)->find("M");
-	if (MPos <= 0) {
-		std::cerr << "Invalid syntax: Client max body size value [" << *(lineSplit.begin() + 1) << "] Need a value or a type of data (M)" << std::endl;
+	char type = (*(lineSplit.begin() + 1))[(lineSplit.begin() + 1)->size() - 2];
+	// check si le type est bon
+	if (type != 'M' && type != 'B' && type != 'K') {
+		std::cerr << "Invalid syntax: Client_Max_Body_size content type need to be: B K or M " << countLine << std::endl;
 		return false;
 	}
 
-	std::string clientmaxbodysize = (lineSplit.begin() + 1)->substr(0, MPos);
-
-	if (strIsNum(clientmaxbodysize)) {	
-		ft_atoi_port(&cmbs, clientmaxbodysize);
-		if (cmbs > 0 && cmbs <= 200) {
-			SetClientMaxBodySize(cmbs);
-		}
-		else {
-			std::cerr << "Invalid Syntax: Max body client size " << cmbs << " is to large max 200" << std::endl;
+	// delete type and ;
+	(lineSplit.begin() + 1)->erase((lineSplit.begin() + 1)->size() - 2);
+	// str is num till last
+	for (size_t i = 0; i < (lineSplit.begin() + 1)->size(); i++) {
+		if ((*(lineSplit.begin() + 1))[i] < '0' || (*(lineSplit.begin() + 1))[i] > '9') {
+			std::cerr << "exept for the content type the max body size value most not contain non numeric character at line: " << countLine << std::endl;
 			return false;
 		}
 	}
+
+	unsigned long long val = 0;
+	if (!ft_atoi_client_max_body_size(*(lineSplit.begin() + 1), &val)) {
+		std::cerr << "Overflow detected on client max body size at line: " << countLine << std::endl;
+		return false;
+	}
+	val = convert_bytes_into_type(val, type);
+	if (!val) {
+		std::cerr << "Error detected on client max body size at line while converting the value: " << countLine << std::endl;
+		return false;
+	}
+	SetClientMaxBodySize(val);
 	return true;
 }
 
@@ -252,7 +307,7 @@ bool	Server::handleHostName(std::vector<std::string> lineSplit, int countLine)
 		std::cout << countLine << std::endl;
 		return false;
 	}
-	// SetHostName(*(lineSplit.begin() + 1));
+	SetHostName(*(lineSplit.begin() + 1));
 	return true;
 }
 
@@ -277,7 +332,6 @@ bool	Server::handleAutoIndex(std::vector<std::string> lineSplit, int countLine) 
 		return false;
 	}
 
-	std::cout << "je set autoindex dans serveur" << std::endl;
 	if (*(lineSplit.begin() + 1) == "on")
 		setAutoIndex(1);
 	else
@@ -285,13 +339,30 @@ bool	Server::handleAutoIndex(std::vector<std::string> lineSplit, int countLine) 
 	return true;
 }
 
+bool Server::handleUploadStore(std::vector<std::string> lineSplit, int countLine)
+{
+	if (lineSplit.size() != 2) {
+		std::cerr << "Invalid upload_store syntax: no value associate, at line " << countLine << std::endl;
+		return false;
+	}
+	*(lineSplit.end() - 1)->erase((lineSplit.end() - 1)->end() - 1);
+	// check if dir exist
+	if (!checkAccessFile(*(lineSplit.begin() + 1), F_OK | R_OK | W_OK)) {
+		std::cerr << "Invalid upload_store syntax: [" << *(lineSplit.begin() + 1) << "] " << strerror(errno) << " at line " << countLine << std::endl;
+		return false;
+	}
+	setUploadStore(*(lineSplit.begin() + 1));
+	setIsUploadFileAccepted(true);
+	return true;
+}
+
 bool Server::AssignToken(std::vector<std::string> lineSplit, int countLine) {
 	const std::string fTokens[] = {"listen", "server_name", "error_page"\
-							, "client_max_body_size", "autoindex"}; // pour location apelle directement getline dans
+							, "client_max_body_size", "autoindex", "upload_store"}; // pour location apelle directement getline dans
 							// la fonction de location parse et voir si ca marche
 
 	bool	(Server::*FuncPtr[]) (std::vector<std::string>, int) = {&Server::handleListenParsing, &Server::handleServerNameParsing\
-		, &Server::handleErrorPageParsing, &Server::handleClientMaxBodySizeParsing, &Server::handleAutoIndex}; //TO DO manque  hostname
+		, &Server::handleErrorPageParsing, &Server::handleClientMaxBodySizeParsing, &Server::handleAutoIndex, &Server::handleUploadStore}; //TO DO manque  hostname
 
 	// si une segment de directive et finit on return true et on passe au suivant
 	if (*(lineSplit.begin()) == "}")
@@ -328,12 +399,12 @@ bool	Server::parseConfFile(std::ifstream & confFileFD, int *countLine) {
 				std::cerr << "Invalid Syntax: location need a match at line " << *countLine << std::endl;
 				return false;
 			}
-			// Location &location = _location[*(lineSplit.begin() + 1)];
 			(*countLine)++;
-			_location[*(lineSplit.begin() + 1)] = new Location();
-			// init autoindex de location de la meme valeur que celle d'autoindex de server
-			if (this->_autoIndex)
-				_location[*(lineSplit.begin() + 1)]->setAutoIndex(true);
+			if (!this->isLocationExisting(*(lineSplit.begin() + 1))) {
+				_location[*(lineSplit.begin() + 1)] = new Location();
+				if (this->_autoIndex)
+					_location[*(lineSplit.begin() + 1)]->setAutoIndex(true);
+			}
 			if (!_location[*(lineSplit.begin() + 1)]->LocationParsing(confFileFD, countLine))
 				return false;
 		}
@@ -344,20 +415,23 @@ bool	Server::parseConfFile(std::ifstream & confFileFD, int *countLine) {
 	return true;
 }
 
-std::ostream & operator<<(std::ostream & o, Server const & server)
+std::ostream & operator<<(std::ostream & o, Server & server)
 {
     o << "SERVER PRINTING\n" << std::endl;
     o << "Default Server = " << server.GetDefaultServer() << std::endl;
-    o << "Port = " << server.GetPort() << std::endl;
+    o << "Port = " << std::endl; printVector(server.GetPortVector(), o);
     o << "serverName = " << server.GetServerName() << std::endl;
     o << "hostName = " << server.GetHostName() << std::endl;
 	o << "auto index = " << server.getAutoIndex() << std::endl;
+	o << "IsUploadFileAccepted = " << server.getIsUploadFileAccepted() << std::endl;
+	o << "upload store = " << server.getUploadStore() << std::endl;
+	o << "Server Index = " << server.getServerIndex() << std::endl;
 
-    o << "Error page:" << std::endl;
+	o << "Error page:" << std::endl;
 	printMap(server.getErrorPageMap(), o);
 
-    o << "Client max body size = " << server.GetClientMaxBodySize() << std::endl;
-
+	o << "Client max body size = " << server.GetClientMaxBodySize() << std::endl;
+	o << "Upload store = " << server.getUploadStore() << std::endl;
 	o << "Location" << std::endl;
 	if (server.getLocationMap().empty()) {
 		o << "No location for this serv" << std::endl;
@@ -373,3 +447,4 @@ std::ostream & operator<<(std::ostream & o, Server const & server)
 	}
 	return o;
 }
+

@@ -1,14 +1,13 @@
 IDEE FUTURE A AJOUTER OU PAS A WEBSERV
 
-
-faire un fichier de log de serveur (log.txt ou croissant.txt) et rediriger les erreurs dans ce fichier
+- faire un fichier de log de serveur (log.txt ou croissant.txt) et rediriger les erreurs dans ce fichier
+- dans la fonction Answer::radnmName ajoute un message de log sur le fichier de log qui dit que 
+	le nom du fichier a uplad n'a pas ete entre correctement et donc a ete prit alleatoiremet puis a le mime .txt
 
 
 to do 
 
-	1 Server: arrive a avoir l'index du serveur qui a recu une requete (A QUOI SERT LE SERVERCONNEXIONRECEIVEDID ?)
-	l'auto index est situe dans location est dans la config il est dans serveur
-	normalement il y a un auto index par location ou pas a voir sur inception
+	y'a un fonction handle qui est pas mise dans le ptr sur fct
 
 	class:
 	constructeur de copy de conf (OPTIONNEL)
@@ -16,6 +15,5 @@ to do
 	Dans le parsing :
 		- allowed methods doit accepte DELETE aussi et refuse tout les autres.
 
-		- auto index doit il etre dans server ou location ou les deux
-			Il se met tjr a 0 ??
 
+	cgi dans le parsing mettre le chemin des script accepte + mettre un timeout sur l'acceptation des script belek au script avec une boucle infinie 502.
