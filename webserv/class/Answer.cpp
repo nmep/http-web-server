@@ -421,8 +421,8 @@ void Answer::parse_header(std::string header)
 //quand on a pas encore eu la ligne d'etat en entier
 void Answer::first_step(size_t bytesRead)
 {
-    if (this->before_body_len  >= LIMIT_SIZE_BEFORE_BODY_SERVER)
-        this->code = 413;
+    // if (this->before_body_len  >= LIMIT_SIZE_BEFORE_BODY_SERVER)
+    //     this->code = 413;
     if (this->piece_of_request.find("\r\n\r\n") != std::string::npos)
     {
         this->step = 2;
@@ -434,7 +434,7 @@ void Answer::first_step(size_t bytesRead)
         if (this->code >= 400)
             return ;
         this->piece_of_request = this->piece_of_request.substr(this->piece_of_request.find("\r\n\r\n") + 4);
-        if (bytesRead < READ_SIZE)
+        if (bytesRead < READ_SIZE / 2 )
             this->request_body = this->piece_of_request;
         else
             this->remaining_part = this->piece_of_request;
@@ -464,8 +464,8 @@ void Answer::first_step(size_t bytesRead)
 
 void Answer::second_step(size_t bytesRead)
 {
-    if (this->before_body_len  >= LIMIT_SIZE_BEFORE_BODY_SERVER)
-        this->code = 413;
+    // if (this->before_body_len  >= LIMIT_SIZE_BEFORE_BODY_SERVER)
+    //     this->code = 413;
     std::cout << MAGENTA << this->methode << " + " << this->ressource << WHITE << std::endl;
     if (this->piece_of_request.find("\r\n\r\n") != std::string::npos)
     {
@@ -482,7 +482,7 @@ void Answer::second_step(size_t bytesRead)
         }
         if (this->methode == "GET" || this->methode == "DELETE")
             this->step = 3;
-        if (bytesRead < READ_SIZE)
+        if (bytesRead < READ_SIZE / 2 )
             this->request_body = this->piece_of_request;
         else
             this->remaining_part = this->piece_of_request;
@@ -510,9 +510,9 @@ void Answer::second_step(size_t bytesRead)
 void Answer::third_step(size_t bytesRead)
 {
     // if (this->piece_of_request.size() >= LIMIT_SIZE_BODY_SERVER || this->piece_of_request.size() >= 5000) {//temporaire apres je pourrais prendre ta variable max size body todo
-    if (this->piece_of_request.size() >= LIMIT_SIZE_BODY_SERVER)//temporaire apres je pourrais prendre ta variable max size body todo
-        this->code = 413;
-    if (bytesRead < READ_SIZE)
+    // if (this->piece_of_request.size() >= LIMIT_SIZE_BODY_SERVER)//temporaire apres je pourrais prendre ta variable max size body todo
+    //     this->code = 413;
+    if (bytesRead < READ_SIZE / 2 )
         this->request_body = this->piece_of_request;
     else
         this->remaining_part = this->piece_of_request;
@@ -528,28 +528,29 @@ void Answer::ReadRequest(Configuration const &conf, int socket_fd, int server_id
     if (this->socket_fd == -2)
         this->socket_fd = socket_fd;
     char buffer[READ_SIZE];
-    bytesRead = recv(this->socket_fd, buffer, READ_SIZE, 0);
-    if (bytesRead == 0)
-    {
-        // la socket a ete close de l'autre cote
-        close(this->socket_fd);
-        this->socket_fd = -2;
-    }
-    else if (bytesRead == -1)
+	bytesRead = read(this->socket_fd, buffer, READ_SIZE);
+    // bytesRead = recv(this->socket_fd, buffer, READ_SIZE, 0);
+	// std::string test(buffer);
+    // if (bytesRead == 0)
+    // {
+    //     // la socket a ete close de l'autre cote
+    //     close(this->socket_fd);
+    //     this->socket_fd = -2;
+    // }
+    if (bytesRead == -1)
     {
         std::cerr << "error 500 6 " << strerror(errno) << std::endl;
         this->code = 500;//error server
     }
-    buffer[bytesRead] = '\0';
-	std::cout << GREEN << buffer << RESET << std::endl;
-	std::cout << "bytes read = " << bytesRead << std::endl;
-    this->request.append(buffer, bytesRead);// a voir pour le -1 todo
-	std::cout << "1" << std::endl;
-    this->piece_of_request.append(buffer, bytesRead);
-	std::cout << "2" << std::endl;
-    this->before_body_len += bytesRead;
-	std::cout << "3" << std::endl;
-	std::cout << "bytes read = " << bytesRead << std::endl;
+	else {
+	    buffer[bytesRead] = '\0';
+		std::cout << GREEN << buffer << RESET << std::endl;
+		std::cout << "bytes read = " << bytesRead << std::endl;
+	    this->request.append(buffer, bytesRead);// a voir pour le -1 todo
+	    this->piece_of_request.append(buffer, bytesRead);
+	    this->before_body_len += bytesRead;
+		std::cout << "bytes read = " << bytesRead << std::endl;
+	}
 
     if (this->step == 0) {
         this->first_step(bytesRead);
@@ -560,9 +561,8 @@ void Answer::ReadRequest(Configuration const &conf, int socket_fd, int server_id
     else if (this->step == 2) {
         this->third_step(bytesRead);
 	}
-	std::cout << "4" << std::endl;
 
-    if (bytesRead < READ_SIZE || this->step == 3)// si on a fini de lire la requete
+    if (bytesRead < READ_SIZE / 2 || this->step == 3)// si on a fini de lire la requete
     {
         if (this->methode == "GET")
             this->GET(conf);
@@ -571,15 +571,13 @@ void Answer::ReadRequest(Configuration const &conf, int socket_fd, int server_id
         else if (this->methode == "DELETE")
             this->DELETE(conf);
     }
-	std::cout << "5" << std::endl;
 
     if (this->code >= 400) {
         this->HandleError(conf);
 	}
-	std::cout << "6" << std::endl;
-    if (bytesRead < READ_SIZE) { // juste pour l'affichage
-        std::cout << YELLOW << "Complete\n" << RESET << std::endl;
-        std::cout << YELLOW << "Complete\n" << this->request << RESET << std::endl;
+    if (bytesRead < READ_SIZE / 2 ) { // juste pour l'affichage
+        std::cout << YELLOW << "Complete\n" << bytesRead << " et " << this->piece_of_request.size() << RESET << std::endl;
+        // std::cout << YELLOW << "Complete\n" << this->request << RESET << std::endl;
 	}
     else
         std::cout << YELLOW << "Uncomplete," << RESET << std::endl;
@@ -631,14 +629,18 @@ void Answer::ReadFile(Configuration const &conf)
         return ;
     }
     if (this->code >= 400)
-        this->HandleError(conf);
-    
+	{
 
-	// std::cout << "request lu = " << this->answer_body << " size = " << this->answer_body.size() << std::endl;
-    if (bytesRead < READ_SIZE)// juste pour l'affichage
-        std::cout << YELLOW << "Complete," << std::endl << this->answer_body << RESET << std::endl;
-    else
-        std::cout << YELLOW << "Uncomplete," << RESET << std::endl;
+        this->HandleError(conf);
+	}
+    
+	std::cout << this->answer_body.size() << "test" << std::endl;
+
+	// // std::cout << "request lu = " << this->answer_body << " size = " << this->answer_body.size() << std::endl;
+    // if (bytesRead < READ_SIZE)// juste pour l'affichage
+    //     std::cout << YELLOW << "Complete," << std::endl << this->request_body << RESET << std::endl;
+    // else
+    //     std::cout << YELLOW << "Uncomplete," << RESET << std::endl;
     std::cout << RED << "Fin de ReadFile" << RESET << std::endl;
 }
 
@@ -761,6 +763,11 @@ void Answer::WriteFile(Configuration const &conf)
     std::cout << RED << "Fin de WriteFile" << WHITE << std::endl;
 }
 
+void Answer::SetStatus(int status)
+{
+	this->status = status;
+}
+
 void Answer::SendAnswer(Configuration const &conf)
 {
     std::cout << RED << "Debut de SendAnswer" << RESET << std::endl;
@@ -788,9 +795,9 @@ void Answer::SendAnswer(Configuration const &conf)
     send(this->socket_fd, this->answer.c_str(), strlen(this->answer.c_str()), 0);
     // if(this->header_map.find("Connection") == this->header_map.end() || this->header_map["Connection"] != "keep-alive")
     //     close(this->socket_fd);// la close ailleur ou pas ?? normalement meme si on collapse avant on send quand meme donc non
-    close(this->socket_fd);// la close ailleur ou pas ?? normalement meme si on collapse avant on send quand meme donc non
+    // close(this->socket_fd);// la close ailleur ou pas ?? normalement meme si on collapse avant on send quand meme donc non
     this->socket_fd = -2; //a voir si ca te derrange
-    std::cout << YELLOW << this->answer << RESET << std::endl;
+    // std::cout << YELLOW << this->answer << RESET << std::endl;
     std::cout << RED << "Fin de SendAnswer" << RESET << std::endl;
     this->Reset();
 }
@@ -847,7 +854,7 @@ void Answer::taille()
 
 void Answer::Reset()
 {
-    this->status = 0;
+    this->status = 4;
     this->code = 200;
     this->socket_fd = -2;
     this->cgi = false;
@@ -1233,7 +1240,8 @@ bool	Answer::uploadFile()
 		fileNameIndex++;
 	}
 
-	std::cout << this->request_body << std::endl;
+	// std::cout << this->request_body << std::endl;
+	std::cout << this->request_body.length() << std::endl;
 	sleep(2);
 	// open en creant le fichier si besoin
 	int fd = open(this->fileName.c_str(), O_CREAT | O_RDWR | W_OK, 0644);
@@ -1255,6 +1263,7 @@ bool	Answer::uploadFile()
 
 	// parser le body pour enlever le header du body et les boundary
 	size_t bodyStart = this->request_body.find("\r\n\r\n");
+	std::cout << "body start = " << bodyStart << std::endl;
 	if (bodyStart == this->request_body.npos) {
 		std::cout << "body start est pas bon = " << bodyStart << std::endl;
 		// to do est ce quil y a un code d'erreur a mettre ici, ca le formattage de l'upload file est pas bon parce qu'il n'y a pas de delimiteur 
@@ -1269,18 +1278,21 @@ bool	Answer::uploadFile()
 	size_t endBoundaryPos = this->request_body.find(this->endBoundary);
 
 	if (endBoundaryPos != this->request_body.npos) {
-		std::cout << "endBoundaryPos est pas bon = " << endBoundary << std::endl;
-		this->request_body.erase(endBoundaryPos, this->endBoundary.size());
+		std::cout << "endBoundaryPos est bon = " << endBoundary << std::endl;
+		this->request_body.erase(endBoundaryPos);
 		// to do est ce quil y a un code d'erreur a mettre ici, ca le formattage de l'upload file est pas bon parce qu'il n'y a pas de delimiteur 
 		// entre le body header et le body
 		// close(fd);
 		// return false;
 	}
 
-	size_t lastNewLine = this->request_body.find_last_of('\n');
-	if (lastNewLine != this->request_body.npos) {
-		this->request_body.erase(lastNewLine, 1);
-	}
+	// std::cout << RED << "APRES" << std::endl;
+	// std::cout << this->request_body << RESET << std::endl;
+
+	// size_t lastNewLine = this->request_body.find_last_of('\n');
+	// if (lastNewLine != this->request_body.npos) {
+	// 	this->request_body.erase(lastNewLine, 1);
+	// }
 
 	// std::cout << GREEN << this->request_body << std::endl;
 	// std::cout << "fin de request body" << std::endl;
@@ -1290,9 +1302,11 @@ bool	Answer::uploadFile()
 
 	// ecrir le fichier
 	outPutFile.write(this->request_body.c_str(), this->request_body.size());
+	this->status = 3;
+	this->code = 201;
 
 	close(fd);
-	exit (2);
+	// exit (2);
 
 	return true;
 }
@@ -1363,7 +1377,8 @@ void Answer::POST(Configuration const &conf, int server_idx)
 		}
 		// ecrire le fichier
 
-		this->status = 2; // si il faut ecrire quelque chose (la fonction writefile est vide tu peux faire la suite la bas)	
+		//temporaire en vrai faut allez ecrire
+		// this->status = 2; // si il faut ecrire quelque chose (la fonction writefile est vide tu peux faire la suite la bas)	
 	}
 	else
 		std::cerr << "Error: Upload was send but is not allowed in this server check conf file" << std::endl;
