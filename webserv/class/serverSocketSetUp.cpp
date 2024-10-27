@@ -214,6 +214,7 @@ int	Epoll::isAnServerFd(int fd) {
 
 bool	Epoll::closeConnexion(int fd)
 {
+	std::cout << "Fd close = " << fd << std::endl;
 	if (epoll_ctl(this->epfd, EPOLL_CTL_DEL, fd, NULL) == -1) {
 		std::cerr << "Epoll ctl del failed: " << strerror(errno) << std::endl;
 		return false;

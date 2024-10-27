@@ -82,7 +82,6 @@ class Answer
 		std::string endBoundary;
 		// 2 nd line
 		std::string fileName;
-		bool		isRandomName;
 		// 3rd line mime type
 		std::string mimeFile;
 		std::string mimeStr;
@@ -130,6 +129,8 @@ class Answer
 		Answer(int server_idx);
         ~Answer();
 
+		int GetSocketFd() const;
+		void SetSocketFd(int fd);
         int GetStatus() const;
 		void SetStatus(int status);
 

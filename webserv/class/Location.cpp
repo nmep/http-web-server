@@ -122,9 +122,6 @@ bool	Location::handleAutoIndex(std::vector<std::string> lineSplit, int countLine
 		return false;
 	}
 
-	// std::cout << "line begin = " << *(lineSplit.begin() + 1) << " avant" << std::endl;
-	// std::cout << "line begin = " << *(lineSplit.begin() + 1) << " apres" << std::endl;
-
 	if (*(lineSplit.begin() + 1) != "on" && *(lineSplit.begin() + 1) != "off") {
 		std::cerr << "Invalid AutoIndex Value at line " << countLine << " it must be on or off" << std::endl;
 		return false;
@@ -187,13 +184,7 @@ bool	Location::handleAllowedMethods(std::vector<std::string> lineSplit, int coun
 
 bool	Location::handleRedirection(std::vector<std::string> lineSplit, int countLine)
 {
-	std::cout << "handle redirection" << std::endl;
-	std::cout << "avant" << std::endl;
-	printVector(lineSplit, std::cout);
 	*(lineSplit.end() - 1)->erase((lineSplit.end() - 1)->end() - 1);
-	std::cout << "apres" << std::endl;
-	printVector(lineSplit, std::cout);
-
 	if (lineSplit.size() <= 2) {
 		std::cerr << "Invalid redirection syntax: must be return [httpCode] [file.html associed], at line " << countLine << std::endl;
 		return false;

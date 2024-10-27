@@ -369,7 +369,6 @@ bool Server::AssignToken(std::vector<std::string> lineSplit, int countLine) {
 
 	// si une directive est trouve faire sa fonction associe
 	for (size_t i = 0; i < sizeof(fTokens) / sizeof(fTokens[0]); i++) {
-		// std::cout << "ls = [" << *(lineSplit.begin()) << "]  ftoken[i] = " << fTokens[i] << std::endl;
 		if (*(lineSplit.begin()) == fTokens[i]) {
 			return (this->*FuncPtr[i])(lineSplit, countLine);
 		}

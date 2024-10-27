@@ -13,7 +13,6 @@ Answer::Answer(int server_idx)
     this->step = 0;
     this->fd_read = -2;
     this->fd_write = -2;
-	this->isRandomName = false;
 
     this->mime_map[".html"] = "text/html";
     this->mime_map[".htm"] = "text/html";
@@ -126,6 +125,16 @@ Answer::~Answer()
         close(this->fd_read);
     if (this->fd_write > 2)
         close(this->fd_write);
+}
+
+int Answer::GetSocketFd() const
+{
+	return this->socket_fd;
+}
+
+void Answer::SetSocketFd(int fd)
+{
+	this->socket_fd = fd;
 }
 
 int Answer::GetStatus() const
@@ -608,7 +617,7 @@ void Answer::ReadRequest(Configuration const &conf, int socket_fd, int server_id
     else
         std::cout << YELLOW << "Uncomplete," << RESET << std::endl;
 
-    // std::cout << YELLOW << "ttt\n" << this->request << RESET << std::endl;
+    std::cout << YELLOW << "ttt\n" << this->request << RESET << std::endl;
     std::cout << RED << "Fin de ReadRequest" << RESET << std::endl;
 }
 
@@ -829,7 +838,7 @@ void Answer::SendAnswer(Configuration const &conf)
     // if(this->header_map.find("Connection") == this->header_map.end() || this->header_map["Connection"] != "keep-alive")
     //     close(this->socket_fd);// la close ailleur ou pas ?? normalement meme si on collapse avant on send quand meme donc non
     // close(this->socket_fd);// la close ailleur ou pas ?? normalement meme si on collapse avant on send quand meme donc non
-    this->socket_fd = -2; //a voir si ca te derrange
+    // this->socket_fd = -2; //a voir si ca te derrange
     std::cout << YELLOW << this->answer << RESET << std::endl;
     std::cout << RED << "Fin de SendAnswer" << RESET << std::endl;
     this->Reset();
@@ -889,7 +898,6 @@ void Answer::Reset()
 {
     this->status = 4;
     this->code = 200;
-    this->socket_fd = -2;
     this->cgi = false;
     this->nb_readfile = 0;
     this->answer.clear();
@@ -1059,7 +1067,6 @@ bool	Answer::parseFileName(std::string line) {
 	if (this->fileName.empty()) {
 
 		std::cout << "file name est vide je dois en creer un" << std::endl;
-		this->isRandomName = true;
 	}
 	return true;
 }

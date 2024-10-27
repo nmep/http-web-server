@@ -126,6 +126,7 @@ int Epoll::launchEpoll(Configuration const & conf) {
 		std::cout << "epollwait" << std::endl;
 		usleep(100000);
 		this->nfd = epoll_wait(this->epfd, events, MAX_EVENTS, 0); // TO DO timout voir fichier de configuration
+		std::cout << "this nfd = " << this->nfd << std::endl;
 		if (this->nfd == -1) {
 			std::cerr << "Epoll wait error: " << strerror(errno) << std::endl;
 			return 0;
@@ -149,7 +150,10 @@ int Epoll::launchEpoll(Configuration const & conf) {
 				if (asynch.Answers_instances[ this->fdAndServer[events[i].data.fd]].GetStatus() == 4)
 				{
 					asynch.Answers_instances[ this->fdAndServer[events[i].data.fd]].SetStatus(0);
-					closeConnexion(events[i].data.fd);
+					// closeConnexion(events[i].data.fd);
+					closeConnexion(asynch.Answers_instances[this->fdAndServer[events[i].data.fd]].GetSocketFd());
+					asynch.Answers_instances[ this->fdAndServer[events[i].data.fd]].SetSocketFd(-2);
+
 				}
 			}
 			else if (events[i].events & EPOLLIN)
