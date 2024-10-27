@@ -1,8 +1,6 @@
 question sans reponse pour l'instant
     est ce qu'il faut indiquer un nom de domaine dans l'url ??
     a quoi sert host dans les fichier de config
-    le server pete quand on vire les usleep, avec des usleep a 1000 c'est bien je trouve mais on a pas le droit a sleep
-    le append de bytes read -1 ca casse les body, comme pour le body du cgi
     est ce qu'on close les sockets dans l'enfant pour le cgi?
 
 question garfi
@@ -13,28 +11,22 @@ question garfi
     dans redirection[2] qui est dans location il y a le ; dans la loc 2, je fait avec mais regarde si ca arrive pas dans d'autre cas
 
 todo garfi
-    mettre tous les truc par default si ils ne sont pas preciser, comme le server name
-    keep-alive pour eviter de creer une nouvelle connexion a chaque requete, quand il y a keep alive moi je ne dois pas close le fd, ca veut dire qu'on vas le reutiliser
-    me passer le max body size avec la taille en octet
-    pour l'autoindex, les liens marchent pas quand la location termine par un /, tu le rajoute quand meme
+    - mettre tous les truc par default si ils ne sont pas preciser, comme le server name
+	- check si root, si c'est pas un dossier je refuse a la config
+	- cgi dans la conf verifier comment ca marche mais dans l'ideal avoir des cgi autorise
+    - listen	accepte 0 TO DO
+	- Upload file: quand je open, open avec le bon path pour pouvoir le mettre au bonne endroit.
+
+todo pierre
+	gerrer les gestions d'erreur de cgi (y'a le bon code mais pas la page);
+	prendre la vriable du serveur en compte (configuration)
 
 tentative de casser le fichier de config
     important
         max body size negative sont acceptees (-1)
-        root doit etre un dossier qui existe sur la machine
-        leak quand deux locations on le meme chemin, la deuxieme ecrase la premiere sans que la premiere soit delete
-        return doit accepter seulement 301 et 302 et toujours avoir un chemin associer, exemple: "return 302 truc"
         quand on fait deux server avec le meme port, ca cree deux server, je pensais que ca ecraser mais non, cf l'appel des destructeur
     ca peut etre bien de les fix
-        listen	accepte 0
-    osef
-        server_name ; ca utilise pas le nom par defaut, ca en creer juste un vide, je pense pas que ca soit grave
-        quand les methodes allowed sont pas bonnes tu dis qu'il faut que ce soit get ou post, tu parles pas de delete
 
-	si server 1 est sur 81 et 82 le 82 segfault a checke
-
-lire les images en binaire
-comment ca se passe pour les videos
 les post peuvent commencer par /upload /update ... a voir lequels tu veux gerer mais si on precise rien dans action ca nous envoie le file html du formulaire
 
 

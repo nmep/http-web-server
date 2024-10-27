@@ -3,7 +3,7 @@
 
 #include "library_needed.hpp"
 #include "configuration.hpp"
-#include "Socket.hpp"
+#include "Epoll.hpp"
 #include "Server.hpp"
 #include "autoIndex.hpp"
 #include <sys/stat.h> // pour stat
@@ -57,7 +57,6 @@ class Answer
                  // 3 quand on veut se barrer de force (pour get et delete quand on arrive au \r\n\r\n)
         std::string piece_of_request;
 
-        void DoneWithRequest(Configuration const &conf);
         void find_ressource_path(Configuration const &conf);
         int is_that_a_directory();
         void find_good_index_or_autoindex(Configuration const &conf);
@@ -92,10 +91,6 @@ class Answer
 		// tools
 		std::map<std::string, std::string> mime_map;
 		std::map<int, std::string> code_map;
-
-		void DoneWithRequest(Configuration const &conf, int server_idx);
-		void ParseRequest();
-		void build_env_cgi(std::string data);
 
 		std::map<std::string, std::string> carctere_special_map;
 		std::string redirection;

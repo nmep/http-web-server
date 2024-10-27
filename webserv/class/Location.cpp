@@ -167,7 +167,7 @@ bool	Location::handleIndex(std::vector<std::string> lineSplit, int countLine)
 
 bool	Location::handleAllowedMethods(std::vector<std::string> lineSplit, int countLine)
 {
-	if (lineSplit.begin()->size() == 1) {
+	if (lineSplit.size() == 1) {
 		std::cerr << "Invalid Allowed methods syntax: no value associate, at line " << countLine << std::endl;
 		return false;
 	}
@@ -187,16 +187,21 @@ bool	Location::handleAllowedMethods(std::vector<std::string> lineSplit, int coun
 
 bool	Location::handleRedirection(std::vector<std::string> lineSplit, int countLine)
 {
-	if (lineSplit.begin()->size() == 1) {
-		std::cerr << "Invalid redirection syntax: no value associate, at line " << countLine << std::endl;
+	std::cout << "handle redirection" << std::endl;
+	std::cout << "avant" << std::endl;
+	printVector(lineSplit, std::cout);
+	*(lineSplit.end() - 1)->erase((lineSplit.end() - 1)->end() - 1);
+	std::cout << "apres" << std::endl;
+	printVector(lineSplit, std::cout);
+
+	if (lineSplit.size() <= 2) {
+		std::cerr << "Invalid redirection syntax: must be return [httpCode] [file.html associed], at line " << countLine << std::endl;
 		return false;
 	}
-	// // erase ;
-	// *(lineSplit.end() - 1)->erase((lineSplit.end() - 1)->end() - 1);
-	// if (!checkHtmlAccess(*(lineSplit.begin() + 2))) 
-	// 	return false; // j'ai commente ca, faut pas que tu verifies si ca existe, pour 2 raisons. c'est une url donc pas le chemin sur la machine et si elle existe quand meme pas il faut renvoyer 404
-
-	// erase le premier 
+	if (*(lineSplit.begin() + 1) != "301" && *(lineSplit.begin() + 1) != "302") {
+		std::cerr << "Error redirection parsing: http code " << *(lineSplit.begin() + 1) << " is invalid it must be 301 or 302 at line " << countLine << std::endl;
+		return false; 
+	}
 	lineSplit.erase(lineSplit.begin());
 	setRedirection(lineSplit);
 	return true;

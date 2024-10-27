@@ -110,7 +110,11 @@ std::string	AutoIndex::createHttpPage(int &code)
 		page += "📂 ";
 		// ici prend state du readdir
 		page += "</td>";
-		page += "<td> <a href=\"" + this->_urlName + '/' +  std::string(this->_readDir->d_name) + "\">" + this->_readDir->d_name + "</a>" + "</td>";
+		page += "<td> <a href=\"" + this->_urlName;
+		if (this->_urlName != "/")
+			page += '/';
+		page += std::string(this->_readDir->d_name) + '/' + "\">" + this->_readDir->d_name + "</a>" + "</td>";
+		std::cout << "URL NAME = " << this->_urlName << " DIR NAME = " << this->_readDir->d_name << std::endl;
 
 		// ajouter le suffix du path aux file trouver dans le directory pour que stat fonction sinon il cherche dans la cwd
 		std::string path = std::string(this->_rootName) + '/' + this->_readDir->d_name;
@@ -144,7 +148,8 @@ std::string	AutoIndex::createHttpPage(int &code)
 		else if (this->_readDir->d_type == DT_UNKNOWN)
 			page += "The file type could not be determined: ";
 		page += "</td>";
-		page += "<td> <a href=\"" + this->_urlName + '/' +  std::string(this->_readDir->d_name) + "\">" + this->_readDir->d_name + "</a>" + "</td>";
+		page += "<td> <a href=\"" + this->_urlName +  std::string(this->_readDir->d_name) + "\">" + this->_readDir->d_name + "</a>" + "</td>";
+		// std::cout << page << std::endl;
 
 		// ici prend state du readdir
 		// ajouter le suffix du path aux file trouver dans le directory pour que stat fonction sinon il cherche dans la cwd

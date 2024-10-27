@@ -627,6 +627,7 @@ void Answer::ReadFile(Configuration const &conf)
         if (WIFEXITED(status))
         {
             status = WEXITSTATUS(status);
+			std::cout << "status du fork = " << status << std::endl;
             std::cout << status << std::endl;
             if (status == 100)// on a pas la place de renvoyer 500
                 this->code = 500;
@@ -743,7 +744,7 @@ void Answer::write_for_cgi(Configuration const &conf)
         if (extension == ".py")
             exec_path = (char*)"/usr/bin/python3";
         else
-            exec_path = (char*)"/usr/bin/php";
+            exec_path = (char*)"/usr/bin/phpjk";
         char *argv[] = { exec_path, (char*)this->ressource_path.c_str(), NULL };
         char **envp = this->ft_build_env(conf, extension);
         size_t x = 0;
@@ -754,6 +755,7 @@ void Answer::write_for_cgi(Configuration const &conf)
         }
         if (execve(exec_path, argv, envp) == -1)
         {
+			std::cerr << "EXECVE NE MARCHE PAS" << std::endl;
             size_t size = 0;
             while (envp[size] != NULL)
                 size++;
@@ -784,8 +786,7 @@ void Answer::WriteFile(Configuration const &conf)
         this->write_for_cgi(conf);
     else
     {
-        // ecrire un fichier classique
-        // c'est la suite pour toi garfi, c'est la que tu fais ton write quand tu sais quoi et ou ecrire
+		this->uploadFile();
     }
     if (this->code >= 400)
         this->HandleError(conf);
@@ -804,7 +805,7 @@ void Answer::SendAnswer(Configuration const &conf)
     std::stringstream tmp;
     tmp << this->code;
 
-    if (this->cgi == true)
+    if (this->cgi == true && this->code < 400)
     {
         this->answer.append(this->answer_body);
     }
@@ -816,6 +817,8 @@ void Answer::SendAnswer(Configuration const &conf)
         this->server(conf);
         this->location();
         this->date();
+		if (this->code == 201)
+			this->answer_body = "<!DOCTYPE html>\n<html lang=\"fr\">\n<head>\n<meta charset=\"UTF-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n<title>Upload</title>\n<style>\nh1 { text-align: center; margin-top: 10%; }\nh2 { text-align: center; }\n</style>\n</head>\n<body>\n<h1>Success</h1>\n<h2>Ressource has been created</h2>\n</body>\n</html>\n";
         this->taille();
         this->answer.append("\n");
         // on remplit le body
@@ -827,7 +830,7 @@ void Answer::SendAnswer(Configuration const &conf)
     //     close(this->socket_fd);// la close ailleur ou pas ?? normalement meme si on collapse avant on send quand meme donc non
     // close(this->socket_fd);// la close ailleur ou pas ?? normalement meme si on collapse avant on send quand meme donc non
     this->socket_fd = -2; //a voir si ca te derrange
-    // std::cout << YELLOW << this->answer << RESET << std::endl;
+    std::cout << YELLOW << this->answer << RESET << std::endl;
     std::cout << RED << "Fin de SendAnswer" << RESET << std::endl;
     this->Reset();
 }
@@ -911,7 +914,11 @@ void Answer::GET(Configuration const &conf)
 {
     this->find_ressource_path(conf);
     if (this->code >= 300)
+	{
         return ;
+
+	}
+	std::cout << this->ressource_path << std::endl;
     if (this->is_that_a_directory() == 1)
     {
         this->find_good_index_or_autoindex(conf);
@@ -1260,6 +1267,7 @@ inline void Answer::randomName(int fileNameIndex)
 bool	Answer::uploadFile()
 {
 	// trouver le bon nom de fichier
+	this->status = 3;
 	std::cout << RED << "UploadFile" << RESET << std::endl;
 	int fileNameIndex = 1;
 	if (access(fileName.c_str(), F_OK) == 0) {
@@ -1270,9 +1278,6 @@ bool	Answer::uploadFile()
 		fileNameIndex++;
 	}
 
-	// std::cout << this->request_body << std::endl;
-	std::cout << this->request_body.length() << std::endl;
-	sleep(2);
 	// open en creant le fichier si besoin
 	int fd = open(this->fileName.c_str(), O_CREAT | O_RDWR | W_OK, 0644);
 
@@ -1287,13 +1292,11 @@ bool	Answer::uploadFile()
 	if (!outPutFile.is_open()) {
 		std::cerr << "Error while opening for the upload file " << this->fileName << ": " << strerror(errno) << std::endl;
 		this->code = 500; // to do 500 je suis pas sur
-		close(fd);
 		return false;
 	}
 
 	// parser le body pour enlever le header du body et les boundary
 	size_t bodyStart = this->request_body.find("\r\n\r\n");
-	std::cout << "body start = " << bodyStart << std::endl;
 	if (bodyStart == this->request_body.npos) {
 		std::cout << "body start est pas bon = " << bodyStart << std::endl;
 		// to do est ce quil y a un code d'erreur a mettre ici, ca le formattage de l'upload file est pas bon parce qu'il n'y a pas de delimiteur 
@@ -1302,44 +1305,26 @@ bool	Answer::uploadFile()
 		return false;
 	}
 	this->request_body.erase(0, bodyStart + 4);
-
-	std::cout << "end boundary = " << this->endBoundary << std::endl;
-
 	size_t endBoundaryPos = this->request_body.find(this->endBoundary);
 
 	if (endBoundaryPos != this->request_body.npos) {
 		std::cout << "endBoundaryPos est bon = " << endBoundary << std::endl;
 		this->request_body.erase(endBoundaryPos);
-		// to do est ce quil y a un code d'erreur a mettre ici, ca le formattage de l'upload file est pas bon parce qu'il n'y a pas de delimiteur 
-		// entre le body header et le body
-		// close(fd);
-		// return false;
 	}
 
-	// std::cout << RED << "APRES" << std::endl;
-	// std::cout << this->request_body << RESET << std::endl;
-
-	// size_t lastNewLine = this->request_body.find_last_of('\n');
-	// if (lastNewLine != this->request_body.npos) {
-	// 	this->request_body.erase(lastNewLine, 1);
-	// }
-
-	// std::cout << GREEN << this->request_body << std::endl;
-	// std::cout << "fin de request body" << std::endl;
-
-	std::istringstream is(this->request_body);
-	std::string line;
-
 	// ecrir le fichier
-	outPutFile.write(this->request_body.c_str(), this->request_body.size());
-	this->status = 3;
-	this->code = 201;
-
+	if (!outPutFile.write(this->request_body.c_str(), this->request_body.size()))
+	{
+		close(fd);
+		this->code = 500;
+		return false;
+	}
+	this->code = 201; // hook
 	close(fd);
-	// exit (2);
-
 	return true;
 }
+
+
 
 void	removeLine(std::string & source) {
 	std::cout << "avant " << std::endl << source << std::endl;
@@ -1355,7 +1340,8 @@ void	removeLine(std::string & source) {
 
 void Answer::POST(Configuration const &conf, int server_idx)
 {
-    this->code = 201;
+	(void)server_idx; // to do enlever ca 
+    this->code = 201;// hook
     this->find_ressource_path(conf);
     if (this->code >= 300)
         return ;
@@ -1395,23 +1381,16 @@ void Answer::POST(Configuration const &conf, int server_idx)
 	// met toi ici GARFI, tu peux faire l'upload file ici
 
     std::cout << GREEN << this->ressource << RESET << std::endl; // savoir si c'est un /upload ou /update
-	this->code = 201;//quand post marche
-	if ((this->ressource == "/upload" || this->ressource == "/") && conf.getServer(server_idx).getIsUploadFileAccepted()) {
-		if (!this->parseBodyHeader())
-			return ;
-
-		// ouvrir le fichier
-		if (!this->uploadFile()) {
-			std::cerr << "Open File error" << std::endl;
-			return ;
-		}
-		// ecrire le fichier
-
-		//temporaire en vrai faut allez ecrire
-		// this->status = 2; // si il faut ecrire quelque chose (la fonction writefile est vide tu peux faire la suite la bas)	
+	this->code = 201;// hook //quand post marche
+	// if ((this->ressource == "/upload" || this->ressource == "/") && conf.getServer(server_idx).getIsUploadFileAccepted()) {
+	this->status = 2; // si il faut ecrire quelque chose (la fonction writefile est vide tu peux faire la suite la bas)	
+	if (!this->parseBodyHeader()) {
+		return ;
 	}
-	else
-		std::cerr << "Error: Upload was send but is not allowed in this server check conf file" << std::endl;
+	// else {
+	// 	std::cerr << "Error: Upload was send but is not allowed in this server check conf file" << std::endl;
+	// 	this->code = 501;
+	// }
 }
 
 void Answer::DELETE(Configuration const &conf)

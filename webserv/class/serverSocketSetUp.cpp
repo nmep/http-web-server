@@ -1,6 +1,6 @@
-#include "Socket.hpp"
+#include "Epoll.hpp"
 
-Socket::Socket()
+Epoll::Epoll()
 {
 	std::cout << YELLOW << "Socket Constructeur called" << RESET << std::endl;
 	this->portListening = NULL;
@@ -8,9 +8,9 @@ Socket::Socket()
 	// this->portListeningLen = 0; sert a rien jsp pk
 }
 
-// Socket::Socket(Socket const & copy) {}
+// Epoll::Socket(Socket const & copy) {}
 
-Socket::~Socket()
+Epoll::~Epoll()
 {
 	std::cout << YELLOW << "Socket Destructeur called" << RESET << std::endl;
 	if (this->sockets != NULL)
@@ -20,13 +20,13 @@ Socket::~Socket()
 }
 
 // renvoie le fd su serveur associe a "fd" sinon renvoie -1
-int	Socket::getFdAndServer(int fd) {
+int	Epoll::getFdAndServer(int fd) {
 	if (this->fdAndServer.find(fd) != this->fdAndServer.end())
 		return this->fdAndServer[fd];
 	return -1;
 }
 
-// Socket& Socket::operator=(Socket const & rhs) {}
+// Socket& Epoll::operator=(Socket const & rhs) {}
 
 static bool	checkIfPortIsSet(int *SokcetPort, int value, int length) {
 	for (int i = 0; i < length; i++) {
@@ -43,14 +43,9 @@ static bool	checkIfPortIsSet(int *SokcetPort, int value, int length) {
 */
 
 static int assignPortToServerIdx(Configuration const & conf, int Port) {
-	std::cout << "port = " << Port << std::endl;
-	std::cout << "vector de serveur 0 = " ;printVector( conf.getServer(0).GetPortVector(), std::cout);
 	for (int i = 0; i < conf.getNbServer(); i++) {
-		std::cout << "Server idx " << i << std::endl;
-		// std::vector<uint16_t> v = conf.getServer(i).GetPortVector();
 		std::vector<uint16_t>::const_iterator it = conf.getServer(i).GetPortVector().begin();
 		for (; it != conf.getServer(i).GetPortVector().end(); it++) {
-			std::cout << *it << " = " << Port << std::endl;
 			if (*it == Port)
 				return i;
 		}
@@ -58,7 +53,7 @@ static int assignPortToServerIdx(Configuration const & conf, int Port) {
 	return -1;
 }
 
-int	Socket::initAllSockets(Configuration const & conf) {
+int	Epoll::initAllSockets(Configuration const & conf) {
 
 	// faire un tableau de max port dispo pour y mettre les ports
 	this->portListening = new int [conf.getNbPort()];
@@ -84,12 +79,11 @@ int	Socket::initAllSockets(Configuration const & conf) {
 		if (!initOneSocket(&this->sockets[i], this->portListening[i]))
 			return 0;
 		this->sockets[i].serverIdx = assignPortToServerIdx(conf, this->portListening[i]);
-		std::cout << "le port " << this->portListening[i] << " est associe au serveur idx " << this->sockets[i].serverIdx << std::endl;
 	}
 	return 1;
 }
 
-// int	Socket::initAllSockets(Configuration const & conf) {
+// int	Epoll::initAllSockets(Configuration const & conf) {
 // 	this->sockets = new t_socket [conf.getNbServer()];
 
 // 	// faire un tableau de max port dispo pour y mettre les ports
@@ -114,7 +108,7 @@ int	Socket::initAllSockets(Configuration const & conf) {
 /*
 	init une socket qui sera place dans socketStruct qui sera bind au port 'port'
 */
-int	Socket::initOneSocket(t_socket *socketStruct, int port)
+int	Epoll::initOneSocket(t_socket *socketStruct, int port)
 {
 	// creation de socket
 	// Il est vrmt to bo ce garfi je me le ferais bien au petit dejeuner
@@ -169,11 +163,11 @@ int	Socket::initOneSocket(t_socket *socketStruct, int port)
 	return 1;
 }
 
-int	Socket::accept_and_save_connexion(int servID, int sockFD) {
+int	Epoll::accept_and_save_connexion(int servID, int sockFD) {
 	int	new_connexion;
 	struct epoll_event	ev;
 
-	std::cout << "serv id = " << servID << std::endl;
+	std::cout << GREEN "serv id = " << servID << RESET << std::endl;
 	new_connexion = accept(sockFD, \
 		(sockaddr *) &this->sockets[servID].addr, &this->sockets[servID].addrLen);
 	if (new_connexion == -1) {
@@ -192,7 +186,7 @@ int	Socket::accept_and_save_connexion(int servID, int sockFD) {
 	return 1;
 }
 
-int	Socket::setNonBlockSocket(int socket) {
+int	Epoll::setNonBlockSocket(int socket) {
 	int socketFlag;
 
 	socketFlag = fcntl(socket, F_GETFL, 0);
@@ -207,12 +201,23 @@ int	Socket::setNonBlockSocket(int socket) {
 	return 1;
 }
 
-int	Socket::isAnServerFd(int fd) {
+int	Epoll::isAnServerFd(int fd) {
 	for (int i = 0; i < this->portListeningLen; i++) {
 		if (this->sockets[i].listenFd == fd) {
 			std::cout << "Server idx = " << this->sockets[i].serverIdx << std::endl;
-			return this->sockets[i].serverIdx;
+			// return this->sockets[i].serverIdx;
+			return i;
 		}
 	}
 	return -1;
+}
+
+bool	Epoll::closeConnexion(int fd)
+{
+	if (epoll_ctl(this->epfd, EPOLL_CTL_DEL, fd, NULL) == -1) {
+		std::cerr << "Epoll ctl del failed: " << strerror(errno) << std::endl;
+		return false;
+	}
+	close(fd);
+	return true;
 }

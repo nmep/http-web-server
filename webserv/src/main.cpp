@@ -1,5 +1,5 @@
 #include "configuration.hpp"
-#include "Socket.hpp"
+#include "Epoll.hpp"
 #include <csignal>
 
 int g_loop = 1;
@@ -13,7 +13,7 @@ void handle_signal(int signal)
 int	main(int ac, char **av)
 {
 	Configuration	conf;
-	Socket			socket;
+	Epoll			server;
 
 	// si on fait plus de signaux il faudrait peut etre faire une boucle de 0 a X todo
 	signal(SIGQUIT, handle_signal); // ctrl backslash
@@ -53,11 +53,11 @@ int	main(int ac, char **av)
 	}
 
 	std::cout << conf << std::endl;
-	if (!socket.initAllSockets(conf)) {
+	if (!server.initAllSockets(conf)) {
 		std::cout << "MARCHE PAS" << std::endl;
 		return 2;
 	}
-	socket.launchEpoll(conf);
+	server.launchEpoll(conf);
 
 	return 0;
 }

@@ -88,7 +88,7 @@ std::string Server::GetServerName() const {
 }
 
 // si httpCode n'est pas dans la map errorPage alors le getteur renvoie une empty string
-std::string	Server::GetErrorPage(std::string const & httpCode) { // meme soucis que pour getlocation, si on envoie un truc qui existe pas encore ca le cree faut proteger to do
+std::string	Server::GetErrorPage(std::string const & httpCode) {
 	if (this->_error_page.find(httpCode) != this->_error_page.end())
 		return _error_page[httpCode];
 	return std::string();
@@ -246,7 +246,6 @@ bool	Server::handleServerNameParsing(std::vector<std::string> lineSplit, int cou
 		std::cerr << "Invalid syntax: Server name need one value at line " << countLine << std::endl;
 		return true;
 	}
-
 	SetServerName(*(lineSplit.begin() + 1));
 	return true;
 }

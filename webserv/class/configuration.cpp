@@ -131,7 +131,6 @@ bool	Configuration::readFileSyntax()
 	int in_scope = 0;
 	while (getline(confFileFD, line))
 	{
-		// TO DO faire une fonction pour detecter les commentaires
 		if (line.empty() || isOnlyWithSpace(line) || isCommentary(line)) {
 			this->_syntaxData.CountLine++;
 			continue ;
