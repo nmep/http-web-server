@@ -94,32 +94,32 @@ class Answer
 		std::map<std::string, std::string> carctere_special_map;
 		std::string redirection;
 
-        void first_step(size_t bytesRead);
-        void second_step(size_t bytesRead);
-        void third_step(size_t bytesRead);
-        void parse_state_line(std::string state_line);
-        void parse_header(std::string header);
+        void			first_step(size_t bytesRead);
+        void			second_step(size_t bytesRead);
+        void			third_step(size_t bytesRead);
+        void			parse_state_line(std::string state_line);
+        void			parse_header(std::string header);
 
-        void GET(Configuration const &conf);
-        void POST(Configuration const &conf, int server_idx);
-        void DELETE(Configuration const &conf);
-		std::string GetMime(std::string extansion);// prend l'extension du fichier en parametre et renvoie le type
-		std::string GetCodeSentence(int code);// on renvoie la phrase de raison associe au code d etat
-		void contentType();
-		void connection();// uniquement quand c'est preciser keep alive dans la requete
-		void server(Configuration const &conf);
-		void location();// on precise on location dans les cas 201 et 3xx
-		void date();
-		void taille();
-		void Reset();
+        void			GET(Configuration const &conf);
+        void			POST(Configuration const &conf, int server_idx);
+        void			DELETE(Configuration const &conf);
+		std::string		GetMime(std::string extansion);// prend l'extension du fichier en parametre et renvoie le type
+		std::string		GetCodeSentence(int code);// on renvoie la phrase de raison associe au code d etat
+		void			contentType();
+		void			connection();// uniquement quand c'est preciser keep alive dans la requete
+		void			server(Configuration const &conf);
+		void			location();// on precise on location dans les cas 201 et 3xx
+		void			date();
+		void			taille();
+		void			Reset();
 
 		// upload file
-		bool	parseBodyHeader();
-		bool	parseBoundary(std::string line);
-		bool	parseContentDisposition(std::string line);
-		bool	parseFileName(std::string line);
-		bool	parseContentType(std::string line);
-		bool	uploadFile();
+		bool		parseBodyHeader();
+		bool		parseBoundary(std::string line);
+		bool		parseContentDisposition(std::string line);
+		bool		parseFileName(std::string line);
+		bool		parseContentType(std::string line);
+		bool		uploadFile(Configuration const  & conf, int servConfIdx);
 		inline bool	changeFileName(int FileNameIndex);
 		inline void	randomName(int fileNameIndex);
 		//
@@ -136,7 +136,7 @@ class Answer
 
         void ReadRequest(Configuration const &conf, int socket_fd, int server_idx);
         void ReadFile(Configuration const &conf);
-        void WriteFile(Configuration const &conf);
+        void WriteFile(Configuration const &conf, int servConfIdx);
         void SendAnswer(Configuration const &conf);
 
 };

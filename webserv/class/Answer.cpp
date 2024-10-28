@@ -787,7 +787,7 @@ void Answer::write_for_cgi(Configuration const &conf)
     }
 }
 
-void Answer::WriteFile(Configuration const &conf)
+void Answer::WriteFile(Configuration const &conf, int servConfIdx)
 {
     std::cout << RED << "Debut de WriteFile" << RESET << std::endl;
 
@@ -795,7 +795,7 @@ void Answer::WriteFile(Configuration const &conf)
         this->write_for_cgi(conf);
     else
     {
-		this->uploadFile();
+		this->uploadFile(conf, servConfIdx);
     }
     if (this->code >= 400)
         this->HandleError(conf);
@@ -1130,9 +1130,14 @@ bool	Answer::parseContentDisposition(std::string line)
 
 static bool	findMimeType(std::string value, std::map<std::string, std::string> mimeMap, std::string *mimeStr)
 {
+	std::cout << "value avant = " << value << std::endl;
 	value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
+	std::cout << "value apres = " << value << std::endl;
+	sleep(2);
 	for (std::map<std::string, std::string>::iterator it = mimeMap.begin(); it != mimeMap.end(); it++) {
+		std::cout << "it second = [" << it->second << "] value = [" << value << ']' << std::endl;
 		if (it->second == value) {
+			std::cout << "ca passe" << std::endl;
 			*mimeStr = it->first;
 			return true;
 		}
@@ -1271,7 +1276,7 @@ inline void Answer::randomName(int fileNameIndex)
 	return ;
 }
 
-bool	Answer::uploadFile()
+bool	Answer::uploadFile(Configuration const & conf, int servConfIdx)
 {
 	// trouver le bon nom de fichier
 	this->status = 3;
@@ -1286,6 +1291,10 @@ bool	Answer::uploadFile()
 	}
 
 	// open en creant le fichier si besoin
+	std::cout << "file name avant" << this->fileName << std::endl;
+	this->fileName = conf.getServer(servConfIdx).getUploadStore() + '/' + this->fileName;
+	std::cout << "file name apres" << this->fileName << std::endl;
+
 	int fd = open(this->fileName.c_str(), O_CREAT | O_RDWR | W_OK, 0644);
 
 	if (fd == -1) {
@@ -1361,7 +1370,6 @@ void Answer::POST(Configuration const &conf, int server_idx)
         }
         else if (access(this->ressource_path.c_str(), F_OK | X_OK) == -1)
         {
-            std::cout << "1 " << this->ressource << " et " << this->ressource_path << std::endl;
             this->code = 403;//forbidden
             return ;
         }

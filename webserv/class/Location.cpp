@@ -136,15 +136,17 @@ bool	Location::handleAutoIndex(std::vector<std::string> lineSplit, int countLine
 
 bool	Location::handleRoot(std::vector<std::string> lineSplit, int countLine)
 {
+	(lineSplit.end() - 1)->erase((lineSplit.end() -1)->end() - 1);
 	if (lineSplit.size() != 2) {
 		std::cerr << "Invalid Root syntax it must be root <root_path>, at line " << countLine << std::endl;
 		return false;
 	}
-	(lineSplit.begin() + 1)->erase((lineSplit.begin() + 1)->end() - 1);
 	if (!checkAccessFile(*(lineSplit.begin() + 1), F_OK | R_OK | W_OK)) {
 		std::cerr << "Error Location parsing: Root " << *(lineSplit.begin() + 1) << " set a line " << countLine << ": " << strerror(errno) << std::endl;
 		return false;
 	}
+	if (!isDir(*(lineSplit.end() - 1)))
+		return false;
 	setRoot(*(lineSplit.begin() + 1));
 	return true;
 }

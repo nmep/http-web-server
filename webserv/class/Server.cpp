@@ -225,12 +225,12 @@ bool	Server::handleListenParsing(std::vector<std::string>lineSplit, int countLin
 		uint16_t port = 0;
 		if (!strIsNum(*it)) {
 			std::cerr << "Error Port settings : Listen Port " << *it << "at line " << countLine << std::endl;
-			continue;
+			return false;
 		}
 
 		if (!ft_atoi_port(&port, *it)) {
 			std::cerr << "Error Port settings : " << *it << " at line " << countLine << std::endl;
-			continue;
+			return false;
 		}
 		SetPort(port);
 	}
@@ -317,13 +317,13 @@ void	Server::setAutoIndex(bool value) {
 /* --------------------------- PARSING -------------------------------------- */
 
 bool	Server::handleAutoIndex(std::vector<std::string> lineSplit, int countLine) {
+	*(lineSplit.end() - 1)->erase((lineSplit.end() - 1)->end() - 1);
 	if (lineSplit.size() != 2) {
 		std::cerr << "Invalid syntax: at line " << countLine << " Autoindex need a value (on or off)" << std::endl;
 		return false;
 	}
 
 	// std::cout << "line begin = " << *(lineSplit.begin() + 1) << " avant" << std::endl;
-	*(lineSplit.begin() + 1)->erase((lineSplit.begin() + 1)->end() - 1);
 	// std::cout << "line begin = " << *(lineSplit.begin() + 1) << " apres" << std::endl;
 
 	if (*(lineSplit.begin() + 1) != "on" && *(lineSplit.begin() + 1) != "off") {
@@ -340,16 +340,21 @@ bool	Server::handleAutoIndex(std::vector<std::string> lineSplit, int countLine) 
 
 bool Server::handleUploadStore(std::vector<std::string> lineSplit, int countLine)
 {
+	*(lineSplit.end() - 1)->erase((lineSplit.end() - 1)->end() - 1);
 	if (lineSplit.size() != 2) {
 		std::cerr << "Invalid upload_store syntax: no value associate, at line " << countLine << std::endl;
 		return false;
 	}
-	*(lineSplit.end() - 1)->erase((lineSplit.end() - 1)->end() - 1);
 	// check if dir exist
 	if (!checkAccessFile(*(lineSplit.begin() + 1), F_OK | R_OK | W_OK)) {
 		std::cerr << "Invalid upload_store syntax: [" << *(lineSplit.begin() + 1) << "] " << strerror(errno) << " at line " << countLine << std::endl;
 		return false;
 	}
+	if (!isDir(*(lineSplit.end() - 1))) {
+		std::cerr << "Error upload store at line " << countLine << std::endl;
+		return false;
+	}
+	std::cout << RED << "je set upload store a " << *(lineSplit.begin() + 1) << std::endl;
 	setUploadStore(*(lineSplit.begin() + 1));
 	setIsUploadFileAccepted(true);
 	return true;

@@ -19,5 +19,6 @@
 	bool						StrIsContext(std::string const & str);
 	bool						StrSyntaxeCheck(std::string const & str);
 	bool						checkAccessFile(std::string const & fileName, int mode);
+	bool						isDir(std::string dirName);
 
 #endif

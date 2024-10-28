@@ -24,6 +24,7 @@
 	#include <cstring> // 
 	#include <fstream> // inputfile
 	#include <string> // string manip
+	#include <dirent.h> // opendir
 
 	#include <map> // map
 	#include <vector> // vector

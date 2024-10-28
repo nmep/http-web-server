@@ -11,9 +11,14 @@ Asynchrone::~Asynchrone()
 }
 
 // on agit en fonction de l'avancee de la reponse concernant ce server
-void Asynchrone::Server_action(Configuration const &conf, int server_idx, int socket_fd)
+void Asynchrone::Server_action(Configuration const &conf, int server_idx, int socket_fd, int servConfIdx)
 {
-    std::cout << BLUE << "Debut de Server_action, serv numero " << server_idx << ", socket_fd " << socket_fd << std::endl;
+	(void)servConfIdx; /* index de la configuration du serveur*/
+    std::cout << BLUE << "Debut de Server_action, serv numero " << server_idx << ", socket_fd " << socket_fd << RESET << std::endl;
+	std::cout << RED << "Server conf index = " << servConfIdx << RESET << std::endl;
+	// std::cout << conf.getServer(servConfIdx) << std::endl;
+	std::cout << "Upload store du serveur demande = " << conf.getServer(servConfIdx).getUploadStore() << std::endl;
+	// sleep(5);
     switch (this->Answers_instances[server_idx].GetStatus())
     {
         case 0:
@@ -23,7 +28,7 @@ void Asynchrone::Server_action(Configuration const &conf, int server_idx, int so
             this->Answers_instances[server_idx].ReadFile(conf);
             break;
         case 2:
-            this->Answers_instances[server_idx].WriteFile(conf);
+            this->Answers_instances[server_idx].WriteFile(conf, servConfIdx);
             break;
         case 3:
             this->Answers_instances[server_idx].SendAnswer(conf);
