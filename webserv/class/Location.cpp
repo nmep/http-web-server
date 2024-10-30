@@ -123,6 +123,26 @@ void	Location::setCgi(std::string mime, std::string cgiPath) {
 
 /* -------------------------------------------------------------------- */
 
+// renvoie true si le mime est dans la conf et false dans le cas inverse
+bool	Location::isCgiMimeAccepted(std::string cgiMime) const {
+	for (std::vector<std::pair<std::string, std::string> >::const_iterator it =_cgi.begin(); it != _cgi.end(); it ++) {
+		if (it->first == cgiMime)
+			return true;
+	}
+	return false;
+}
+
+// renvoie true si le path est dans la conf et false dans le cas inverse
+bool	Location::isCgiPathAccepted(std::string path) const {
+	for (std::vector<std::pair<std::string, std::string> >::const_iterator it =_cgi.begin(); it != _cgi.end(); it ++) {
+		if (it->second == path)
+			return true;
+	}
+	return false;
+}
+
+/* -------------------------------------------------------------------- */
+
 bool	Location::handleAutoIndex(std::vector<std::string> lineSplit, int countLine) {
 	*(lineSplit.begin() + 1)->erase((lineSplit.begin() + 1)->end() - 1);
 	if (lineSplit.size() != 2) {
