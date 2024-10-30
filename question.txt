@@ -6,7 +6,8 @@ question garfi
 todo garfi
     - 1 mettre tous les truc par default si ils ne sont pas preciser, comme le server name
 	- 2 check si root, si c'est pas un dossier je refuse a la config -> ✅
-	- 2 cgi dans la conf verifier comment ca marche mais dans l'ideal avoir des cgi autorise
+	- 2 cgi dans la conf verifier comment ca marche mais dans l'ideal avoir des cgi autorise -> ✅
+	- 2 faire un getteur pour une cgi precise / voir une fonction qui permet de verifier si tel mime ou path est comprit dans la conf
     - 2 listen	accepte 0 80 passe aussi mais j'ai pas la permission desus et il n'est pas bind ensuite TO DO -> ✅
 	- 3 Upload file: quand je open, open avec le bon path pour pouvoir le mettre au bon endroit. -> ✅
 	- fin waitpid timeout

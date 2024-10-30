@@ -19,7 +19,7 @@ int	main(int ac, char **av, char **envp)
 
 	if (pid == 0) {
 		std::cout << "enfant" << std::endl;
-		sleep(5);
+		// sleep(5);
 		execve(av[1], args, envp);
 	}
 	else
@@ -28,14 +28,12 @@ int	main(int ac, char **av, char **envp)
 
 		fd_set fds;
 		struct timeval tv;
-		
+
 		FD_ZERO(&fds);
 		FD_SET(0, &fds);
-
-	
 		while (count > 0) {
-			tv.tv_sec = 1;
-			tv.tv_usec = 0;
+			tv.tv_sec = 0;
+			tv.tv_usec = 1000;
 			if (select(1, &fds, NULL, NULL, &tv) == -1) {
 				std::cerr << "Error with select: " << strerror(errno) << std::endl;
 			}
@@ -61,6 +59,6 @@ int	main(int ac, char **av, char **envp)
 				std::cerr << "Error with kill: " << strerror(errno) << std::endl;
 			}
 		}
-		std::cout << "parent" << std::endl;
 	}
+		std::cout << "parent" << std::endl;
 }
