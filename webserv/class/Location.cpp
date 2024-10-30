@@ -90,6 +90,10 @@ std::vector<std::string> Location::getIndex() const {
 	return _index;
 }
 
+std::vector<std::pair<std::string, std::string> > & Location::getPairCgi() {
+	return _cgi;
+}
+
 /* -------------------------------------------------------------------- */
 
 void	Location::setAllowedMethod(std::vector<std::string> const & allowedMethod) {
@@ -111,6 +115,10 @@ void	Location::setAutoIndex(bool value) {
 
 void	Location::setIndex(std::string const & indexFileName) {
 	_index.push_back(indexFileName);
+}
+
+void	Location::setCgi(std::string mime, std::string cgiPath) {
+	this->_cgi.push_back(std::make_pair(mime, cgiPath));
 }
 
 /* -------------------------------------------------------------------- */
@@ -200,14 +208,38 @@ bool	Location::handleRedirection(std::vector<std::string> lineSplit, int countLi
 	return true;
 }
 
+bool	Location::handleCgi(std::vector<std::string> lineSplit, int countLine)
+{
+	(lineSplit.end() - 1)->erase((lineSplit.end() - 1)->size() - 1);
+
+	if ((lineSplit.end() - 1)->empty())
+		lineSplit.erase(lineSplit.end() - 1);
+	if (lineSplit.size() != 3) {
+		std::cerr << "Error parsing Location: Cgi last arg can't be empty at line " << countLine << std::endl;
+		return false;
+	}
+	std::cout << "je find sur " << *(lineSplit.begin() + 1) << std::endl;
+	if ((lineSplit.begin() + 1)->find(".") != 0) {
+		std::cerr << "Error Location Parsing: Cgi invalid mime format [" << *(lineSplit.begin() + 1) << "] at line " << countLine << std::endl;
+		return false;
+	}
+	if (access((lineSplit.end() - 1)->c_str(), F_OK | R_OK | X_OK) == -1) {
+		std::cerr << "Error Location Parsing: Cgi invalid Cgi path: [" << *(lineSplit.end() - 1) << "] " << strerror(errno) << " at line " << countLine << std::endl;
+		return false;
+	}
+	std::cout << "cgi mime = " << *(lineSplit.begin() + 1) << " cgi path = " << *(lineSplit.begin() + 2) << std::endl;
+	setCgi(*(lineSplit.begin() + 1), *(lineSplit.begin() + 2));
+	return true;
+}
+
 /* -------------------------------------------------------------------- */
 
 bool	Location::LocationParsing(std::ifstream & file, int *countLine) {
 
 	std::string LocationKeyWord[] = {"root", "autoindex", "index", "allowedMethods",\
-							 "return"};
+							 "return", "cgi"};
 	bool	(Location::*FuncPtr[]) (std::vector<std::string>, int) = {&Location::handleRoot, &Location::handleAutoIndex, \
-				&Location::handleIndex, &Location::handleAllowedMethods, &Location::handleRedirection};
+				&Location::handleIndex, &Location::handleAllowedMethods, &Location::handleRedirection, &Location::handleCgi};
 	std::string 				line;
 	std::vector<std::string>	lineSplit;
 
@@ -263,5 +295,13 @@ std::ostream & operator<<(std::ostream & o, Location *location) {
 		o << "Root = " << location->getRoot() << std::endl;
 		o << "Auto Index = " << location->getAutoIndex() << std::endl;
 		o << "location index = " << location->getLocationID() << std::endl;
+		o << "Cgi info: " << std::endl;
+		if (location->getPairCgi().size() > 0) {
+			for (std::vector<std::pair<std::string, std::string> >::iterator it = location->getPairCgi().begin(); it != location->getPairCgi().end(); it++) {
+				o << "mime = " << it->first << " cgi path = " << it->second << std::endl;
+			}
+		}
+		else
+			o << "Cgi vector is empty" << std::endl;
 	return o;
 }

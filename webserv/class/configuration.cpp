@@ -72,8 +72,9 @@ void	Configuration::setNBServer(int nbServer)
 
 bool	Configuration::syntaxParse(std::vector<std::string> lineSplit)
 {
-	const std::string cTokens[] = {"server", "listen", "server_name",
-	 "error_page", "client_max_body_size", "location", "allowedMethods", "autoindex", "}", "root", "return", "index", "upload_store", "//", "#"};
+	const std::string cTokens[] = {"server", "listen", "server_name",\
+	 "error_page", "client_max_body_size", "location", "allowedMethods",\
+	 "autoindex", "}", "root", "return", "index", "upload_store", "//", "#", "cgi"};
 
 	std::vector<std::string>::const_iterator ite = lineSplit.end();
 

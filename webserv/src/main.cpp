@@ -40,7 +40,6 @@ int	main(int ac, char **av)
 		const std::string confFileName(av[1]);
 		// lancer la config des serveur
 		if (!conf.launchServerConf(confFileName)) {
-			// conf.clearConfiguration();
 			std::cout << "la conf est pas ok" << std::endl;
 			return 2;
 		}
@@ -53,11 +52,11 @@ int	main(int ac, char **av)
 	}
 
 	std::cout << conf << std::endl;
-	if (!server.initAllSockets(conf)) {
-		std::cout << "MARCHE PAS" << std::endl;
-		return 2;
-	}
-	server.launchEpoll(conf);
+	// if (!server.initAllSockets(conf)) {
+	// 	std::cout << "MARCHE PAS" << std::endl;
+	// 	return 2;
+	// }
+	// server.launchEpoll(conf);
 
 	return 0;
 }

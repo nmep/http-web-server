@@ -354,7 +354,6 @@ bool Server::handleUploadStore(std::vector<std::string> lineSplit, int countLine
 		std::cerr << "Error upload store at line " << countLine << std::endl;
 		return false;
 	}
-	std::cout << RED << "je set upload store a " << *(lineSplit.begin() + 1) << std::endl;
 	setUploadStore(*(lineSplit.begin() + 1));
 	setIsUploadFileAccepted(true);
 	return true;
