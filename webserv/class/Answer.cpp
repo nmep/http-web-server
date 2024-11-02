@@ -547,8 +547,8 @@ void Answer::ReadRequest(Configuration const &conf, int socket_fd, int server_id
     if (this->socket_fd == -2)
         this->socket_fd = socket_fd;
     char buffer[READ_SIZE];
-	bytesRead = read(this->socket_fd, buffer, READ_SIZE);
-    // bytesRead = recv(this->socket_fd, buffer, READ_SIZE, 0);
+	// bytesRead = read(this->socket_fd, buffer, READ_SIZE);
+    bytesRead = recv(this->socket_fd, buffer, READ_SIZE, 0);
 	// std::string test(buffer);
     // if (bytesRead == 0)
     // {

@@ -52,11 +52,11 @@ int	main(int ac, char **av)
 	}
 
 	std::cout << conf << std::endl;
-	// if (!server.initAllSockets(conf)) {
-	// 	std::cout << "MARCHE PAS" << std::endl;
-	// 	return 2;
-	// }
-	// server.launchEpoll(conf);
+	if (!server.initAllSockets(conf)) {
+		std::cout << "MARCHE PAS" << std::endl;
+		return 2;
+	}
+	server.launchEpoll(conf);
 
 	return 0;
 }
