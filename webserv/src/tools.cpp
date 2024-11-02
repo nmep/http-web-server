@@ -61,7 +61,7 @@ uint16_t	ft_atoi_port(uint16_t *ptr, std::string str) {
 		i++;
 	}
 	if (*ptr <= 1024) {
-		std::cerr << "Port set can't be less than " << 1024 << std::endl;
+		std::cerr << "Port set can't be less than " << 1024 << " super user permission is needed" << std::endl;
 		return false;
 	}
 	return true;
@@ -132,4 +132,15 @@ unsigned long long	convert_bytes_into_type(unsigned long long val, char type) {
 	else if (type == 'B')
 		return val;
 	return 0;
+}
+
+bool	isDir(std::string dirName)
+{
+	DIR	*dir = opendir(dirName.c_str());
+	if (dir == NULL) {
+		std::cerr << "Error parsing isDir: " << dirName << " is not a directory" << std::endl;
+		return false;
+	}
+	closedir(dir);
+	return true;
 }

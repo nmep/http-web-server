@@ -175,6 +175,7 @@ int	Epoll::accept_and_save_connexion(int servID, int sockFD) {
 		return 0;
 	}
 	this->fdAndServer[new_connexion] = servID;
+	this->fdAndServerConfIdx[new_connexion] = this->sockets[servID].serverIdx;
 	setNonBlockSocket(new_connexion);
 	ev.events = EPOLLIN | EPOLLOUT;
 	ev.data.fd = new_connexion;
@@ -215,6 +216,8 @@ int	Epoll::isAnServerFd(int fd) {
 bool	Epoll::closeConnexion(int fd)
 {
 	std::cout << "Fd close = " << fd << std::endl;
+	this->fdAndServer.erase(fd);
+	this->fdAndServerConfIdx.erase(fd);
 	if (epoll_ctl(this->epfd, EPOLL_CTL_DEL, fd, NULL) == -1) {
 		std::cerr << "Epoll ctl del failed: " << strerror(errno) << std::endl;
 		return false;

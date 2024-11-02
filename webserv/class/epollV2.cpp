@@ -133,9 +133,7 @@ int Epoll::launchEpoll(Configuration const & conf) {
 		}
 
 		std::cout << "nfd = " << this->nfd << std::endl;
-		serverConnxionReceivedId = -1;
 		for (int i = 0; i < this->nfd; i++) {
-			serverConnxionReceivedId = isAnServerFd(events[i].data.fd);
 			if (events[i].events & EPOLLRDHUP) {
 				std::cout << "EPOLLRHDUP detecte" << std::endl;
 				closeConnexion(events[i].data.fd);
@@ -146,19 +144,19 @@ int Epoll::launchEpoll(Configuration const & conf) {
 			}
 			else if (events[i].events & EPOLLOUT) {
 				std::cout << "ICI J'ECRIS" << std::endl;
-				asynch.Server_action(conf, this->fdAndServer[events[i].data.fd], events[i].data.fd);
+				asynch.Server_action(conf, this->fdAndServer[events[i].data.fd], events[i].data.fd, this->fdAndServerConfIdx[events[i].data.fd]);
 				if (asynch.Answers_instances[ this->fdAndServer[events[i].data.fd]].GetStatus() == 4)
 				{
 					asynch.Answers_instances[ this->fdAndServer[events[i].data.fd]].SetStatus(0);
 					// closeConnexion(events[i].data.fd);
 					closeConnexion(asynch.Answers_instances[this->fdAndServer[events[i].data.fd]].GetSocketFd());
 					asynch.Answers_instances[ this->fdAndServer[events[i].data.fd]].SetSocketFd(-2);
-
 				}
 			}
 			else if (events[i].events & EPOLLIN)
 			{
-				std::cout << "ici c soit un serveur soit une requete qui est lu" << std::endl;
+				serverConnxionReceivedId = -1;
+				serverConnxionReceivedId = isAnServerFd(events[i].data.fd);
 				// attention a l'appel de la map si un fd n'est pas dans la map il se passe quoi ?
 				usleep(100000);
 				std::cout << "get = " << this->getFdAndServer(events[i].data.fd) << std::endl;
@@ -173,6 +171,15 @@ int Epoll::launchEpoll(Configuration const & conf) {
 			}
 		}
 	}
+	for (int i = 0; i < this->portListeningLen; i++)
+	{
+		if (epoll_ctl(this->epfd, EPOLL_CTL_DEL, this->sockets[i].listenFd, NULL) == -1) {
+			std::cerr << "Epoll ctl del failed: " << strerror(errno) << std::endl;
+			return false;
+		}
+		close(this->sockets[i].listenFd);
+	}
+	close(this->epfd);
 	std::cout << "on est plus dans la boucle" << std::endl;
 	return 1;
 }

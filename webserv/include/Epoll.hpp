@@ -35,6 +35,7 @@
 				int					*portListening; // tableau qui definit les port qui doivent etre mit sur ecoute en evitant les doublons
 				int					portListeningLen; // taille de portListening
 				std::map<int, int>	fdAndServer; // first fd de requete, second index du serveur associe a la requete
+				std::map<int, int>	fdAndServerConfIdx;
 
 			public:
 				Epoll();

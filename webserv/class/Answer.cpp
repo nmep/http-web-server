@@ -13,6 +13,7 @@ Answer::Answer(int server_idx)
     this->step = 0;
     this->fd_read = -2;
     this->fd_write = -2;
+    this->cgi_exec_path = "";
 
     this->mime_map[".html"] = "text/html";
     this->mime_map[".htm"] = "text/html";
@@ -430,8 +431,8 @@ void Answer::parse_header(std::string header)
 //quand on a pas encore eu la ligne d'etat en entier
 void Answer::first_step(size_t bytesRead)
 {
-    // if (this->before_body_len  >= LIMIT_SIZE_BEFORE_BODY_SERVER)
-    //     this->code = 413;
+    if (this->before_body_len >= LIMIT_SIZE_BEFORE_BODY_SERVER)
+        this->code = 413;
     if (this->piece_of_request.find("\r\n\r\n") != std::string::npos)
     {
         this->step = 2;
@@ -473,8 +474,8 @@ void Answer::first_step(size_t bytesRead)
 
 void Answer::second_step(size_t bytesRead)
 {
-    // if (this->before_body_len  >= LIMIT_SIZE_BEFORE_BODY_SERVER)
-    //     this->code = 413;
+    if (this->before_body_len  >= LIMIT_SIZE_BEFORE_BODY_SERVER)
+        this->code = 413;
     std::cout << MAGENTA << this->methode << " + " << this->ressource << WHITE << std::endl;
     if (this->piece_of_request.find("\r\n\r\n") != std::string::npos)
     {
@@ -516,12 +517,11 @@ void Answer::second_step(size_t bytesRead)
     }
 }
 
-void Answer::third_step(size_t bytesRead)
+void Answer::third_step(size_t bytesRead, Configuration const &conf)
 {
     (void)bytesRead;
-    // if (this->piece_of_request.size() >= LIMIT_SIZE_BODY_SERVER || this->piece_of_request.size() >= 5000) {//temporaire apres je pourrais prendre ta variable max size body todo
-    // if (this->piece_of_request.size() >= LIMIT_SIZE_BODY_SERVER)//temporaire apres je pourrais prendre ta variable max size body todo
-    //     this->code = 413;
+    if (this->piece_of_request.size() >= LIMIT_SIZE_BODY_SERVER || this->piece_of_request.size() >= conf.getServer(this->server_idx).GetClientMaxBodySize())
+        this->code = 413;
     if (this->header_map.find("Content-Length") == this->header_map.end())
     {
         this->code = 400;
@@ -541,21 +541,21 @@ void Answer::third_step(size_t bytesRead)
 void Answer::ReadRequest(Configuration const &conf, int socket_fd, int server_idx)
 {
     std::cout << RED << "Debut de ReadRequest" << WHITE << std::endl;
+    this->server_idx = server_idx;
 	ssize_t bytesRead = 0;
     this->piece_of_request.clear();
     this->piece_of_request.append(this->remaining_part);
     if (this->socket_fd == -2)
         this->socket_fd = socket_fd;
     char buffer[READ_SIZE];
-	bytesRead = read(this->socket_fd, buffer, READ_SIZE);
-    // bytesRead = recv(this->socket_fd, buffer, READ_SIZE, 0);
-	// std::string test(buffer);
-    // if (bytesRead == 0)
-    // {
-    //     // la socket a ete close de l'autre cote
-    //     close(this->socket_fd);
-    //     this->socket_fd = -2;
-    // }
+    bytesRead = recv(this->socket_fd, buffer, READ_SIZE, 0);
+    if (bytesRead == 0)
+    {
+        // la socket a ete close de l'autre cote
+        close(this->socket_fd);
+        this->socket_fd = -2;
+        this->code = 400;
+    }
     if (bytesRead == -1)
     {
         std::cerr << "error 500 6 " << strerror(errno) << std::endl;
@@ -578,7 +578,7 @@ void Answer::ReadRequest(Configuration const &conf, int socket_fd, int server_id
         this->second_step(bytesRead);
 	}
     else if (this->step == 2) {
-        this->third_step(bytesRead);
+        this->third_step(bytesRead, conf);
 	}
 
 
@@ -592,7 +592,7 @@ void Answer::ReadRequest(Configuration const &conf, int socket_fd, int server_id
             if (this->methode == "GET")
                 this->GET(conf);
             else if (this->methode == "POST")
-                this->POST(conf, server_idx);
+                this->POST(conf);
             else if (this->methode == "DELETE")
                 this->DELETE(conf);
         }
@@ -640,6 +640,7 @@ void Answer::ReadFile(Configuration const &conf)
             std::cout << status << std::endl;
             if (status == 100)// on a pas la place de renvoyer 500
                 this->code = 500;
+            this->HandleError(conf);
             return ;
         }
         std::cout << "truc\n";
@@ -669,10 +670,9 @@ void Answer::ReadFile(Configuration const &conf)
         return ;
     }
     if (this->code >= 400)
-	{
-
+    {
         this->HandleError(conf);
-	}
+    }
     
 	std::cout << this->answer_body.size() << "test" << std::endl;
 
@@ -716,6 +716,19 @@ char** Answer::ft_build_env(Configuration const &conf, std::string extension) {
 
 void Answer::write_for_cgi(Configuration const &conf)
 {
+    size_t dot = this->ressource_path.find_last_of('.');
+    for (std::vector<std::pair<std::string, std::string> >::iterator it = conf.getServer(this->server_idx).getLocation(this->match_location)->getPairCgi().begin(); it != conf.getServer(this->server_idx).getLocation(this->match_location)->getPairCgi().end(); it++)
+    {
+        if (it->first == this->ressource_path.substr(dot) && (this->ressource_path.substr(dot) == ".php" || this->ressource_path.substr(dot) == ".py"))
+        {
+            this->cgi_exec_path = it->second;
+        }
+    }
+    if (this->cgi_exec_path == "")
+    {
+        this->code = 501;// not implemented
+        return ;
+    }
     this->status = 1;
     int pipe_in[2];
     int pipe_out[2];
@@ -749,12 +762,7 @@ void Answer::write_for_cgi(Configuration const &conf)
         close(pipe_in[1]);
         close(pipe_out[0]);
         std::string extension = this->ressource_path.substr(this->ressource_path.find_last_of('.'));
-        char *exec_path;
-        if (extension == ".py")
-            exec_path = (char*)"/usr/bin/python3";
-        else
-            exec_path = (char*)"/usr/bin/phpjk";
-        char *argv[] = { exec_path, (char*)this->ressource_path.c_str(), NULL };
+        char *argv[] = { (char *)this->cgi_exec_path.c_str(), (char*)this->ressource_path.c_str(), NULL };
         char **envp = this->ft_build_env(conf, extension);
         size_t x = 0;
         while (envp[x] != NULL)
@@ -762,7 +770,7 @@ void Answer::write_for_cgi(Configuration const &conf)
             std::cerr << envp[x] << std::endl;
             x++;
         }
-        if (execve(exec_path, argv, envp) == -1)
+        if (execve((char *)this->cgi_exec_path.c_str(), argv, envp) == -1)
         {
 			std::cerr << "EXECVE NE MARCHE PAS" << std::endl;
             size_t size = 0;
@@ -787,7 +795,7 @@ void Answer::write_for_cgi(Configuration const &conf)
     }
 }
 
-void Answer::WriteFile(Configuration const &conf)
+void Answer::WriteFile(Configuration const &conf, int servConfIdx)
 {
     std::cout << RED << "Debut de WriteFile" << RESET << std::endl;
 
@@ -795,7 +803,7 @@ void Answer::WriteFile(Configuration const &conf)
         this->write_for_cgi(conf);
     else
     {
-		this->uploadFile();
+		this->uploadFile(conf, servConfIdx);
     }
     if (this->code >= 400)
         this->HandleError(conf);
@@ -913,6 +921,7 @@ void Answer::Reset()
     this->remaining_part.clear();
     this->step = 0;
     this->redirection.clear();
+    this->cgi_exec_path.clear();
                  
     // peut etre qu'on reset aussi l'auto index
     this->match_location.clear();
@@ -924,7 +933,6 @@ void Answer::GET(Configuration const &conf)
     if (this->code >= 300)
 	{
         return ;
-
 	}
 	std::cout << this->ressource_path << std::endl;
     if (this->is_that_a_directory() == 1)
@@ -966,17 +974,6 @@ void Answer::GET(Configuration const &conf)
         {  
             this->cgi = true;
             this->status = 2;
-        }
-        else if (this->isBinary() == true)// si on a besoin de le lire en binaire
-        {
-            this->fd_read = open(this->ressource_path.c_str(), O_RDONLY);
-            if (this->fd_read == -1)
-            {
-                std::cout << "error 500 4\n";
-                std::cerr << "Erreur lors de l'ouverture du fichier" << std::endl;
-                this->code = 500;// a voir quelle code on met quand le fichier ne s'ouvre pas  todo
-                return ;
-            }
         }
         else
         {
@@ -1130,9 +1127,14 @@ bool	Answer::parseContentDisposition(std::string line)
 
 static bool	findMimeType(std::string value, std::map<std::string, std::string> mimeMap, std::string *mimeStr)
 {
+	std::cout << "value avant = " << value << std::endl;
 	value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
+	std::cout << "value apres = " << value << std::endl;
+	sleep(2);
 	for (std::map<std::string, std::string>::iterator it = mimeMap.begin(); it != mimeMap.end(); it++) {
+		std::cout << "it second = [" << it->second << "] value = [" << value << ']' << std::endl;
 		if (it->second == value) {
+			std::cout << "ca passe" << std::endl;
 			*mimeStr = it->first;
 			return true;
 		}
@@ -1271,7 +1273,7 @@ inline void Answer::randomName(int fileNameIndex)
 	return ;
 }
 
-bool	Answer::uploadFile()
+bool	Answer::uploadFile(Configuration const & conf, int servConfIdx)
 {
 	// trouver le bon nom de fichier
 	this->status = 3;
@@ -1286,6 +1288,10 @@ bool	Answer::uploadFile()
 	}
 
 	// open en creant le fichier si besoin
+	std::cout << "file name avant" << this->fileName << std::endl;
+	this->fileName = conf.getServer(servConfIdx).getUploadStore() + '/' + this->fileName;
+	std::cout << "file name apres" << this->fileName << std::endl;
+
 	int fd = open(this->fileName.c_str(), O_CREAT | O_RDWR | W_OK, 0644);
 
 	if (fd == -1) {
@@ -1345,10 +1351,9 @@ void	removeLine(std::string & source) {
 	std::cout << source << std::endl;
 }
 
-void Answer::POST(Configuration const &conf, int server_idx)
+void Answer::POST(Configuration const &conf)
 {
-	(void)server_idx; // to do enlever ca 
-    this->code = 201;// hook
+    this->code = 201;
     this->find_ressource_path(conf);
     if (this->code >= 300)
         return ;
@@ -1361,14 +1366,10 @@ void Answer::POST(Configuration const &conf, int server_idx)
         }
         else if (access(this->ressource_path.c_str(), F_OK | X_OK) == -1)
         {
-            std::cout << "1 " << this->ressource << " et " << this->ressource_path << std::endl;
             this->code = 403;//forbidden
             return ;
         }
         this->cgi = true;
-        // this->find_ressource_path(conf);
-        // if (this->code >= 300)
-        //     return ;
         this->cgi_from_post();
         if (this->code >= 400)
         {

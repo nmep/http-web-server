@@ -40,8 +40,7 @@ int	main(int ac, char **av)
 		const std::string confFileName(av[1]);
 		// lancer la config des serveur
 		if (!conf.launchServerConf(confFileName)) {
-			// conf.clearConfiguration();
-			std::cout << "2qwer la conf est pas ok" << std::endl;
+			std::cout << "la conf est pas ok" << std::endl;
 			return 2;
 		}
 		std::cout << "la conf est ok" << std::endl;
