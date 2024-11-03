@@ -7,12 +7,12 @@ Location::Location() : _autoIndex(false)
 	_locationIndex++;
 	_locationID = _locationIndex;
 	_allowedMethod = std::vector<std::string>(1);
-	std::cout << GREEN << "location default constructor de location id " << _locationIndex << " called" << RESET << std::endl;
+	//std::cout  << GREEN << "location default constructor de location id " << _locationIndex << " called" << RESET << std::endl;
 }
 
 Location::Location(Location const & copy) :_autoIndex(false)
 {
-	std::cout << "j'incremente location index" << std::endl;
+	//std::cout  << "j'incremente location index" << std::endl;
 	_locationIndex++;
 	_locationID = _locationIndex;
 	*this = copy;
@@ -35,7 +35,7 @@ Location & Location::operator=(Location const & rhs)
 }
 
 Location::~Location() {
-	std::cout << GREEN << "Location destructeur de location id " << _locationID << " called" << RESET << std::endl;
+	//std::cout  << GREEN << "Location destructeur de location id " << _locationID << " called" << RESET << std::endl;
 }
 
 bool Location::getAllowedMethod(std::string const & method) const {
@@ -72,7 +72,7 @@ std::vector<std::string> Location::getAllowedMethodVector() const {
 	std::vector<std::string> empty;
 
 	if (this->_allowedMethod.empty()) {
-		std::cout << "allowed est vide je renvoie un vector empty" << std::endl;
+		//std::cout  << "allowed est vide je renvoie un vector empty" << std::endl;
 		return empty;
 	}
 	return _allowedMethod;
@@ -84,7 +84,7 @@ std::vector<std::string> Location::getIndex() const {
 	std::vector<std::string> empty;
 
 	if (this->_index.empty()) {
-		std::cout << "index est vide je renvoie un vector empty" << std::endl;
+		//std::cout  << "index est vide je renvoie un vector empty" << std::endl;
 		return empty;
 	}
 	return _index;
@@ -238,7 +238,7 @@ bool	Location::handleCgi(std::vector<std::string> lineSplit, int countLine)
 		std::cerr << "Error parsing Location: Cgi last arg can't be empty at line " << countLine << std::endl;
 		return false;
 	}
-	std::cout << "je find sur " << *(lineSplit.begin() + 1) << std::endl;
+	//std::cout  << "je find sur " << *(lineSplit.begin() + 1) << std::endl;
 	if ((lineSplit.begin() + 1)->find(".") != 0) {
 		std::cerr << "Error Location Parsing: Cgi invalid mime format [" << *(lineSplit.begin() + 1) << "] at line " << countLine << std::endl;
 		return false;
@@ -247,7 +247,7 @@ bool	Location::handleCgi(std::vector<std::string> lineSplit, int countLine)
 		std::cerr << "Error Location Parsing: Cgi invalid Cgi path: [" << *(lineSplit.end() - 1) << "] " << strerror(errno) << " at line " << countLine << std::endl;
 		return false;
 	}
-	std::cout << "cgi mime = " << *(lineSplit.begin() + 1) << " cgi path = " << *(lineSplit.begin() + 2) << std::endl;
+	//std::cout  << "cgi mime = " << *(lineSplit.begin() + 1) << " cgi path = " << *(lineSplit.begin() + 2) << std::endl;
 	setCgi(*(lineSplit.begin() + 1), *(lineSplit.begin() + 2));
 	return true;
 }

@@ -8,7 +8,7 @@ DEP = $(OBJ:%.o=%.d)
 
 # COMPILATION
 CC = g++
-CXXFLAGS = -Wall -Wextra -Werror -std=c++98 -I./include -g3 -ftrapv
+CXXFLAGS = -Wall -Wextra -Werror -std=c++98 -I./include -g3
 
 
 # RULES
