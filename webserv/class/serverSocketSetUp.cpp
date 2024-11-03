@@ -183,7 +183,6 @@ int	Epoll::setNonBlockSocket(int socket) {
 int	Epoll::isAnServerFd(int fd) {
 	for (int i = 0; i < this->portListeningLen; i++) {
 		if (this->sockets[i].listenFd == fd) {
-			std::cout << "Server idx = " << this->sockets[i].serverIdx << std::endl;
 			// return this->sockets[i].serverIdx;
 			return i;
 		}

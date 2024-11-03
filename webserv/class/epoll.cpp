@@ -23,13 +23,14 @@ int Epoll::launchEpoll(Configuration const & conf) {
 	}
 
 	int	serverConnxionReceivedId; // il sert a avoir l'index du serv qui a recu une connexion
-
+	int tmpResetSocket = 0;
 	while (g_loop) {
 		std::cout << "epollwait" << std::endl;
 		// usleep(100000);
-		this->nfd = epoll_wait(this->epfd, events, MAX_EVENTS, 100); // TO DO timout voir fichier de configuration
-		std::cout << "this nfd = " << this->nfd << std::endl;
+		this->nfd = epoll_wait(this->epfd, events, MAX_EVENTS, 10000);
+		// std::cout << "this nfd = " << this->nfd << std::endl;
 		if (this->nfd == -1) {
+			std::cout << "bla bla" << std::endl;
 			std::cerr << "Epoll wait error: " << strerror(errno) << std::endl;
 			break ;
 		}
@@ -45,13 +46,14 @@ int Epoll::launchEpoll(Configuration const & conf) {
 				closeConnexion(events[i].data.fd);
 			}
 			else if (events[i].events & EPOLLOUT) {
-				std::cout << "ICI J'ECRIS" << std::endl;
+				// std::cout << "ICI J'ECRIS" << std::endl;
 				asynch.Server_action(conf, this->fdAndServer[events[i].data.fd], events[i].data.fd, this->fdAndServerConfIdx[events[i].data.fd]);
-				if (asynch.Answers_instances[ this->fdAndServer[events[i].data.fd]].GetStatus() == 4)
+				if (asynch.Answers_instances[this->fdAndServer[events[i].data.fd]].GetStatus() == 4)
 				{
 					asynch.Answers_instances[ this->fdAndServer[events[i].data.fd]].SetStatus(0);
+					tmpResetSocket = this->fdAndServer[events[i].data.fd];
 					closeConnexion(asynch.Answers_instances[this->fdAndServer[events[i].data.fd]].GetSocketFd());
-					asynch.Answers_instances[ this->fdAndServer[events[i].data.fd]].SetSocketFd(-2);
+					asynch.Answers_instances[tmpResetSocket].SetSocketFd(-2);
 				}
 			}
 			else if (events[i].events & EPOLLIN)

@@ -541,12 +541,16 @@ void Answer::third_step(size_t bytesRead, Configuration const &conf)
 void Answer::ReadRequest(Configuration const &conf, int socket_fd, int server_idx)
 {
     std::cout << RED << "Debut de ReadRequest" << WHITE << std::endl;
+	std::cout << "socket fd param " << socket_fd << std::endl;
     this->server_idx = server_idx;
 	ssize_t bytesRead = 0;
     this->piece_of_request.clear();
     this->piece_of_request.append(this->remaining_part);
-    if (this->socket_fd == -2)
+	std::cout << "RR socket fd = " << this->socket_fd << std::endl;
+    if (this->socket_fd == -2) {
         this->socket_fd = socket_fd;
+	}
+	std::cout << "RR socket fd = " << this->socket_fd << std::endl;
     char buffer[READ_SIZE];
     bytesRead = recv(this->socket_fd, buffer, READ_SIZE, 0);
     if (bytesRead == 0)
