@@ -16,9 +16,9 @@
 #include <sstream> //stringstream
 
 #define READ_SIZE 40960 // pour l'instant choisi arbitrairement, on verra si on le change pour plus de performance
-#define LIMIT_SIZE_BODY_SERVER 104857600000 //equivalent a 1 Mo, pour ne pas saturer la memoire vive
-#define LIMIT_SIZE_BEFORE_BODY_SERVER 1048576111111
-#define LIM_SIZE_READ_FILE 1048576111111
+#define LIMIT_SIZE_BODY_SERVER 1073741824 //equivalent a 1 Go, pour ne pas saturer la memoire vive
+#define LIMIT_SIZE_BEFORE_BODY_SERVER 1073741824
+#define LIM_SIZE_READ_FILE 1073741824
 
 class Answer
 {
@@ -48,6 +48,7 @@ class Answer
 		std::ifstream *read_file;// pourquoi, on a pas le droit de read et write sans les fonctions en c todo
         size_t nb_readfile;
         int cgi_pid;
+		std::string cgi_exec_path;
 
 		size_t before_body_len;
         std::string remaining_part;
@@ -96,12 +97,12 @@ class Answer
 
         void			first_step(size_t bytesRead);
         void			second_step(size_t bytesRead);
-        void			third_step(size_t bytesRead);
+        void			third_step(size_t bytesRead, Configuration const &conf);
         void			parse_state_line(std::string state_line);
         void			parse_header(std::string header);
 
         void			GET(Configuration const &conf);
-        void			POST(Configuration const &conf, int server_idx);
+        void			POST(Configuration const &conf);
         void			DELETE(Configuration const &conf);
 		std::string		GetMime(std::string extansion);// prend l'extension du fichier en parametre et renvoie le type
 		std::string		GetCodeSentence(int code);// on renvoie la phrase de raison associe au code d etat

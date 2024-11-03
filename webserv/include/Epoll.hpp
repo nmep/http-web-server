@@ -2,7 +2,7 @@
 	#define EPOLL_HPP
 
 	#define KAA 1
-	#define MAX_EVENTS 1024
+	#define MAX_EVENTS 4096
 
 	#include "library_needed.hpp"
 	#include "configuration.hpp"
