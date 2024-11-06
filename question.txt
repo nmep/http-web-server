@@ -1,11 +1,9 @@
 question:
     est ce qu'on close les sockets dans l'enfant pour le cgi?
-	this->Answers_instances[server_idx].ReadRequest(conf, socket_fd, servConfIdx); tu avais laisser l'autre idx, c'etait fait expres ?
-	il ce passe quoi quand on post et qu'il y a pas d'upload store
+	il ce passe quoi quand on post et qu'il y a pas d'upload store ? 412 428 507, pour l'instant c'est 500
 
 todo garfi
-    - 1 mettre tous les truc par default si ils ne sont pas preciser, comme le server name
-	- 2 faire un getteur pour une cgi precise / voir une fonction qui permet de verifier si tel mime ou path est comprit dans la conf
+	- faire un getteur pour une cgi precise / voir une fonction qui permet de verifier si tel mime ou path est comprit dans la conf
 	- fin waitpid timeout
 
 sujet de correction :
@@ -15,8 +13,3 @@ sujet de correction :
 	- In the configuration, try to setup the same port multiple times. It should not work.
 	- Launch multiple servers at the same time with different configurations but with common ports. Does it work? If it does, ask why the server should work if one of the configurations isn't functional. Keep going.
 	- Check if there is no hanging connection.
-
-socket non bloquante
-
-faire des fichier de config qui marche et marche pas 
-faire des fichier cgi qui marche pas et des boucles infini
