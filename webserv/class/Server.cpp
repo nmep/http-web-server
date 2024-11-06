@@ -94,7 +94,7 @@ std::string	Server::GetErrorPage(std::string const & httpCode) {
 	return std::string();
 }
 
-uint16_t	Server::GetClientMaxBodySize(void) const {
+unsigned long long	Server::GetClientMaxBodySize(void) const {
 	return _client_max_body_size;
 }
 

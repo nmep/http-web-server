@@ -45,7 +45,7 @@ class Answer
         int fd_read;// utiliser pour la ressource a lire ou le fichier d'erreure a lire aussi
         int fd_write;
         bool cgi;
-		std::ifstream *read_file;// pourquoi, on a pas le droit de read et write sans les fonctions en c todo
+		std::ifstream *read_file;
         size_t nb_readfile;
         int cgi_pid;
 		std::string cgi_exec_path;

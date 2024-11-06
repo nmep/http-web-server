@@ -19,7 +19,6 @@ class Asynchrone
         
         std::vector<Answer> Answers_instances;// de longeur nb_serv
                                               // regroupe toutes les instances de la class Answer
-                                              // doit etre en private mais la c'est temporaire todo
 };
 
 #endif

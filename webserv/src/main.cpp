@@ -15,7 +15,6 @@ int	main(int ac, char **av)
 	Configuration	conf;
 	Epoll			server;
 
-	// si on fait plus de signaux il faudrait peut etre faire une boucle de 0 a X todo
 	signal(SIGQUIT, handle_signal); // ctrl backslash
 	signal(SIGINT, handle_signal); // ctrl c
 	signal(SIGTSTP, handle_signal); // ctrl z

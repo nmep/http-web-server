@@ -1,0 +1,21 @@
+------WebKitFormBoundaryD0TPNDDlNeeuthdX
+Content-Disposition: form-data; name="file"; filename="input.txt"
+Content-Type: text/plain
+
+date | value
+2011-01-03 |
+2012-01-11 | 1000.1
+ 2012-01-11 | 21474836489
+2011-01-09 | 1.
+2012-01-11       | -1
+2001-42-42
+2017-02-29 | .
+2006-02-01 | 1
+  3012-01-11 | 21
+9999-02-28 | 1
+ 2011-01-03 | 3
+2011-01-03 | 2
+2009-01-02 | 1.2
+  2022-03-29 | 1
+2020-02-29 | 1
+------WebKitFormBoundaryD0TPNDDlNeeuthdX--

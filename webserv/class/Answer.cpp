@@ -335,6 +335,8 @@ bool Answer::isBinary()
 
 void Answer::HandleError(Configuration const &conf)
 {
+    if (this->code < 400)
+        return ;
     std::stringstream tmp;
     tmp << this->code;
     std::map<std::string, std::string> map = conf.getServer(this->server_idx).getErrorPageMap();
@@ -351,7 +353,7 @@ void Answer::HandleError(Configuration const &conf)
     this->status = 3;
     std::stringstream tmp2;
     tmp2 << this->code;
-    this->answer_body.clear();// je sais pas si je dois forcement le clear ici, est ce qu'on peut avoir une erreur apres avoir commencer a remplir le body ?? todo
+    this->answer_body.clear();
     this->answer_body = "<!DOCTYPE html>\n<html lang=\"fr\">\n<head>\n<meta charset=\"UTF-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n<title>Error " + tmp2.str() + "</title>\n<style>\nh1 { text-align: center; margin-top: 10%; }\nh2 { text-align: center; }\n</style>\n</head>\n<body>\n<h1>Error " + tmp2.str() + " - " + this->GetCodeSentence(this->code) + "</h1>\n<h2>Default page</h2>\n</body>\n</html>\n";
 }
 
@@ -657,7 +659,7 @@ void Answer::ReadFile(Configuration const &conf)
 		;
 	}
     buffer[bytesRead] = '\0';
-    this->answer_body.append(buffer, bytesRead);// a voir pour le -1 todo
+    this->answer_body.append(buffer, bytesRead);
     //std::cout  << bytesRead << std::endl;
     if (bytesRead < READ_SIZE)
     {
@@ -849,14 +851,14 @@ void Answer::SendAnswer(Configuration const &conf)
     //     close(this->socket_fd);// la close ailleur ou pas ?? normalement meme si on collapse avant on send quand meme donc non
     // close(this->socket_fd);// la close ailleur ou pas ?? normalement meme si on collapse avant on send quand meme donc non
     // this->socket_fd = -2; //a voir si ca te derrange
-    //std::cout  << YELLOW << this->answer << RESET << std::endl;
+    std::cout  << GREEN << this->answer << RESET << std::endl;
     //std::cout  << RED << "Fin de SendAnswer" << RESET << std::endl;
     this->Reset();
 }
 
 void Answer::contentType()
 {
-    if(this->code >= 300 || this->cgi == true)// est ce qu'on affiche quand meme que c'est du html en cas de page d'erreur?? todo
+    if(this->code >= 300 || this->cgi == true)
         return;
     this->answer.append("Content-Type: ");
     size_t dot = this->ressource_path.find_last_of('.');
@@ -984,7 +986,7 @@ void Answer::GET(Configuration const &conf)
             {
                 //std::cout  << "error 500 5\n";
                 std::cerr << "Erreur lors de l'ouverture du fichier" << std::endl;
-                this->code = 500;// a voir quelle code on met quand le fichier ne s'ouvre pas  todo
+                this->code = 500;
                 return ;
             }
         }
@@ -1277,7 +1279,7 @@ bool	Answer::uploadFile(Configuration const & conf, int servConfIdx)
 
 	std::cout << "3" << std::endl;
 	if (fd == -1) {
-		this->code = 500; // to do 500 je suis pas sur
+		this->code = 500;
 		return false;
 	}
 	std::cout << "4" << std::endl;
