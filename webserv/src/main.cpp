@@ -1,5 +1,5 @@
 #include "configuration.hpp"
-#include "Socket.hpp"
+#include "Epoll.hpp"
 #include <csignal>
 
 int g_loop = 1;
@@ -13,7 +13,7 @@ void handle_signal(int signal)
 int	main(int ac, char **av)
 {
 	Configuration	conf;
-	Socket			socket;
+	Epoll			server;
 
 	// si on fait plus de signaux il faudrait peut etre faire une boucle de 0 a X todo
 	signal(SIGQUIT, handle_signal); // ctrl backslash
@@ -25,26 +25,25 @@ int	main(int ac, char **av)
 	if (ac == 1)
 	{
 		// faire le serveur web avec une config par defaut
-		std::cout << "default conf" << std::endl;
+		//std::cout  << "default conf" << std::endl;
 		const std::string defaultConfFileName("conf/default.conf");
 		if (!conf.launchServerConf(defaultConfFileName)) {
 			// conf.clearConfiguration();
-			std::cout << "la conf est pas ok" << std::endl;
+			//std::cout  << "la conf est pas ok" << std::endl;
 			return 2;
 		}
-		std::cout << "la default conf est ok" << std::endl;
+		//std::cout  << "la default conf est ok" << std::endl;
 	}
 	else if (ac == 2)
 	{
-		std::cout << "file gived conf" << std::endl;
+		//std::cout  << "file gived conf" << std::endl;
 		const std::string confFileName(av[1]);
 		// lancer la config des serveur
 		if (!conf.launchServerConf(confFileName)) {
-			// conf.clearConfiguration();
-			std::cout << "2qwer la conf est pas ok" << std::endl;
+			//std::cout  << "la conf est pas ok" << std::endl;
 			return 2;
 		}
-		std::cout << "la conf est ok" << std::endl;
+		//std::cout  << "la conf est ok" << std::endl;
 	}
 	else
 	{
@@ -52,12 +51,12 @@ int	main(int ac, char **av)
 		return 2;
 	}
 
-	std::cout << conf << std::endl;
-	if (!socket.initAllSockets(conf)) {
-		std::cout << "MARCHE PAS" << std::endl;
+	//std::cout  << conf << std::endl;
+	if (!server.initAllSockets(conf)) {
+		//std::cout  << "MARCHE PAS" << std::endl;
 		return 2;
 	}
-	socket.launchEpoll(conf);
+	server.launchEpoll(conf);
 
 	return 0;
 }

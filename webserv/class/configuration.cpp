@@ -2,7 +2,7 @@
 
 Configuration::Configuration() : _nbServer(0), _nbPort(0)
 {
-	std::cout << RED << "Configuration Constructeur called" << RESET << std::endl;
+	//std::cout  << RED << "Configuration Constructeur called" << RESET << std::endl;
 	this->_syntaxData.OCB = 0;
 	this->_syntaxData.CCB = 0;
 	this->_syntaxData.CountLine = 1;
@@ -11,7 +11,7 @@ Configuration::Configuration() : _nbServer(0), _nbPort(0)
 
 Configuration::~Configuration()
 {
-	std::cout << RED << "Configuration destructor called" << RESET  << std::endl;
+	//std::cout  << RED << "Configuration destructor called" << RESET  << std::endl;
 	delete[] _servTab;
 }
 
@@ -72,8 +72,9 @@ void	Configuration::setNBServer(int nbServer)
 
 bool	Configuration::syntaxParse(std::vector<std::string> lineSplit)
 {
-	const std::string cTokens[] = {"server", "listen", "server_name",
-	 "error_page", "client_max_body_size", "location", "allowedMethods", "autoindex", "}", "root", "return", "index", "upload_store", "//", "#"};
+	const std::string cTokens[] = {"server", "listen", "server_name",\
+	 "error_page", "client_max_body_size", "location", "allowedMethods",\
+	 "autoindex", "}", "root", "return", "index", "upload_store", "//", "#", "cgi"};
 
 	std::vector<std::string>::const_iterator ite = lineSplit.end();
 
@@ -131,7 +132,6 @@ bool	Configuration::readFileSyntax()
 	int in_scope = 0;
 	while (getline(confFileFD, line))
 	{
-		// TO DO faire une fonction pour detecter les commentaires
 		if (line.empty() || isOnlyWithSpace(line) || isCommentary(line)) {
 			this->_syntaxData.CountLine++;
 			continue ;
@@ -218,7 +218,7 @@ bool	Configuration::launchServerConf(const std::string & confFileName)
 		}
 	}
 	// conf finit
-	std::cout << "nb serv = " << _nbServer << std::endl;
+	//std::cout  << "nb serv = " << _nbServer << std::endl;
 	for (int i = 0; i < _nbServer; i++) {
 		_nbPort += getServer(i).GetPortVector().size();
 	}

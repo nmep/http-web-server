@@ -3,7 +3,7 @@
 
 #include "library_needed.hpp"
 #include "configuration.hpp"
-#include "Socket.hpp"
+#include "Epoll.hpp"
 #include "Server.hpp"
 #include "Answer.hpp"
 
@@ -15,7 +15,7 @@ class Asynchrone
         Asynchrone(size_t nb_serv);
         ~Asynchrone();
 
-        void Server_action(Configuration const &conf, int server_idx, int socket_fd);
+        void Server_action(Configuration const &conf, int server_idx, int socket_fd, int servConfIdx);
         
         std::vector<Answer> Answers_instances;// de longeur nb_serv
                                               // regroupe toutes les instances de la class Answer

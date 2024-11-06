@@ -2,17 +2,17 @@
 
 AutoIndex::AutoIndex() : _rootName("./"), _dirPath(NULL), _file(NULL)
 {
-	std::cout << "Auto index default constructor called" << std::endl;
+	//std::cout  << "Auto index default constructor called" << std::endl;
 }
 
 AutoIndex::AutoIndex(std::string urlName , std::string rootName) : _urlName(urlName), _rootName(rootName), _dirPath(NULL), _file(NULL)
 {
-	std::cout << "auto index constructeur dir name called" << std::endl;
+	//std::cout  << "auto index constructeur dir name called" << std::endl;
 }
 
 AutoIndex::~AutoIndex()
 {
-	std::cout << "Auto index destrusctor called" << std::endl;
+	//std::cout  << "Auto index destrusctor called" << std::endl;
 	if (_dirPath)
 		closedir(_dirPath);
 	if (_file)
@@ -89,14 +89,12 @@ std::string	AutoIndex::createHttpPage(int &code)
 
 	// open le dossier
 	if ((this->_dirPath = opendir(this->_rootName.c_str())) == NULL) {
-		std::cerr << "Open dir failed: " << strerror(errno) << std::endl;
 		code = 500;
 		return std::string();
 	}
 
 	// open le dossier
 	if ((this->_file = opendir(this->_rootName.c_str())) == NULL) {
-		std::cerr << "Open dir failed: " << strerror(errno) << std::endl;
 		code = 500;
 		return std::string();
 	}
@@ -110,12 +108,15 @@ std::string	AutoIndex::createHttpPage(int &code)
 		page += "📂 ";
 		// ici prend state du readdir
 		page += "</td>";
-		page += "<td> <a href=\"" + this->_urlName + '/' +  std::string(this->_readDir->d_name) + "\">" + this->_readDir->d_name + "</a>" + "</td>";
+		page += "<td> <a href=\"" + this->_urlName;
+		if (this->_urlName != "/")
+			page += '/';
+		page += std::string(this->_readDir->d_name) + '/' + "\">" + this->_readDir->d_name + '/' + "</a>" + "</td>";
+		// std::cout  << "URL NAME = " << this->_urlName << " DIR NAME = " << this->_readDir->d_name << std::endl;
 
 		// ajouter le suffix du path aux file trouver dans le directory pour que stat fonction sinon il cherche dans la cwd
 		std::string path = std::string(this->_rootName) + '/' + this->_readDir->d_name;
 		if (stat(path.c_str(), &this->_fileInfo) == -1) {
-			std::cerr << "Error with stat on: [" << this->_readDir->d_name << "]: " << strerror(errno) << std::endl;
 			page += "\n</tr>\n";
 			continue;
 		}
@@ -130,7 +131,6 @@ std::string	AutoIndex::createHttpPage(int &code)
 		if (this->_readDir->d_type == DT_DIR)
 			continue;
 		page += "<tr>\n<td>";
-
 		if (this->_readDir->d_type == DT_REG)
 			page += "📝 ";
 		else if (this->_readDir->d_type == DT_BLK)
@@ -144,13 +144,14 @@ std::string	AutoIndex::createHttpPage(int &code)
 		else if (this->_readDir->d_type == DT_UNKNOWN)
 			page += "The file type could not be determined: ";
 		page += "</td>";
-		page += "<td> <a href=\"" + this->_urlName + '/' +  std::string(this->_readDir->d_name) + "\">" + this->_readDir->d_name + "</a>" + "</td>";
+		page += "<td> <a href=\"./"  + this->_urlName + '/' + std::string(this->_readDir->d_name) + "\">" + this->_readDir->d_name + "</a>" + "</td>";
+		// //std::cout  << page << std::endl;
 
 		// ici prend state du readdir
 		// ajouter le suffix du path aux file trouver dans le directory pour que stat fonction sinon il cherche dans la cwd
 		std::string path = std::string(this->_rootName) + '/' + this->_readDir->d_name;
+		std::cout << "root name = " << this->_rootName << std::endl;
 		if (stat(path.c_str(), &this->_fileInfo) == -1) {
-			std::cerr << "Error with stat on: [" << this->_readDir->d_name << "]: " << strerror(errno) << std::endl;
 			page += "\n</tr>\n";
 			continue;
 		}
@@ -158,7 +159,6 @@ std::string	AutoIndex::createHttpPage(int &code)
 		page += "<td>" + convertFileSizeBytesIntoStr(this->_fileInfo.st_size) + "</td>";
 		page += "<td>" + std::string(std::ctime(&this->_fileInfo.st_mtime)) + "</td>\n";
 		page += "</tr>\n";
-
 	}
 	page += "\n</body>\n\
 	</html>\n";
@@ -174,5 +174,5 @@ std::string	AutoIndex::createHttpPage(int &code)
 // {
 // 	AutoIndex test("./", "./");
 	
-// 	std::cout << test.createHttpPage() << std::endl;
+// 	//std::cout  << test.createHttpPage() << std::endl;
 // }

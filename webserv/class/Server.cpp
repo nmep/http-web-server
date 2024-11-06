@@ -5,8 +5,8 @@
 Server::Server() : _default_server(0), _serverName("server_name"),\
 	 _hostName("localhost"), _client_max_body_size(1048576), _autoIndex(true), _isUploadFileAccepted(false), _serverIdx(0)
 {
-	std::cout << BLUE << "Server default COnstructor called" << RESET << std::endl;
-	// std::cout << "size de vector port = " << this->_port.size() << std::endl;
+	//std::cout  << BLUE << "Server default COnstructor called" << RESET << std::endl;
+	// //std::cout  << "size de vector port = " << this->_port.size() << std::endl;
 }
 
 /*
@@ -20,7 +20,7 @@ si la conf est vide je peux
 */
 
 Server::~Server() {
-	std::cout << BLUE << "Server destructor called" << RESET << std::endl;
+	//std::cout  << BLUE << "Server destructor called" << RESET << std::endl;
 	std::map<std::string, Location*>::iterator it = this->_location.begin();
 
 	for (/**/; it != _location.end(); ++it) {
@@ -33,13 +33,13 @@ Server::~Server() {
 Server::Server(Server const & copy) : _default_server(0), _port(8080), _serverName("server_name"),\
 	 _hostName("localhost"), _client_max_body_size(0), _autoIndex(false), _isUploadFileAccepted(false)
 {
-	std::cout << "Server copy constructor called" << std::endl;
+	//std::cout  << "Server copy constructor called" << std::endl;
 	*this = copy;
 }
 
 Server & Server::operator=(Server const & rhs)
 {
-	std::cout << "Server overload = constructor called" << std::endl;
+	//std::cout  << "Server overload = constructor called" << std::endl;
 	_default_server = rhs._default_server;
 	_port = rhs._port;
 	_serverName = rhs._serverName;
@@ -88,7 +88,7 @@ std::string Server::GetServerName() const {
 }
 
 // si httpCode n'est pas dans la map errorPage alors le getteur renvoie une empty string
-std::string	Server::GetErrorPage(std::string const & httpCode) { // meme soucis que pour getlocation, si on envoie un truc qui existe pas encore ca le cree faut proteger to do
+std::string	Server::GetErrorPage(std::string const & httpCode) {
 	if (this->_error_page.find(httpCode) != this->_error_page.end())
 		return _error_page[httpCode];
 	return std::string();
@@ -225,12 +225,12 @@ bool	Server::handleListenParsing(std::vector<std::string>lineSplit, int countLin
 		uint16_t port = 0;
 		if (!strIsNum(*it)) {
 			std::cerr << "Error Port settings : Listen Port " << *it << "at line " << countLine << std::endl;
-			continue;
+			return false;
 		}
 
 		if (!ft_atoi_port(&port, *it)) {
 			std::cerr << "Error Port settings : " << *it << " at line " << countLine << std::endl;
-			continue;
+			return false;
 		}
 		SetPort(port);
 	}
@@ -246,7 +246,6 @@ bool	Server::handleServerNameParsing(std::vector<std::string> lineSplit, int cou
 		std::cerr << "Invalid syntax: Server name need one value at line " << countLine << std::endl;
 		return true;
 	}
-
 	SetServerName(*(lineSplit.begin() + 1));
 	return true;
 }
@@ -304,7 +303,7 @@ bool	Server::handleHostName(std::vector<std::string> lineSplit, int countLine)
 {
 	if (lineSplit.size() != 2) {
 		std::cerr << "Error host name syntax: at line " << countLine << " must be only one value for the hostName" <<std::endl;
-		std::cout << countLine << std::endl;
+		//std::cout  << countLine << std::endl;
 		return false;
 	}
 	SetHostName(*(lineSplit.begin() + 1));
@@ -318,14 +317,14 @@ void	Server::setAutoIndex(bool value) {
 /* --------------------------- PARSING -------------------------------------- */
 
 bool	Server::handleAutoIndex(std::vector<std::string> lineSplit, int countLine) {
+	*(lineSplit.end() - 1)->erase((lineSplit.end() - 1)->end() - 1);
 	if (lineSplit.size() != 2) {
 		std::cerr << "Invalid syntax: at line " << countLine << " Autoindex need a value (on or off)" << std::endl;
 		return false;
 	}
 
-	// std::cout << "line begin = " << *(lineSplit.begin() + 1) << " avant" << std::endl;
-	*(lineSplit.begin() + 1)->erase((lineSplit.begin() + 1)->end() - 1);
-	// std::cout << "line begin = " << *(lineSplit.begin() + 1) << " apres" << std::endl;
+	// //std::cout  << "line begin = " << *(lineSplit.begin() + 1) << " avant" << std::endl;
+	// //std::cout  << "line begin = " << *(lineSplit.begin() + 1) << " apres" << std::endl;
 
 	if (*(lineSplit.begin() + 1) != "on" && *(lineSplit.begin() + 1) != "off") {
 		std::cerr << "Invalid AutoIndex Value at line " << countLine << " it must be on or off" << std::endl;
@@ -341,14 +340,18 @@ bool	Server::handleAutoIndex(std::vector<std::string> lineSplit, int countLine) 
 
 bool Server::handleUploadStore(std::vector<std::string> lineSplit, int countLine)
 {
+	*(lineSplit.end() - 1)->erase((lineSplit.end() - 1)->end() - 1);
 	if (lineSplit.size() != 2) {
 		std::cerr << "Invalid upload_store syntax: no value associate, at line " << countLine << std::endl;
 		return false;
 	}
-	*(lineSplit.end() - 1)->erase((lineSplit.end() - 1)->end() - 1);
 	// check if dir exist
 	if (!checkAccessFile(*(lineSplit.begin() + 1), F_OK | R_OK | W_OK)) {
 		std::cerr << "Invalid upload_store syntax: [" << *(lineSplit.begin() + 1) << "] " << strerror(errno) << " at line " << countLine << std::endl;
+		return false;
+	}
+	if (!isDir(*(lineSplit.end() - 1))) {
+		std::cerr << "Error upload store at line " << countLine << std::endl;
 		return false;
 	}
 	setUploadStore(*(lineSplit.begin() + 1));
@@ -370,7 +373,6 @@ bool Server::AssignToken(std::vector<std::string> lineSplit, int countLine) {
 
 	// si une directive est trouve faire sa fonction associe
 	for (size_t i = 0; i < sizeof(fTokens) / sizeof(fTokens[0]); i++) {
-		// std::cout << "ls = [" << *(lineSplit.begin()) << "]  ftoken[i] = " << fTokens[i] << std::endl;
 		if (*(lineSplit.begin()) == fTokens[i]) {
 			return (this->*FuncPtr[i])(lineSplit, countLine);
 		}

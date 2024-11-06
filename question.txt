@@ -1,71 +1,24 @@
-question sans reponse pour l'instant
-    est ce qu'il faut indiquer un nom de domaine dans l'url ??
-    a quoi sert host dans les fichier de config
-    le server pete quand on vire les usleep, avec des usleep a 1000 c'est bien je trouve mais on a pas le droit a sleep
-    le append de bytes read -1 ca casse les body, comme pour le body du cgi
+question:
     est ce qu'on close les sockets dans l'enfant pour le cgi?
-
-question garfi
-    c'est quoi les parametres que l'on doit prendre en compte pour le cgi dans la config
-    j'ai vu que t'avais un upload file fd, j'imagine que je le close dans le destructeur si il est pas deja close ? ca serai bien de mettre les fd a -2 apres les avoir close et de les inits a -2 avant de open
-    this->isRandomName = false; tu l'initialise dans le constructeur mais j'imagine qui il faut qu il demarre a false a chaque nouvelle requete, si oui il faut aussi le mettre a flase dans reset()
-    j'ai commente la verification de return dans les locations. Ca impact rien d'autre ?? faut pas que tu verifies si ca existe, pour 2 raisons. c'est une url donc pas le chemin sur la machine et si elle existe quand meme pas il faut renvoyer 404
-    dans redirection[2] qui est dans location il y a le ; dans la loc 2, je fait avec mais regarde si ca arrive pas dans d'autre cas
+	this->Answers_instances[server_idx].ReadRequest(conf, socket_fd, servConfIdx); tu avais laisser l'autre idx, c'etait fait expres ?
+	il ce passe quoi quand on post et qu'il y a pas d'upload store
 
 todo garfi
-    mettre tous les truc par default si ils ne sont pas preciser, comme le server name
-    keep-alive pour eviter de creer une nouvelle connexion a chaque requete, quand il y a keep alive moi je ne dois pas close le fd, ca veut dire qu'on vas le reutiliser
-    me passer le max body size avec la taille en octet
-    pour l'autoindex, les liens marchent pas quand la location termine par un /, tu le rajoute quand meme
+    - 1 mettre tous les truc par default si ils ne sont pas preciser, comme le server name
+	- 2 faire un getteur pour une cgi precise / voir une fonction qui permet de verifier si tel mime ou path est comprit dans la conf
+	- fin waitpid timeout
 
-tentative de casser le fichier de config
-    important
-        max body size negative sont acceptees (-1)
-        root doit etre un dossier qui existe sur la machine
-        leak quand deux locations on le meme chemin, la deuxieme ecrase la premiere sans que la premiere soit delete
-        return doit accepter seulement 301 et 302 et toujours avoir un chemin associer, exemple: "return 302 truc"
-        quand on fait deux server avec le meme port, ca cree deux server, je pensais que ca ecraser mais non, cf l'appel des destructeur
-    ca peut etre bien de les fix
-        listen	accepte 0
-    osef
-        server_name ; ca utilise pas le nom par defaut, ca en creer juste un vide, je pense pas que ca soit grave
-        quand les methodes allowed sont pas bonnes tu dis qu'il faut que ce soit get ou post, tu parles pas de delete
+sujet de correction :
+	- Setup multiple servers with different hostnames (use something like: curl --resolve example.com:80:127.0.0.1 http://example.com/).
+	- Limit the client body (use: curl -X POST -H "Content-Type: plain/text" --data "BODY IS HERE write something shorter or longer than body limit").
+	- UNKNOWN requests should not result in a crash.
+	- You need to test with files containing errors to see if the error handling works properly. You can use a script containing an infinite loop or an error; you are free to do whatever tests you want within the limits of acceptability that remain at your discretion. The group being evaluated should help you with this.
+	- In the configuration, try to setup the same port multiple times. It should not work.
+	- Launch multiple servers at the same time with different configurations but with common ports. Does it work? If it does, ask why the server should work if one of the configurations isn't functional. Keep going.
+	- Availability should be above 99.5% for a simple GET on an empty page with a siege -b on that page.
+	- Check if there is no hanging connection.
 
-	si server 1 est sur 81 et 82 le 82 segfault a checke
+socket non bloquante
 
-lire les images en binaire
-comment ca se passe pour les videos
-les post peuvent commencer par /upload /update ... a voir lequels tu veux gerer mais si on precise rien dans action ca nous envoie le file html du formulaire
-
-
-j'ai essaye de le strees test, jusqu a un certains point ca va mais au bout d'un moment ca fait ca
-Debut de Server_action, serv numero 0, socket_fd 6
-Debut de ReadRequest
-error 500 6 Resource temporarily unavailable
-**3087150** new/new[] failed and should throw an exception, but Valgrind
-**3087150**    cannot throw exceptions and so is aborting instead.  Sorry.
-==3087150==    at 0x484852C: ??? (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
-==3087150==    by 0x4849085: operator new(unsigned long) (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
-==3087150==    by 0x49C10BD: std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_mutate(unsigned long, unsigned long, char const*, unsigned long) (in /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.30)
-==3087150==    by 0x49C2B4F: std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_append(char const*, unsigned long) (in /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.30)
-==3087150==    by 0x123F70: Answer::ReadRequest(Configuration const&, int) (Answer.cpp:490)
-==3087150==    by 0x11CDE1: Asynchrone::Server_action(Configuration const&, int, int) (Asynchrone.cpp:20)
-==3087150==    by 0x12EB7A: Socket::launchEpoll(Configuration const&) (epollV2.cpp:48)
-==3087150==    by 0x12F0AC: main (main.cpp:56)
-==3087150== 
-==3087150== HEAP SUMMARY:
-==3087150==     in use at exit: 26,877 bytes in 267 blocks
-==3087150==   total heap usage: 4,519 allocs, 4,252 frees, 427,375 bytes allocated
-==3087150== 
-==3087150== LEAK SUMMARY:
-==3087150==    definitely lost: 0 bytes in 0 blocks
-==3087150==    indirectly lost: 0 bytes in 0 blocks
-==3087150==      possibly lost: 0 bytes in 0 blocks
-==3087150==    still reachable: 26,877 bytes in 267 blocks
-==3087150==                       of which reachable via heuristic:
-==3087150==                         newarray           : 560 bytes in 1 blocks
-==3087150==         suppressed: 0 bytes in 0 blocks
-==3087150== Rerun with --leak-check=full to see details of leaked memory
-==3087150== 
-==3087150== For lists of detected and suppressed errors, rerun with: -s
-==3087150== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)
+faire des fichier de config qui marche et marche pas 
+faire des fichier cgi qui marche pas et des boucles infiini

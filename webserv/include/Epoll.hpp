@@ -1,8 +1,8 @@
-#ifndef	SOCKET_HPP
-	#define SOCKET_HPP
+#ifndef	EPOLL_HPP
+	#define EPOLL_HPP
 
 	#define KAA 1
-	#define MAX_EVENTS 1024
+	#define MAX_EVENTS 4096
 
 	#include "library_needed.hpp"
 	#include "configuration.hpp"
@@ -26,7 +26,7 @@
 		struct sockaddr_in	addr;
 	}				t_socket;
 
-		class Socket
+		class Epoll
 		{
 			private:
 				int					epfd; // tableau de int  chaque case represente une instance epoll par serveur
@@ -35,21 +35,22 @@
 				int					*portListening; // tableau qui definit les port qui doivent etre mit sur ecoute en evitant les doublons
 				int					portListeningLen; // taille de portListening
 				std::map<int, int>	fdAndServer; // first fd de requete, second index du serveur associe a la requete
+				std::map<int, int>	fdAndServerConfIdx;
 
 			public:
-				Socket();
-				// Socket(Socket const & copy);
-				~Socket();
-				// Socket&	operator=(Socket const & rhs);
-				int	initAllSockets(Configuration const & conf);
-				int	initOneSocket(t_socket *socketStruct, int port);
-				int	launchEpoll(Configuration const & conf);
-				int	accept_and_save_connexion(int servId, int sockFD);
-				int	setNonBlockSocket(int socket);
-				int	isAnServerFd(int fd);
+				Epoll();
+				// Epoll(Epoll const & copy);
+				~Epoll();
+				// Epoll&	operator=(Epoll const & rhs);
+				int		initAllSockets(Configuration const & conf);
+				int		initOneSocket(t_socket *socketStruct, int port);
+				int		launchEpoll(Configuration const & conf);
+				int		accept_and_save_connexion(int servId, int sockFD);
+				int		setNonBlockSocket(int socket);
+				int		isAnServerFd(int fd);
+				bool	closeConnexion(int fd);
 
-				int	getFdAndServer(int fd);
-
+				int		getFdAndServer(int fd);
 		};
 
 #endif

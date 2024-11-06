@@ -13,7 +13,6 @@ to do
 	constructeur de copy de conf (OPTIONNEL)
 
 	Dans le parsing :
-		- allowed methods doit accepte DELETE aussi et refuse tout les autres.
 
 
 	cgi dans le parsing mettre le chemin des script accepte + mettre un timeout sur l'acceptation des script belek au script avec une boucle infinie 502.
