@@ -616,8 +616,8 @@ void Answer::ReadRequest(Configuration const &conf, int socket_fd, int server_id
     // else
         //std::cout  << YELLOW << "Uncomplete," << RESET << std::endl;
 
-    //std::cout  << YELLOW << "ttt\n" << this->request << RESET << std::endl;
-    //std::cout  << RED << "Fin de ReadRequest" << RESET << std::endl;
+    std::cout  << YELLOW << "ttt\n" << this->request << RESET << std::endl;
+    std::cout  << RED << "Fin de ReadRequest" << RESET << std::endl;
 }
 
 // on lit le fichier demander, que ce soit la ressource ou un fichier d'erreur
