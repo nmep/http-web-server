@@ -164,6 +164,7 @@ int Answer::is_that_a_directory()
 
     if (stat(this->ressource_path.c_str(), &info) == -1)
     {
+		std::cout << "ICI " << this->ressource_path << std::endl;
         if (access(this->ressource_path.c_str(), F_OK) != 0)
             this->code = 404;//not found
         else if (access(this->ressource_path.c_str(), F_OK | R_OK) != 0)
@@ -275,7 +276,9 @@ void Answer::find_good_index_or_autoindex(Configuration const &conf)
     }
     if (this->autoindex == true)
     {
-        AutoIndex AI(this->ressource, this->ressource_path);
+		std::cout << "ressource = " << this->ressource << " this match loc " << this->match_location << std::endl;
+        // AutoIndex AI(this->ressource, this->ressource_path);
+        AutoIndex AI(this->match_location, this->ressource_path);
         this->answer_body = AI.createHttpPage(this->code);
         if (this->code < 400)
             this->status = 3;
@@ -618,8 +621,52 @@ void Answer::ReadRequest(Configuration const &conf, int socket_fd, int server_id
     // else
         //std::cout  << YELLOW << "Uncomplete," << RESET << std::endl;
 
-    //std::cout  << YELLOW << "ttt\n" << this->request << RESET << std::endl;
+    std::cout  << YELLOW << "ttt\n" << this->request << RESET << std::endl;
     //std::cout  << RED << "Fin de ReadRequest" << RESET << std::endl;
+}
+
+void	Answer::waitpidTimeOut(int *waitpidStatus)
+{
+	int count = 5;
+	int res = 0;
+	fd_set fds;
+	struct timeval tv;
+	
+	FD_ZERO(&fds);
+	FD_SET(0, &fds);
+	while (count > 0) {
+		tv.tv_sec = 0;
+		tv.tv_usec = 9510;
+		if (select(1, &fds, NULL, NULL, &tv) == -1) {
+			std::cerr << "Error with select: " << strerror(errno) << std::endl;
+			return ;
+		}
+		if ((res = waitpid(this->cgi_pid, waitpidStatus, WNOHANG)) == 0) {
+			std::cout << RED << "still no pid that returned..." << std::endl;
+		}
+		if (res == -1) {
+			std::cerr << "Error with waitpid " << strerror(errno) << std::endl;
+			return ;
+		}
+		else if (*waitpidStatus > 0) {
+			std::cout << "process termine" << std::endl;
+			break ;
+		}
+		count--;
+	}
+	std::cout << "count = " << count << std::endl;
+	if (count == 0) {
+		std::cout << "the process timed out" << std::endl;
+		if (kill(this->cgi_pid, SIGKILL) == 0) {
+			std::cout << "process " << this->cgi_pid << " killed succesfully" << std::endl;
+			this->code = 408;
+		}
+
+		else {
+			std::cerr << "Error with kill: " << strerror(errno) << std::endl;
+		}
+	}
+	return ;
 }
 
 // on lit le fichier demander, que ce soit la ressource ou un fichier d'erreur
@@ -632,8 +679,9 @@ void Answer::ReadFile(Configuration const &conf)
     if (this->cgi == true && this->nb_readfile == 0)
     {
         this->nb_readfile = 1;
-        int status;
-        waitpid(this->cgi_pid, &status, 0);
+        int status = 0;
+        // waitpid(this->cgi_pid, &status, 0);
+		this->waitpidTimeOut(&status);
         if (WIFEXITED(status))
         {
             status = WEXITSTATUS(status);
@@ -1230,6 +1278,27 @@ inline bool	Answer::changeFileName(int FileNameIndex)
 	return true;
 }
 
+
+inline bool	Answer::changeFileName(int FileNameIndex, Configuration const & conf, int servConfIdx)
+{
+	std::stringstream ss;
+	std::string fileNameWihtoutMime;
+
+	if (fileName.find('.') == fileName.npos) {
+		std::cerr << "Change File Name point pas trouve" << std::endl;
+		return false;
+	}
+	ss << FileNameIndex;
+	fileNameWihtoutMime = this->fileName.substr(0, this->fileName.find('.'));
+	while (access(std::string(conf.getServer(servConfIdx).getUploadStore() + '/' + this->fileName).c_str(), F_OK) == 0) {
+		this->fileName = fileNameWihtoutMime + '(' + ss.str() + ')' + this->mimeStr;
+		ss.str("");
+		FileNameIndex++;
+		ss << FileNameIndex;
+	}
+	return true;
+}
+
 inline void Answer::randomName(int fileNameIndex)
 {
 	this->fileName = "random.txt";
@@ -1242,15 +1311,16 @@ bool	Answer::uploadFile(Configuration const & conf, int servConfIdx)
 {
 	// trouver le bon nom de fichier
 	std::cout << "1 " << this->fileName << std::endl;
-
+	std::cout << "file name = " << this->fileName << std::endl;
 	this->status = 3;
 	int fileNameIndex = 1;
 	if (conf.getServer(servConfIdx).getUploadStore().empty()) {
 
 	}
-	if (access(std::string(conf.getServer(servConfIdx).getUploadStore() + this->fileName).c_str(), F_OK) == 0) {
+	std::cout << "qwer " << std::string(conf.getServer(servConfIdx).getUploadStore() + this->fileName).c_str() << std::endl;
+	if (access(std::string(conf.getServer(servConfIdx).getUploadStore() + '/' + this->fileName).c_str(), F_OK) == 0) {
 		std::cout << "access + dir" << std::endl;
-		if (!this->changeFileName(fileNameIndex))
+		if (!this->changeFileName(fileNameIndex, conf, servConfIdx))
 		if (fileNameIndex == INT_MAX)
 			this->randomName(fileNameIndex);
 		fileNameIndex++;
@@ -1270,7 +1340,7 @@ bool	Answer::uploadFile(Configuration const & conf, int servConfIdx)
 	std::cout << "filename size = " << this->fileName.size() << std::endl;
 	std::cout << "2 [" << this->fileName << ']' << std::endl;
 	if (this->fileName.size() == 0) {
-		std::cout <<  conf.getServer(servConfIdx).getUploadStore() + '/' + this->fileName;
+		std::cout <<  conf.getServer(servConfIdx).getUploadStore() + '/' + this->fileName << std::endl;
 		this->randomName(fileNameIndex);
 	}
 	this->fileName = conf.getServer(servConfIdx).getUploadStore() + '/' + this->fileName;
@@ -1284,20 +1354,17 @@ bool	Answer::uploadFile(Configuration const & conf, int servConfIdx)
 	}
 	std::cout << "4" << std::endl;
 
-	this->fileName.clear();
 	// utiliser ofstream pour ouvrir en binaire
 	std::cout << "request body" << std::endl;
-	std::cout << this->request_body << std::endl;
 	std::cout << this->request_body.size() << std::endl;
+
 	std::ofstream outPutFile(this->fileName.c_str(), std::ios::binary);
 	if (outPutFile.is_open()) {
 		// parser le body pour enlever le header du body et les boundary
 		size_t bodyStart = this->request_body.find("\r\n\r\n");
 		if (bodyStart == this->request_body.npos) {
-			//std::cout  << "body start est pas bon = " << bodyStart << std::endl;
-			// to do est ce quil y a un code d'erreur a mettre ici, ca le formattage de l'upload file est pas bon parce qu'il n'y a pas de delimiteur 
-			// entre le body header et le body
 			close(fd);
+			this->code = 400;
 			return false;
 		}
 		this->request_body.erase(0, bodyStart + 4);
@@ -1333,21 +1400,13 @@ bool	Answer::uploadFile(Configuration const & conf, int servConfIdx)
 		close(fd);
 		this->code = 201;
 	}
+	std::cout << "j'ai finit" << std::endl;
 	return true;
 }
 
-
-
 void	removeLine(std::string & source) {
-	//std::cout  << "avant " << std::endl << source << std::endl;
 	size_t end = source.find('\n');
-	//std::cout  << "end = " << end << std::endl;
-
 	source.erase(0, end + 1);
-
-	//std::cout  << "apres\n\n\n" << std::endl;
-
-	//std::cout  << source << std::endl;
 }
 
 void Answer::POST(Configuration const &conf)

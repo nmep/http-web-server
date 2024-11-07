@@ -122,9 +122,11 @@ class Answer
 		bool		parseContentType(std::string line);
 		bool		uploadFile(Configuration const  & conf, int servConfIdx);
 		inline bool	changeFileName(int FileNameIndex);
+		inline bool	changeFileName(int FileNameIndex, Configuration const & conf, int servConfIdx);
 		inline void	randomName(int fileNameIndex);
-		//
+		void		waitpidTimeOut(int *waitpidStatus);
 
+		//
 		Answer() {};// c'est toi qui l'as rajoute ?
     public:
 		Answer(int server_idx);

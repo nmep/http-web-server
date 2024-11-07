@@ -94,7 +94,7 @@ std::string	Server::GetErrorPage(std::string const & httpCode) {
 	return std::string();
 }
 
-uint16_t	Server::GetClientMaxBodySize(void) const {
+unsigned long long	Server::GetClientMaxBodySize(void) const{
 	return _client_max_body_size;
 }
 
@@ -295,6 +295,7 @@ bool	Server::handleClientMaxBodySizeParsing(std::vector<std::string> lineSplit, 
 		std::cerr << "Error detected on client max body size at line while converting the value: " << countLine << std::endl;
 		return false;
 	}
+	std::cout << "QWHRQWJEHRQWERHQWERHQW jet set cmbs a " << val << std::endl;
 	SetClientMaxBodySize(val);
 	return true;
 }

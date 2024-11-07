@@ -35,7 +35,7 @@ class Server
 		std::string							GetServerName() const;
 		std::string							GetHostName() const;
 		std::string							GetErrorPage(std::string const & httpCode);
-		uint16_t							GetClientMaxBodySize(void) const;
+		unsigned long long					GetClientMaxBodySize(void) const;
 		std::map<std::string, std::string>	getErrorPageMap() const;
 		std::string 						getUploadStore() const;
 		bool								getIsUploadFileAccepted() const;

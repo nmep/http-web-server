@@ -144,16 +144,32 @@ std::string	AutoIndex::createHttpPage(int &code)
 		else if (this->_readDir->d_type == DT_UNKNOWN)
 			page += "The file type could not be determined: ";
 		page += "</td>";
-		page += "<td> <a href=\"./"  + this->_urlName + '/' + std::string(this->_readDir->d_name) + "\">" + this->_readDir->d_name + "</a>" + "</td>";
+		// if (this->_urlName.find('/') == 0){
+		// 	std::cout << "avant erase " << this->_urlName << std::endl;
+		// 	this->_urlName.erase(0, 1);
+		// 	std::cout << "apres erase " << this->_urlName << std::endl;
+		// }
+		// page += "<td> <a href=\"" + std::string(this->_readDir->d_name) + "\">" + this->_readDir->d_name + "</a>" + "</td>";
 		// //std::cout  << page << std::endl;
 
 		// ici prend state du readdir
 		// ajouter le suffix du path aux file trouver dans le directory pour que stat fonction sinon il cherche dans la cwd
+		std::cout << "QWEORHQOWEHRQEHRQWEO" << this->_urlName << std::endl;
+		std::cout << "Name = " << this->_readDir->d_name << std::endl;
+		if (this->_urlName == "/") {
+			std::cout << 1 << std::endl;
+			page += "<td> <a href=\"" + std::string(this->_readDir->d_name) + "\">" + this->_readDir->d_name + "</a>" + "</td>";
+		}
+		else {
+			std::cout << 2 << std::endl;
+			std::cout << "lien = " << this->_urlName + '/' + std::string(this->_readDir->d_name) + "\">" + this->_readDir->d_name  << std::endl;
+			page += "<td> <a href=\"" + this->_urlName + '/' + std::string(this->_readDir->d_name) + "\">" + this->_readDir->d_name + "</a>" + "</td>";
+		}
 		std::string path = std::string(this->_rootName) + '/' + this->_readDir->d_name;
 		std::cout << "root name = " << this->_rootName << std::endl;
 		if (stat(path.c_str(), &this->_fileInfo) == -1) {
-			page += "\n</tr>\n";
 			continue;
+			page += "\n</tr>\n";
 		}
 		// ajouter les stats
 		page += "<td>" + convertFileSizeBytesIntoStr(this->_fileInfo.st_size) + "</td>";

@@ -51,7 +51,7 @@ int	main(int ac, char **av)
 		return 2;
 	}
 
-	//std::cout  << conf << std::endl;
+	std::cout  << conf << std::endl;
 	if (!server.initAllSockets(conf)) {
 		//std::cout  << "MARCHE PAS" << std::endl;
 		return 2;
