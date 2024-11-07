@@ -23,8 +23,6 @@ int	main(int ac, char **av)
 
 	if (ac == 1)
 	{
-		// faire le serveur web avec une config par defaut
-		//std::cout  << "default conf" << std::endl;
 		const std::string defaultConfFileName("conf/default.conf");
 		if (!conf.launchServerConf(defaultConfFileName))
 			return 2;
@@ -41,9 +39,7 @@ int	main(int ac, char **av)
 		return 2;
 	}
 
-	std::cout  << conf << std::endl;
 	if (!server.initAllSockets(conf)) {
-		//std::cout  << "MARCHE PAS" << std::endl;
 		return 2;
 	}
 	server.launchEpoll(conf);

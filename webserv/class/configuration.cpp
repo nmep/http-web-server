@@ -2,7 +2,6 @@
 
 Configuration::Configuration() : _nbServer(0), _nbPort(0)
 {
-	//std::cout  << RED << "Configuration Constructeur called" << RESET << std::endl;
 	this->_syntaxData.OCB = 0;
 	this->_syntaxData.CCB = 0;
 	this->_syntaxData.CountLine = 1;
@@ -11,7 +10,6 @@ Configuration::Configuration() : _nbServer(0), _nbPort(0)
 
 Configuration::~Configuration()
 {
-	//std::cout  << RED << "Configuration destructor called" << RESET  << std::endl;
 	delete[] _servTab;
 }
 
@@ -191,8 +189,6 @@ bool	Configuration::launchServerConf(const std::string & confFileName)
 		return false;
 	}
 	_servTab = new Server[_nbServer];
-	// lancer la lecture de mot et si je trouve le mot server je lance la config d'un server
-	// 		(important: il faut que ce soit avec le meme fd pour etre sur la meme ligne)
 	while (getline(confFileFD, line)) {
 		if (line.empty() || isOnlyWithSpace(line) || isCommentary(line)) {
 			countLine++;
@@ -200,25 +196,19 @@ bool	Configuration::launchServerConf(const std::string & confFileName)
 		}
 		lineSplit = split(line);
 		if (*(lineSplit.begin()) == "server") {
-			// mettre le premier serveur rencontre comme serveur par defaut
 			if (serverToConf == 0) {
-				_servTab[serverToConf].SetDefaultServer(); // TO DO enlever ca
+				_servTab[serverToConf].SetDefaultServer();
 			}
-			// lancer la conf du serveur
 			countLine++;
 			if (!_servTab[serverToConf].parseConfFile(confFileFD, &countLine)) {
-				// ici set l'idx du serv
 				_servTab[serverToConf].setServerIdx(serverToConf);
 				return false;
 			}
-			// ici set l'idx du serv
 			_servTab[serverToConf].setServerIdx(serverToConf);
 			serverToConf++;
 			countLine++;
 		}
 	}
-	// conf finit
-	//std::cout  << "nb serv = " << _nbServer << std::endl;
 	for (int i = 0; i < _nbServer; i++) {
 		_nbPort += getServer(i).GetPortVector().size();
 	}

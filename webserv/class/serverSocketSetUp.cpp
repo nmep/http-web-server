@@ -12,7 +12,6 @@ Epoll::Epoll()
 
 Epoll::~Epoll()
 {
-	//std::cout  << YELLOW << "Socket Destructeur called" << RESET << std::endl;
 	if (this->sockets != NULL)
 		delete[] this->sockets;
 	if (this->portListening)
@@ -35,12 +34,6 @@ static bool	checkIfPortIsSet(int *SokcetPort, int value, int length) {
 	}
 	return false;
 }
-
-/*
-	Si il y a deux serveur qui ecoute sur le meme port lors une seule socket sera cree
-	je creer un tableau de int avec ecrit un port qui est mit sur ecoute. 
-	Si je veux mettre un nouveau port sur ecoute je verfie avant si il ne l'est pas deja
-*/
 
 static int assignPortToServerIdx(Configuration const & conf, int Port) {
 	for (int i = 0; i < conf.getNbServer(); i++) {
@@ -70,9 +63,6 @@ int	Epoll::initAllSockets(Configuration const & conf) {
 	}
 
 	this->sockets = new t_socket [this->portListeningLen];
-	for (int i = 0; i < this->portListeningLen; i++) {
-		//std::cout  << this->portListening[i] << std::endl;
-	}
 
 	// // creer une socket pour chaque port
 	for (int i = 0; i < this->portListeningLen; i++) {
@@ -145,7 +135,6 @@ int	Epoll::accept_and_save_connexion(int servID, int sockFD) {
 	int	new_connexion;
 	struct epoll_event	ev;
 
-	//std::cout  << GREEN "serv id = " << servID << RESET << std::endl;
 	new_connexion = accept(sockFD, \
 		(sockaddr *) &this->sockets[servID].addr, &this->sockets[servID].addrLen);
 	if (new_connexion == -1) {
@@ -157,7 +146,6 @@ int	Epoll::accept_and_save_connexion(int servID, int sockFD) {
 	// setNonBlockSocket(new_connexion);
 	ev.events = EPOLLIN | EPOLLOUT;
 	ev.data.fd = new_connexion;
-	//std::cout  << "j'ajoute new connexion qui est a " << new_connexion << std::endl;
 	if (epoll_ctl(this->epfd, EPOLL_CTL_ADD, new_connexion, &ev) == -1) {
 		std::cerr << "Epoll ctl failed sur socket " << sockFD << ": " << strerror(errno) << std::endl;
 		return 0;
@@ -192,7 +180,6 @@ int	Epoll::isAnServerFd(int fd) {
 
 bool	Epoll::closeConnexion(int fd)
 {
-	//std::cout  << "Fd close = " << fd << std::endl;
 	this->fdAndServer.erase(fd);
 	this->fdAndServerConfIdx.erase(fd);
 	if (epoll_ctl(this->epfd, EPOLL_CTL_DEL, fd, NULL) == -1) {

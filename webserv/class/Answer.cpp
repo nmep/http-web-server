@@ -2,7 +2,6 @@
 
 Answer::Answer(int server_idx)
 {
-	//std::cout  << YELLOW << "Answer constructeur called" << RESET << std::endl;
     this->server_idx = server_idx;
     this->status = 0;
     this->socket_fd = -2;
@@ -164,7 +163,6 @@ int Answer::is_that_a_directory()
 
     if (stat(this->ressource_path.c_str(), &info) == -1)
     {
-		std::cout << "ICI " << this->ressource_path << std::endl;
         if (access(this->ressource_path.c_str(), F_OK) != 0)
             this->code = 404;//not found
         else if (access(this->ressource_path.c_str(), F_OK | R_OK) != 0)
@@ -187,7 +185,6 @@ int Answer::is_that_a_directory()
 void Answer::find_ressource_path(Configuration const &conf)
 {
     int depth = -1;
-	//std::cout  << "Server index = " << server_idx << std::endl;
     std::map<std::string, Location*> map = conf.getServer(this->server_idx).getLocationMap();
     std::map<std::string, Location*>::iterator it = map.begin();
     for (; it != map.end(); it++) {
@@ -211,8 +208,6 @@ void Answer::find_ressource_path(Configuration const &conf)
                 this->match_location = it->first;
             }
         }
-        // //std::cout  << YELLOW << it->first << " et " << it ->second << " " << this->ressource << " " << this->match_location << " " << this->ressource_path << WHITE << std::endl;
-        // //std::cout  << YELLOW << ressource << " " << this->match_location << " " << this->ressource_path << " " << this->ressource_path << RESET << std::endl;
     }
     if (depth == -1 && this->methode == "GET")
     {
@@ -276,8 +271,6 @@ void Answer::find_good_index_or_autoindex(Configuration const &conf)
     }
     if (this->autoindex == true)
     {
-		std::cout << "ressource = " << this->ressource << " this match loc " << this->match_location << std::endl;
-        // AutoIndex AI(this->ressource, this->ressource_path);
         AutoIndex AI(this->match_location, this->ressource_path);
         this->answer_body = AI.createHttpPage(this->code);
         if (this->code < 400)
@@ -367,7 +360,6 @@ void Answer::parse_state_line(std::string state_line)
     size_t end = state_line.find_first_of(' ');
     if (end == std::string::npos)
     {
-        //std::cout  << "ici1\n";
         this->code = 400;// requete mal faite
         return ;
     }
@@ -382,8 +374,7 @@ void Answer::parse_state_line(std::string state_line)
     end = state_line.find_first_of(' ');
     if (end == std::string::npos)
     {
-        //std::cout  << "ici2\n";
-        this->code = 400;// requete mal faite
+        this->code = 400;
         return ;
     }
     this->ressource = state_line.substr(start, end);
@@ -425,7 +416,6 @@ void Answer::parse_header(std::string header)
         size_t colon = header_line[i].find(":");
         if (colon == std::string::npos)
         {
-            //std::cout  << "ici3\n";
             this->code = 400;
             return ;
         }
@@ -449,7 +439,7 @@ void Answer::first_step(size_t bytesRead)
         if (this->code >= 400)
             return ;
         this->piece_of_request = this->piece_of_request.substr(this->piece_of_request.find("\r\n\r\n") + 4);
-        if (bytesRead < READ_SIZE / 2 )//fff
+        if (bytesRead < READ_SIZE / 2 )
             this->request_body = this->piece_of_request;
         else
             this->remaining_part = this->piece_of_request;
@@ -481,12 +471,8 @@ void Answer::second_step(size_t bytesRead)
 {
     if (this->before_body_len  >= LIMIT_SIZE_BEFORE_BODY_SERVER)
         this->code = 413;
-    //std::cout  << MAGENTA << this->methode << " + " << this->ressource << WHITE << std::endl;
     if (this->piece_of_request.find("\r\n\r\n") != std::string::npos)
     {
-        //std::cout  << "condition 1\n";
-        //std::cout  << CYAN << this->piece_of_request << std::endl;
-        //std::cout  << BLACK << this->piece_of_request.substr(0, this->piece_of_request.find("\r\n\r\n")) << WHITE << std::endl;
         this->step = 2;
         if (this->piece_of_request.compare(0, 4, "\r\n\r\n") != 0)
         {
@@ -504,22 +490,14 @@ void Answer::second_step(size_t bytesRead)
     }
     else if (this->piece_of_request.find("\r\n") != std::string::npos && this->piece_of_request.find_last_of("\n") - 1 != 0)
     {
-        //std::cout  << "condition 2\n";
-        //std::cout  << CYAN << this->piece_of_request << std::endl;
-        //std::cout  << BLACK << "|" << this->piece_of_request.substr(0, this->piece_of_request.find_last_of("\n") - 1) << "|" << WHITE << std::endl;
         this->parse_header(this->piece_of_request.substr(0, this->piece_of_request.find_last_of("\n") - 1));
         if (this->code >= 400)
             return ;
-        // this->piece_of_request = this->piece_of_request.substr(this->piece_of_request.find("\r\n\r\n") + 1);
         this->piece_of_request = this->piece_of_request.substr(this->piece_of_request.find_last_of("\n") - 1);
         this->remaining_part = this->piece_of_request;
     }
     else
-    {
-        //std::cout  << "condition 3\n";
-        //std::cout  << CYAN << this->piece_of_request << std::endl;
         this->remaining_part = this->piece_of_request;
-    }
 }
 
 void Answer::third_step(size_t bytesRead, Configuration const &conf)
@@ -535,7 +513,6 @@ void Answer::third_step(size_t bytesRead, Configuration const &conf)
     size_t size;
     std::istringstream iss(this->header_map["Content-Length"]);
     iss >> size;
-    //std::cout  << this->piece_of_request.size() << " et " <<  size << std::endl;
     if (this->piece_of_request.size() >= size)
         this->request_body = this->piece_of_request;
     else
@@ -545,22 +522,17 @@ void Answer::third_step(size_t bytesRead, Configuration const &conf)
 // on lit la requete par tranche de READ_SIZE et parse le bout de requete qu on a et ainsi de suite
 void Answer::ReadRequest(Configuration const &conf, int socket_fd, int server_idx)
 {
-    //std::cout  << RED << "Debut de ReadRequest" << WHITE << std::endl;
-	//std::cout  << "socket fd param " << socket_fd << std::endl;
     this->server_idx = server_idx;
 	ssize_t bytesRead = 0;
     this->piece_of_request.clear();
     this->piece_of_request.append(this->remaining_part);
-	//std::cout  << "RR socket fd = " << this->socket_fd << std::endl;
     if (this->socket_fd == -2) {
         this->socket_fd = socket_fd;
 	}
-	//std::cout  << "RR socket fd = " << this->socket_fd << std::endl;
     char buffer[READ_SIZE];
     bytesRead = recv(this->socket_fd, buffer, READ_SIZE, 0);
     if (bytesRead == 0)
     {
-        // la socket a ete close de l'autre cote
         close(this->socket_fd);
         this->socket_fd = -2;
         this->code = 400;
@@ -611,18 +583,11 @@ void Answer::ReadRequest(Configuration const &conf, int socket_fd, int server_id
         size_t size;
         std::istringstream iss(this->header_map["Content-Length"]);
         iss >> size;
-        // if (this->piece_of_request.size() >= size){
-            // //std::cout  << YELLOW << "Complete\n" << bytesRead << " et " << this->piece_of_request.size() << RESET << std::endl;
-            // //std::cout  << YELLOW << "Complete\n" << this->request << RESET << std::endl;
-        // }
-        // else
-            //std::cout  << YELLOW << "Uncomplete," << RESET << std::endl;
     }
     // else
         //std::cout  << YELLOW << "Uncomplete," << RESET << std::endl;
 
-    std::cout  << YELLOW << "ttt\n" << this->request << RESET << std::endl;
-    //std::cout  << RED << "Fin de ReadRequest" << RESET << std::endl;
+    // std::cout  << YELLOW << "ttt\n" << this->request << RESET << std::endl;
 }
 
 void	Answer::waitpidTimeOut(int *waitpidStatus)
@@ -641,30 +606,22 @@ void	Answer::waitpidTimeOut(int *waitpidStatus)
 			std::cerr << "Error with select: " << strerror(errno) << std::endl;
 			return ;
 		}
-		if ((res = waitpid(this->cgi_pid, waitpidStatus, WNOHANG)) == 0) {
-			std::cout << RED << "still no pid that returned..." << std::endl;
-		}
+		res = waitpid(this->cgi_pid, waitpidStatus, WNOHANG);
 		if (res == -1) {
 			std::cerr << "Error with waitpid " << strerror(errno) << std::endl;
 			return ;
 		}
-		else if (*waitpidStatus > 0) {
-			std::cout << "process termine" << std::endl;
+		else if (*waitpidStatus > 0)
 			break ;
-		}
 		count--;
 	}
-	std::cout << "count = " << count << std::endl;
 	if (count == 0) {
-		std::cout << "the process timed out" << std::endl;
 		if (kill(this->cgi_pid, SIGKILL) == 0) {
-			std::cout << "process " << this->cgi_pid << " killed succesfully" << std::endl;
+			// std::cout << "process " << this->cgi_pid << " killed succesfully" << std::endl;
 			this->code = 408;
 		}
-
-		else {
+		else
 			std::cerr << "Error with kill: " << strerror(errno) << std::endl;
-		}
 	}
 	return ;
 }
@@ -672,7 +629,6 @@ void	Answer::waitpidTimeOut(int *waitpidStatus)
 // on lit le fichier demander, que ce soit la ressource ou un fichier d'erreur
 void Answer::ReadFile(Configuration const &conf)
 {
-    //std::cout  << RED << "Debut de ReadFile" << WHITE << std::endl;
     char buffer[READ_SIZE];
     int bytesRead;
 
@@ -680,25 +636,19 @@ void Answer::ReadFile(Configuration const &conf)
     {
         this->nb_readfile = 1;
         int status = 0;
-        // waitpid(this->cgi_pid, &status, 0);
 		this->waitpidTimeOut(&status);
         if (WIFEXITED(status))
         {
             status = WEXITSTATUS(status);
-			//std::cout  << "status du fork = " << status << std::endl;
-            //std::cout  << status << std::endl;
-            if (status == 100)// on a pas la place de renvoyer 500
+            if (status == 100)
                 this->code = 500;
             this->HandleError(conf);
             return ;
         }
-        //std::cout  << "truc\n";
     }
-    //std::cout  << this->fd_read << std::endl;
     bytesRead = read(this->fd_read, buffer, READ_SIZE);
     if (bytesRead == -1) {
-        //std::cout  << "error 500 2\n";
-		this->code = 500;//gerer comment on traiter la page d'erreur depuis ici ?
+		this->code = 500;
         close(this->fd_read);
         this->fd_read = -2;
         return ;
@@ -708,7 +658,6 @@ void Answer::ReadFile(Configuration const &conf)
 	}
     buffer[bytesRead] = '\0';
     this->answer_body.append(buffer, bytesRead);
-    //std::cout  << bytesRead << std::endl;
     if (bytesRead < READ_SIZE)
     {
         close(this->fd_read);
@@ -871,7 +820,6 @@ void Answer::write_for_cgi(Configuration const &conf, int epfd, int nfd, struct 
 void Answer::WriteFile(Configuration const &conf, int servConfIdx, \
 	int epfd, int nfd, struct epoll_event events[], t_socket *sockets, int portListeningLen)
 {
-    //std::cout  << RED << "Debut de WriteFile" << RESET << std::endl;
 
     if (this->cgi == true)
         this->write_for_cgi(conf, epfd, nfd, events, sockets, portListeningLen);
@@ -881,8 +829,6 @@ void Answer::WriteFile(Configuration const &conf, int servConfIdx, \
     }
     if (this->code >= 400)
         this->HandleError(conf);
-
-    //std::cout  << RED << "Fin de WriteFile" << WHITE << std::endl;
 }
 
 void Answer::SetStatus(int status)
@@ -892,7 +838,6 @@ void Answer::SetStatus(int status)
 
 void Answer::SendAnswer(Configuration const &conf)
 {
-    //std::cout  << RED << "Debut de SendAnswer" << RESET << std::endl;
     std::stringstream tmp;
     tmp << this->code;
 
@@ -912,7 +857,6 @@ void Answer::SendAnswer(Configuration const &conf)
 			this->answer_body = "<!DOCTYPE html>\n<html lang=\"fr\">\n<head>\n<meta charset=\"UTF-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n<title>Upload</title>\n<style>\nh1 { text-align: center; margin-top: 10%; }\nh2 { text-align: center; }\n</style>\n</head>\n<body>\n<h1>Success</h1>\n<h2>Ressource has been created</h2>\n</body>\n</html>\n";
         this->taille();
         this->answer.append("\n");
-        // on remplit le body
         if (this->answer_body.size() != 0)
             this->answer.append(this->answer_body);
     }
@@ -1009,7 +953,6 @@ void Answer::GET(Configuration const &conf)
 	{
         return ;
 	}
-	//std::cout  << this->ressource_path << std::endl;
     if (this->is_that_a_directory() == 1)
     {
         this->find_good_index_or_autoindex(conf);
@@ -1035,13 +978,11 @@ void Answer::GET(Configuration const &conf)
         }
         else if (access(this->ressource_path.c_str(), F_OK | R_OK) == -1)
         {
-            //std::cout  << "1 " << this->ressource << " et " << this->ressource_path << std::endl;
             this->code = 403;//forbidden
             return ;
         }
         else if (this->isScript() == true && access(this->ressource_path.c_str(), F_OK | R_OK | X_OK) == -1)
         {
-            //std::cout  << "2 " << this->ressource << " et " << this->ressource_path << " et " << this->cgi_env_var << std::endl;
             this->code = 403;//forbidden
             return ;
         }
@@ -1055,7 +996,6 @@ void Answer::GET(Configuration const &conf)
             this->fd_read = open(this->ressource_path.c_str(), O_RDONLY);
             if (this->fd_read == -1)
             {
-                //std::cout  << "error 500 5\n";
                 std::cerr << "Erreur lors de l'ouverture du fichier" << std::endl;
                 this->code = 500;
                 return ;
@@ -1136,10 +1076,6 @@ bool	Answer::parseFileName(std::string line) {
 		return false;
 	}
 	this->fileName = this->fileName.substr(0,this->fileName.find_last_of('"'));
-	if (this->fileName.empty()) {
-
-		//std::cout  << "file name est vide je dois en creer un" << std::endl;
-	}
 	return true;
 }
 
@@ -1333,16 +1269,12 @@ inline void Answer::randomName(int fileNameIndex)
 bool	Answer::uploadFile(Configuration const & conf, int servConfIdx)
 {
 	// trouver le bon nom de fichier
-	std::cout << "1 " << this->fileName << std::endl;
-	std::cout << "file name = " << this->fileName << std::endl;
 	this->status = 3;
 	int fileNameIndex = 1;
 	if (conf.getServer(servConfIdx).getUploadStore().empty()) {
 
 	}
-	std::cout << "qwer " << std::string(conf.getServer(servConfIdx).getUploadStore() + this->fileName).c_str() << std::endl;
 	if (access(std::string(conf.getServer(servConfIdx).getUploadStore() + '/' + this->fileName).c_str(), F_OK) == 0) {
-		std::cout << "access + dir" << std::endl;
 		if (!this->changeFileName(fileNameIndex, conf, servConfIdx))
 		if (fileNameIndex == INT_MAX)
 			this->randomName(fileNameIndex);
@@ -1350,7 +1282,6 @@ bool	Answer::uploadFile(Configuration const & conf, int servConfIdx)
 	}
 	else
 	{
-		std::cout << "access file name" << std::endl;
 		if (access(this->fileName.c_str(), F_OK) == 0) {
 			if (!this->changeFileName(fileNameIndex))
 			if (fileNameIndex == INT_MAX)
@@ -1360,26 +1291,16 @@ bool	Answer::uploadFile(Configuration const & conf, int servConfIdx)
 	}
 
 	// open en creant le fichier si besoin
-	std::cout << "filename size = " << this->fileName.size() << std::endl;
-	std::cout << "2 [" << this->fileName << ']' << std::endl;
 	if (this->fileName.size() == 0) {
-		std::cout <<  conf.getServer(servConfIdx).getUploadStore() + '/' + this->fileName << std::endl;
 		this->randomName(fileNameIndex);
 	}
 	this->fileName = conf.getServer(servConfIdx).getUploadStore() + '/' + this->fileName;
-	std::cout << "3 " << this->fileName << std::endl;
 	int fd = open(this->fileName.c_str(), O_CREAT | O_RDWR | W_OK, 0644);
 
-	std::cout << "3" << std::endl;
 	if (fd == -1) {
 		this->code = 500;
 		return false;
 	}
-	std::cout << "4" << std::endl;
-
-	// utiliser ofstream pour ouvrir en binaire
-	std::cout << "request body" << std::endl;
-	std::cout << this->request_body.size() << std::endl;
 
 	std::ofstream outPutFile(this->fileName.c_str(), std::ios::binary);
 	if (outPutFile.is_open()) {
@@ -1394,10 +1315,8 @@ bool	Answer::uploadFile(Configuration const & conf, int servConfIdx)
 		size_t endBoundaryPos = this->request_body.find(this->endBoundary);
 
 		if (endBoundaryPos != this->request_body.npos) {
-			//std::cout  << "endBoundaryPos est bon = " << endBoundary << std::endl;
 			this->request_body.erase(endBoundaryPos);
 		}
-
 		// ecrir le fichier
 		if (!outPutFile.write(this->request_body.c_str(), this->request_body.size()))
 		{
@@ -1405,16 +1324,13 @@ bool	Answer::uploadFile(Configuration const & conf, int servConfIdx)
 			this->code = 500;
 			return false;
 		}
-		this->code = 201; // hook
+		this->code = 201;
 		close(fd);
-		std::cout << "file de upload file" << std::endl;
 		return true;
 	}
 	else
 	{
-		std::cout << "barbare" << std::endl;
 		int writeSize = write(fd, this->request_body.c_str(), this->request_body.size());
-		std::cout << "writesize = " << writeSize << std::endl;
 		if (writeSize == -1) {
 			close(fd);
 			this->code = 500;
@@ -1423,7 +1339,6 @@ bool	Answer::uploadFile(Configuration const & conf, int servConfIdx)
 		close(fd);
 		this->code = 201;
 	}
-	std::cout << "j'ai finit" << std::endl;
 	return true;
 }
 
@@ -1467,16 +1382,12 @@ void Answer::POST(Configuration const &conf)
 		return ;
     }
 
-	// met toi ici GARFI, tu peux faire l'upload file ici
-
     //std::cout  << GREEN << this->ressource << RESET << std::endl; // savoir si c'est un /upload ou /update
 	this->code = 201;// hook //quand post marche
-	// if ((this->ressource == "/upload" || this->ressource == "/") && conf.getServer(server_idx).getIsUploadFileAccepted()) {
 	this->status = 2; // si il faut ecrire quelque chose (la fonction writefile est vide tu peux faire la suite la bas)	
 	if (!this->parseBodyHeader()) {
 		return ;
 	}
-	std::cout << "body header ok code = " << this->code << std::endl;
 	// else {
 	// 	std::cerr << "Error: Upload was send but is not allowed in this server check conf file" << std::endl;
 	// 	this->code = 501;

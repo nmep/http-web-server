@@ -5,22 +5,9 @@
 Server::Server() : _default_server(0), _serverName("server_name"),\
 	 _hostName("localhost"), _client_max_body_size(1048576), _autoIndex(true), _isUploadFileAccepted(false), _serverIdx(0)
 {
-	//std::cout  << BLUE << "Server default COnstructor called" << RESET << std::endl;
-	// //std::cout  << "size de vector port = " << this->_port.size() << std::endl;
 }
 
-/*
-
-pour avoir le nom d'un dossier il faut que l'user l'entre dans le conf file
-
-si il n'est pas entree je ne peux pas le changer dans le constructeur, c'est trop tot encore
-
-si la conf est vide je peux 
-
-*/
-
 Server::~Server() {
-	//std::cout  << BLUE << "Server destructor called" << RESET << std::endl;
 	std::map<std::string, Location*>::iterator it = this->_location.begin();
 
 	for (/**/; it != _location.end(); ++it) {
@@ -33,13 +20,11 @@ Server::~Server() {
 Server::Server(Server const & copy) : _default_server(0), _port(8080), _serverName("server_name"),\
 	 _hostName("localhost"), _client_max_body_size(0), _autoIndex(false), _isUploadFileAccepted(false)
 {
-	//std::cout  << "Server copy constructor called" << std::endl;
 	*this = copy;
 }
 
 Server & Server::operator=(Server const & rhs)
 {
-	//std::cout  << "Server overload = constructor called" << std::endl;
 	_default_server = rhs._default_server;
 	_port = rhs._port;
 	_serverName = rhs._serverName;
@@ -47,7 +32,6 @@ Server & Server::operator=(Server const & rhs)
 	_error_page = rhs._error_page;
 	_client_max_body_size = rhs._client_max_body_size;
 	_isUploadFileAccepted = rhs._isUploadFileAccepted;
-	// check si loc de rhs est vide 
 	if (rhs._location.size() > 0) {
 		std::map<std::string, Location*>::const_iterator it_rhs = rhs._location.begin();
 		std::map<std::string, Location*>::const_iterator ite_rhs = rhs._location.end();
@@ -295,21 +279,17 @@ bool	Server::handleClientMaxBodySizeParsing(std::vector<std::string> lineSplit, 
 		std::cerr << "Error detected on client max body size at line while converting the value: " << countLine << std::endl;
 		return false;
 	}
-	std::cout << "QWHRQWJEHRQWERHQWERHQW jet set cmbs a " << val << std::endl;
 	SetClientMaxBodySize(val);
 	return true;
 }
 
 bool	Server::handleHostName(std::vector<std::string> lineSplit, int countLine)
 {
-	std::cout << *(lineSplit.end() - 1) << std::endl;
 	if (lineSplit.size() != 2) {
 		std::cerr << "Error host name syntax: at line " << countLine << " must be only one value for the hostName" <<std::endl;
-		//std::cout  << countLine << std::endl;
 		return false;
 	}
 	(lineSplit.end() - 1)->erase((lineSplit.end() - 1)->size() - 1);
-	std::cout << *(lineSplit.end() - 1) << std::endl;
 	if ((lineSplit.end() - 1)->empty()) {
 		std::cerr << "Error host name syntax: at line " << countLine << " value for the hostName can't be empty" <<std::endl;
 		return false;
@@ -331,9 +311,6 @@ bool	Server::handleAutoIndex(std::vector<std::string> lineSplit, int countLine) 
 		std::cerr << "Invalid syntax: at line " << countLine << " Autoindex need a value (on or off)" << std::endl;
 		return false;
 	}
-
-	// //std::cout  << "line begin = " << *(lineSplit.begin() + 1) << " avant" << std::endl;
-	// //std::cout  << "line begin = " << *(lineSplit.begin() + 1) << " apres" << std::endl;
 
 	if (*(lineSplit.begin() + 1) != "on" && *(lineSplit.begin() + 1) != "off") {
 		std::cerr << "Invalid AutoIndex Value at line " << countLine << " it must be on or off" << std::endl;
@@ -370,17 +347,14 @@ bool Server::handleUploadStore(std::vector<std::string> lineSplit, int countLine
 
 bool Server::AssignToken(std::vector<std::string> lineSplit, int countLine) {
 	const std::string fTokens[] = {"listen", "server_name", "error_page"\
-							, "client_max_body_size", "autoindex", "upload_store", "host_name"}; // pour location apelle directement getline dans
-							// la fonction de location parse et voir si ca marche
+							, "client_max_body_size", "autoindex", "upload_store", "host_name"};
 
 	bool	(Server::*FuncPtr[]) (std::vector<std::string>, int) = {&Server::handleListenParsing, &Server::handleServerNameParsing\
-		, &Server::handleErrorPageParsing, &Server::handleClientMaxBodySizeParsing, &Server::handleAutoIndex, &Server::handleUploadStore, &Server::handleHostName}; //TO DO manque  hostname
+		, &Server::handleErrorPageParsing, &Server::handleClientMaxBodySizeParsing, &Server::handleAutoIndex, &Server::handleUploadStore, &Server::handleHostName};
 
-	// si une segment de directive et finit on return true et on passe au suivant
 	if (*(lineSplit.begin()) == "}")
 		return true;
 
-	// si une directive est trouve faire sa fonction associe
 	for (size_t i = 0; i < sizeof(fTokens) / sizeof(fTokens[0]); i++) {
 		if (*(lineSplit.begin()) == fTokens[i]) {
 			return (this->*FuncPtr[i])(lineSplit, countLine);
