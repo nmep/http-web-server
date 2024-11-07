@@ -66,8 +66,9 @@ class Answer
         void HandleError(Configuration const &conf);
         void cgi_from_post();
         char** ft_build_env(Configuration const &conf, std::string extension);
-		void write_for_cgi(Configuration const &conf);
+		void write_for_cgi(Configuration const &conf, int epfd, int nfd, struct epoll_event events[], t_socket *sockets, int portListeningLen);
 		void build_actual_cgi_env_var();
+		void	closeFdCgi(int epfd, int nfd, struct epoll_event events[], t_socket *sockets, int portListeningLen);
 
 		std::string request;
 		std::string methode;
@@ -122,9 +123,11 @@ class Answer
 		bool		parseContentType(std::string line);
 		bool		uploadFile(Configuration const  & conf, int servConfIdx);
 		inline bool	changeFileName(int FileNameIndex);
+		inline bool	changeFileName(int FileNameIndex, Configuration const & conf, int servConfIdx);
 		inline void	randomName(int fileNameIndex);
-		//
+		void		waitpidTimeOut(int *waitpidStatus);
 
+		//
 		Answer() {};// c'est toi qui l'as rajoute ?
     public:
 		Answer(int server_idx);
@@ -137,7 +140,8 @@ class Answer
 
         void ReadRequest(Configuration const &conf, int socket_fd, int server_idx);
         void ReadFile(Configuration const &conf);
-        void WriteFile(Configuration const &conf, int servConfIdx);
+        void WriteFile(Configuration const &conf, int servConfIdx, \
+			int epfd, int nfd, struct epoll_event events[], t_socket *sockets, int portListeningLen);
         void SendAnswer(Configuration const &conf);
 
 };

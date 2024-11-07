@@ -45,7 +45,8 @@ int Epoll::launchEpoll(Configuration const & conf) {
 			}
 			else if (events[i].events & EPOLLOUT) {
 				// //std::cout  << "ICI J'ECRIS" << std::endl;
-				asynch.Server_action(conf, this->fdAndServer[events[i].data.fd], events[i].data.fd, this->fdAndServerConfIdx[events[i].data.fd]);
+				asynch.Server_action(conf, this->fdAndServer[events[i].data.fd], events[i].data.fd, this->fdAndServerConfIdx[events[i].data.fd], \
+					this->epfd, this->nfd, events, this->sockets, this->portListeningLen);
 				if (asynch.Answers_instances[this->fdAndServer[events[i].data.fd]].GetStatus() == 4)
 				{
 					asynch.Answers_instances[ this->fdAndServer[events[i].data.fd]].SetStatus(0);

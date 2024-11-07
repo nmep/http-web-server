@@ -11,7 +11,8 @@ Asynchrone::~Asynchrone()
 }
 
 // on agit en fonction de l'avancee de la reponse concernant ce server
-void Asynchrone::Server_action(Configuration const &conf, int server_idx, int socket_fd, int servConfIdx)
+void Asynchrone::Server_action(Configuration const &conf, int server_idx, int socket_fd, int servConfIdx,
+		int epfd, int nfd, struct epoll_event events[], t_socket *sockets, int portListeningLen)
 {
 	(void)servConfIdx; /* index de la configuration du serveur*/
     //std::cout  << BLUE << "Debut de Server_action, serv numero " << server_idx << ", socket_fd " << socket_fd << RESET << std::endl;
@@ -28,7 +29,8 @@ void Asynchrone::Server_action(Configuration const &conf, int server_idx, int so
             this->Answers_instances[server_idx].ReadFile(conf);
             break;
         case 2:
-            this->Answers_instances[server_idx].WriteFile(conf, servConfIdx);
+            this->Answers_instances[server_idx].WriteFile(conf, servConfIdx, \
+				epfd, nfd, events, sockets, portListeningLen);
             break;
         case 3:
             this->Answers_instances[server_idx].SendAnswer(conf);

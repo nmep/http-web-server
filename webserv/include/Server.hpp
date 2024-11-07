@@ -71,7 +71,6 @@ class Server
 
 		// FONCTION PRINCIPALE DE PARSING DE SERVEUR
 		bool	parseConfFile(std::ifstream & confFileFD, int *countLine);
-
 };
 
 std::ostream & operator<<(std::ostream& o, Server & server);

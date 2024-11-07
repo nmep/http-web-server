@@ -1,7 +1,3 @@
-question:
-    est ce qu'on close les sockets dans l'enfant pour le cgi?
-	il ce passe quoi quand on post et qu'il y a pas d'upload store ? 412 428 507, pour l'instant c'est 500
-
 sujet de correction :
 	- Setup multiple servers with different hostnames (use something like: curl --resolve example.com:80:127.0.0.1 http://example.com/).
 	- Limit the client body (use: curl -X POST -H "Content-Type: plain/text" --data "BODY IS HERE write something shorter or longer than body limit").
