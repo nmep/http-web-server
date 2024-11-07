@@ -766,7 +766,19 @@ char** Answer::ft_build_env(Configuration const &conf, std::string extension) {
     return envp;
 }
 
-void Answer::write_for_cgi(Configuration const &conf)
+void	Answer::closeFdCgi(int epfd, int nfd, struct epoll_event events[], t_socket *sockets, int portListeningLen)
+{
+	close(epfd);
+	for (int i = 0; i < nfd; i++) {
+		close(events[i].data.fd);
+	}
+	for (int i = 0; i < portListeningLen; i++) {
+		close(sockets[i].listenFd);
+	}
+}
+
+
+void Answer::write_for_cgi(Configuration const &conf, int epfd, int nfd, struct epoll_event events[], t_socket *sockets, int portListeningLen)
 {
     size_t dot = this->ressource_path.find_last_of('.');
     for (std::vector<std::pair<std::string, std::string> >::iterator it = conf.getServer(this->server_idx).getLocation(this->match_location)->getPairCgi().begin(); it != conf.getServer(this->server_idx).getLocation(this->match_location)->getPairCgi().end(); it++)
@@ -800,7 +812,7 @@ void Answer::write_for_cgi(Configuration const &conf)
     }
     this->fd_read = pipe_out[0];
     this->fd_write = pipe_in[1];
-    
+
     this->cgi_pid = fork();
     if (this->cgi_pid == -1)
     {
@@ -809,6 +821,8 @@ void Answer::write_for_cgi(Configuration const &conf)
     }
     if (this->cgi_pid == 0)
     {
+		// ici je close
+		this->closeFdCgi(epfd, nfd, events, sockets, portListeningLen);
         dup2(pipe_in[0], STDIN_FILENO); // Redirige l'entrée
         dup2(pipe_out[1], STDOUT_FILENO); // Redirige la sortie
         close(pipe_in[1]);
@@ -847,12 +861,13 @@ void Answer::write_for_cgi(Configuration const &conf)
     }
 }
 
-void Answer::WriteFile(Configuration const &conf, int servConfIdx)
+void Answer::WriteFile(Configuration const &conf, int servConfIdx, \
+	int epfd, int nfd, struct epoll_event events[], t_socket *sockets, int portListeningLen)
 {
     //std::cout  << RED << "Debut de WriteFile" << RESET << std::endl;
 
     if (this->cgi == true)
-        this->write_for_cgi(conf);
+        this->write_for_cgi(conf, epfd, nfd, events, sockets, portListeningLen);
     else
     {
 		this->uploadFile(conf, servConfIdx);

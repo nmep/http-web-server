@@ -302,14 +302,22 @@ bool	Server::handleClientMaxBodySizeParsing(std::vector<std::string> lineSplit, 
 
 bool	Server::handleHostName(std::vector<std::string> lineSplit, int countLine)
 {
+	std::cout << *(lineSplit.end() - 1) << std::endl;
 	if (lineSplit.size() != 2) {
 		std::cerr << "Error host name syntax: at line " << countLine << " must be only one value for the hostName" <<std::endl;
 		//std::cout  << countLine << std::endl;
 		return false;
 	}
+	(lineSplit.end() - 1)->erase((lineSplit.end() - 1)->size() - 1);
+	std::cout << *(lineSplit.end() - 1) << std::endl;
+	if ((lineSplit.end() - 1)->empty()) {
+		std::cerr << "Error host name syntax: at line " << countLine << " value for the hostName can't be empty" <<std::endl;
+		return false;
+	}
 	SetHostName(*(lineSplit.begin() + 1));
 	return true;
 }
+
 
 void	Server::setAutoIndex(bool value) {
 	_autoIndex = value;
@@ -362,11 +370,11 @@ bool Server::handleUploadStore(std::vector<std::string> lineSplit, int countLine
 
 bool Server::AssignToken(std::vector<std::string> lineSplit, int countLine) {
 	const std::string fTokens[] = {"listen", "server_name", "error_page"\
-							, "client_max_body_size", "autoindex", "upload_store"}; // pour location apelle directement getline dans
+							, "client_max_body_size", "autoindex", "upload_store", "host_name"}; // pour location apelle directement getline dans
 							// la fonction de location parse et voir si ca marche
 
 	bool	(Server::*FuncPtr[]) (std::vector<std::string>, int) = {&Server::handleListenParsing, &Server::handleServerNameParsing\
-		, &Server::handleErrorPageParsing, &Server::handleClientMaxBodySizeParsing, &Server::handleAutoIndex, &Server::handleUploadStore}; //TO DO manque  hostname
+		, &Server::handleErrorPageParsing, &Server::handleClientMaxBodySizeParsing, &Server::handleAutoIndex, &Server::handleUploadStore, &Server::handleHostName}; //TO DO manque  hostname
 
 	// si une segment de directive et finit on return true et on passe au suivant
 	if (*(lineSplit.begin()) == "}")
@@ -423,6 +431,7 @@ std::ostream & operator<<(std::ostream & o, Server & server)
     o << "SERVER PRINTING\n" << std::endl;
     o << "Default Server = " << server.GetDefaultServer() << std::endl;
     o << "Port = " << std::endl; printVector(server.GetPortVector(), o);
+	o << "Hostname " << server.GetHostName() << std::endl;
     o << "serverName = " << server.GetServerName() << std::endl;
     o << "hostName = " << server.GetHostName() << std::endl;
 	o << "auto index = " << server.getAutoIndex() << std::endl;
