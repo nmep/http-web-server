@@ -5,6 +5,7 @@
 Server::Server() : _default_server(0), _serverName("server_name"),\
 	 _hostName("localhost"), _client_max_body_size(1048576), _autoIndex(true), _isUploadFileAccepted(false), _serverIdx(0)
 {
+	this->_port.push_back(8080);
 }
 
 Server::~Server() {
@@ -204,7 +205,13 @@ bool	Server::handleListenParsing(std::vector<std::string>lineSplit, int countLin
 		std::cerr << "Invalid syntax: at line " << countLine << "should be listen Port < 65535" << std::endl;
 		return true;
 	}
-
+	std::cout << "avant" << std::endl;
+	printVector(this->_port, std::cout);
+	if (this->_port.size() == (size_t)1 && *(this->_port.begin()) == 8080)
+		this->_port.clear();
+	// int i = 0;
+	std::cout << "apres" << std::endl;
+	printVector(this->_port, std::cout);
 	for (std::vector<std::string>::iterator it = lineSplit.begin() + 1; it != lineSplit.end(); it++) {
 		uint16_t port = 0;
 		if (!strIsNum(*it)) {
