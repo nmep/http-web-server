@@ -17,8 +17,8 @@ Server::~Server() {
 	_location.clear();
 }
 
-Server::Server(Server const & copy) : _default_server(0), _port(8080), _serverName("server_name"),\
-	 _hostName("localhost"), _client_max_body_size(0), _autoIndex(false), _isUploadFileAccepted(false)
+Server::Server(Server const & copy) : _default_server(1), _port(8080), _serverName("server_name"),\
+	 _hostName("localhost"), _client_max_body_size(1), _autoIndex(false), _isUploadFileAccepted(false)
 {
 	*this = copy;
 }
@@ -331,7 +331,6 @@ bool Server::handleUploadStore(std::vector<std::string> lineSplit, int countLine
 		std::cerr << "Invalid upload_store syntax: no value associate, at line " << countLine << std::endl;
 		return false;
 	}
-	// check if dir exist
 	if (!checkAccessFile(*(lineSplit.begin() + 1), F_OK | R_OK | W_OK)) {
 		std::cerr << "Invalid upload_store syntax: [" << *(lineSplit.begin() + 1) << "] " << strerror(errno) << " at line " << countLine << std::endl;
 		return false;

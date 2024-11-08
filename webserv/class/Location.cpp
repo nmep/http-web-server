@@ -182,8 +182,16 @@ bool	Location::handleIndex(std::vector<std::string> lineSplit, int countLine)
 	}
 	(lineSplit.end() - 1)->erase((lineSplit.end() - 1)->end() - 1);
 	for (std::vector<std::string>::iterator it = lineSplit.begin() + 1; it != lineSplit.end(); it++) {
-		setIndex(*it);
+		if (it->find(".html") != it->npos || it->find(".htm") != it->npos || it->find(".txt") != it->npos) {
+			setIndex(*it);
+		}
+		else
+		{
+			std::cerr << "Error Conf file Location index at line " << countLine << ", index file [" << *it << "] can only be a .txt or .htm or .html" << std::endl;
+			return false;
+		}
 	}
+	// exit(2);
 	return true;
 }
 

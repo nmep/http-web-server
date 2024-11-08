@@ -57,14 +57,13 @@ int Epoll::launchEpoll(Configuration const & conf) {
 				closeConnexion(events[i].data.fd);
 		}
 	}
+
 	this->nfd = epoll_wait(this->epfd, events, MAX_EVENTS, 0);
-	for (int i = 0; i < this->nfd; i++) {
+	for (int i = 0; i < this->nfd; i++)
 		closeConnexion(events[i].data.fd);
-	}
 	for (int i = 0; i < this->portListeningLen; i++)
 	{
 		if (epoll_ctl(this->epfd, EPOLL_CTL_DEL, this->sockets[i].listenFd, NULL) == -1) {
-			std::cerr << "Epoll ctl del failed: " << strerror(errno) << std::endl;
 			break ;
 		}
 		close(this->sockets[i].listenFd);

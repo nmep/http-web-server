@@ -27,7 +27,7 @@
         <main>
             <div class="upload-section">
                 <h1>Upload File</h1>
-                <form action="/upload" method="POST">
+                <form action="/upload" method="POST" enctype="multipart/form-data">
                     <label for="file">Select a file :</label>
                     <input type="file" id="file" name="file" required>
                     <button type="submit" class="custom_color">Download</button>

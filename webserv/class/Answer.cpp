@@ -560,6 +560,12 @@ void Answer::ReadRequest(Configuration const &conf, int socket_fd, int server_id
 
     if (this->header_map.find("Content-Length") != this->header_map.end() || this->methode == "GET" || this->methode == "DELETE")
     {
+		if (this->piece_of_request.size() >= LIMIT_SIZE_BODY_SERVER || this->piece_of_request.size() >= conf.getServer(this->server_idx).GetClientMaxBodySize())
+		{
+        	this->code = 413;
+			this->HandleError(conf);
+			return ;
+		}
         size_t size;
         std::istringstream iss(this->header_map["Content-Length"]);
         iss >> size;
@@ -593,36 +599,41 @@ void Answer::ReadRequest(Configuration const &conf, int socket_fd, int server_id
 void	Answer::waitpidTimeOut(int *waitpidStatus)
 {
 	int count = 5;
-	int res = 0;
+	// int res = 0;
 	fd_set fds;
 	struct timeval tv;
 	
 	FD_ZERO(&fds);
 	FD_SET(0, &fds);
 	while (count > 0) {
-		tv.tv_sec = 0;
-		tv.tv_usec = 9510;
+		tv.tv_sec = 1;
+		tv.tv_usec = 0;
+		// tv.tv_usec = 1091500;
 		if (select(1, &fds, NULL, NULL, &tv) == -1) {
 			std::cerr << "Error with select: " << strerror(errno) << std::endl;
 			return ;
 		}
-		res = waitpid(this->cgi_pid, waitpidStatus, WNOHANG);
-		if (res == -1) {
-			std::cerr << "Error with waitpid " << strerror(errno) << std::endl;
-			return ;
-		}
-		else if (*waitpidStatus > 0)
+		waitpid(this->cgi_pid, waitpidStatus, WNOHANG);
+		// if (res == 0) {
+		// 	std::cout << "still waiting for child process" << std::endl;
+		// }
+		// else if (res == -1) {
+		// 	std::cerr << "Error with waitpid " << strerror(errno) << std::endl;
+		// 	// return ;
+		// }
+		if (*waitpidStatus >= 0) {
 			break ;
+		}
 		count--;
 	}
 	if (count == 0) {
 		if (kill(this->cgi_pid, SIGKILL) == 0) {
-			// std::cout << "process " << this->cgi_pid << " killed succesfully" << std::endl;
 			this->code = 408;
 		}
 		else
 			std::cerr << "Error with kill: " << strerror(errno) << std::endl;
 	}
+
 	return ;
 }
 
@@ -635,17 +646,19 @@ void Answer::ReadFile(Configuration const &conf)
     if (this->cgi == true && this->nb_readfile == 0)
     {
         this->nb_readfile = 1;
-        int status = 0;
+        int status = -1;
 		this->waitpidTimeOut(&status);
         if (WIFEXITED(status))
         {
             status = WEXITSTATUS(status);
-            if (status == 100)
-                this->code = 500;
-            this->HandleError(conf);
-            return ;
+            // if (status == 100)
+            //     this->code = 500;
+        	this->HandleError(conf);
+			if (this->code >= 400)
+            	return ;
         }
     }
+	this->HandleError(conf);
     bytesRead = read(this->fd_read, buffer, READ_SIZE);
     if (bytesRead == -1) {
 		this->code = 500;
@@ -704,7 +717,6 @@ char** Answer::ft_build_env(Configuration const &conf, std::string extension) {
     strftime(date, sizeof(date), "%a, %d %b %Y %H:%M:%S %Z", &tm);
     env_vars.push_back("DATE=" + std::string(date));
 
-
     char** envp = new char*[env_vars.size() + 1];
     for (size_t i = 0; i < env_vars.size(); ++i) {
         envp[i] = new char[env_vars[i].size() + 1];
@@ -718,10 +730,10 @@ char** Answer::ft_build_env(Configuration const &conf, std::string extension) {
 void	Answer::closeFdCgi(int epfd, int nfd, struct epoll_event events[], t_socket *sockets, int portListeningLen)
 {
 	for (int i = 0; i < nfd; i++) {
-        if (epoll_ctl(epfd, EPOLL_CTL_DEL, events[i].data.fd, NULL) == -1) {
-		std::cerr << "Epoll ctl del failed: " << strerror(errno) << std::endl;
-		continue ;
-	}
+        // if (epoll_ctl(epfd, EPOLL_CTL_DEL, events[i].data.fd, NULL) == -1) {
+		// 	std::cerr << "Epoll ctl del failed: " << strerror(errno) << std::endl;
+		// 	continue ;
+		// }
 		close(events[i].data.fd);
 	}
 	for (int i = 0; i < portListeningLen; i++) {
@@ -738,6 +750,8 @@ void Answer::write_for_cgi(Configuration const &conf, int epfd, int nfd, struct 
     {
         if (it->first == this->ressource_path.substr(dot) && (this->ressource_path.substr(dot) == ".php" || this->ressource_path.substr(dot) == ".py"))
         {
+			// std::cout << "cgi exec path = " << it->second << std::endl;
+			// sleep(2);
             this->cgi_exec_path = it->second;
         }
     }
@@ -777,21 +791,14 @@ void Answer::write_for_cgi(Configuration const &conf, int epfd, int nfd, struct 
 		// ici je close
 		this->closeFdCgi(epfd, nfd, events, sockets, portListeningLen);
         dup2(pipe_in[0], STDIN_FILENO); // Redirige l'entrée
-        close(pipe_in[1]);
         dup2(pipe_out[1], STDOUT_FILENO); // Redirige la sortie
+        close(pipe_in[1]);
         close(pipe_out[0]);
         std::string extension = this->ressource_path.substr(this->ressource_path.find_last_of('.'));
         char *argv[] = { (char *)this->cgi_exec_path.c_str(), (char*)this->ressource_path.c_str(), NULL };
         char **envp = this->ft_build_env(conf, extension);
-        size_t x = 0;
-        while (envp[x] != NULL)
-        {
-            std::cerr << envp[x] << std::endl;
-            x++;
-        }
         if (execve((char *)this->cgi_exec_path.c_str(), argv, envp) == -1)
         {
-			std::cerr << "EXECVE NE MARCHE PAS" << std::endl;
             size_t size = 0;
             while (envp[size] != NULL)
                 size++;
@@ -802,8 +809,8 @@ void Answer::write_for_cgi(Configuration const &conf, int epfd, int nfd, struct 
 
             close(pipe_in[0]);
             close(pipe_out[1]);
-            // est ce qu'on close les sockets et on delete les truc allouer ?? todo
-            exit(100);// on a pas la place de renvoyer 500
+			while (1)
+				;
         }
     }
     else
@@ -1271,9 +1278,13 @@ bool	Answer::uploadFile(Configuration const & conf, int servConfIdx)
 	// trouver le bon nom de fichier
 	this->status = 3;
 	int fileNameIndex = 1;
-	if (conf.getServer(servConfIdx).getUploadStore().empty()) {
-
+	// 
+	if (this->fileName.empty()) {
+		this->randomName(fileNameIndex);
 	}
+	// if (conf.getServer(servConfIdx).getUploadStore().empty()) {
+
+	// }
 	if (access(std::string(conf.getServer(servConfIdx).getUploadStore() + '/' + this->fileName).c_str(), F_OK) == 0) {
 		if (!this->changeFileName(fileNameIndex, conf, servConfIdx))
 		if (fileNameIndex == INT_MAX)
@@ -1307,9 +1318,18 @@ bool	Answer::uploadFile(Configuration const & conf, int servConfIdx)
 		// parser le body pour enlever le header du body et les boundary
 		size_t bodyStart = this->request_body.find("\r\n\r\n");
 		if (bodyStart == this->request_body.npos) {
-			close(fd);
-			this->code = 400;
+			// close(fd);
+			// this->code = 400;
+			// return false;
+			std::cout << "barbare" << std::endl;
+			int writeSize = write(fd, this->request_body.c_str(), this->request_body.size());
+			if (writeSize == -1) {
+				close(fd);
+				this->code = 500;
 			return false;
+		}
+		close(fd);
+		this->code = 201;
 		}
 		this->request_body.erase(0, bodyStart + 4);
 		size_t endBoundaryPos = this->request_body.find(this->endBoundary);
@@ -1328,17 +1348,10 @@ bool	Answer::uploadFile(Configuration const & conf, int servConfIdx)
 		close(fd);
 		return true;
 	}
-	else
-	{
-		int writeSize = write(fd, this->request_body.c_str(), this->request_body.size());
-		if (writeSize == -1) {
-			close(fd);
-			this->code = 500;
-			return false;
-		}
-		close(fd);
-		this->code = 201;
-	}
+	// else
+	// {
+
+	// }
 	return true;
 }
 

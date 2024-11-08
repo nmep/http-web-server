@@ -39,10 +39,12 @@ int	main(int ac, char **av)
 		return 2;
 	}
 
+	std::cout << conf << std::endl;
 	if (!server.initAllSockets(conf)) {
 		return 2;
 	}
 	server.launchEpoll(conf);
 
+	// pour l'uploadFile check si le bool isUploadFileAccepted est true ou false
 	return 0;
 }

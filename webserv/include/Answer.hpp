@@ -15,10 +15,10 @@
 #include <wait.h>// pour wait
 #include <sstream> //stringstream
 
-#define READ_SIZE 40960 // pour l'instant choisi arbitrairement, on verra si on le change pour plus de performance
-#define LIMIT_SIZE_BODY_SERVER 1073741824 //equivalent a 1 Go, pour ne pas saturer la memoire vive
-#define LIMIT_SIZE_BEFORE_BODY_SERVER 1073741824
-#define LIM_SIZE_READ_FILE 1073741824
+#define READ_SIZE 4096 // pour l'instant choisi arbitrairement, on verra si on le change pour plus de performance
+#define LIMIT_SIZE_BODY_SERVER 10485760 //equivalent a 10 Mo, pour ne pas saturer la memoire vive
+#define LIMIT_SIZE_BEFORE_BODY_SERVER 10485760
+#define LIM_SIZE_READ_FILE 10485760
 
 class Answer
 {

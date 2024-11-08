@@ -183,7 +183,6 @@ bool	Epoll::closeConnexion(int fd)
 	this->fdAndServer.erase(fd);
 	this->fdAndServerConfIdx.erase(fd);
 	if (epoll_ctl(this->epfd, EPOLL_CTL_DEL, fd, NULL) == -1) {
-		std::cerr << "Epoll ctl del failed: " << strerror(errno) << std::endl;
 		return false;
 	}
 	close(fd);
