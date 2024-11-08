@@ -852,6 +852,11 @@ void Answer::SendAnswer(Configuration const &conf)
         this->connection();
         this->server(conf);
         this->location();
+
+        // this->answer.append("X-Server-Hostname: ");
+        // this->answer.append(conf.getServer(server_idx).GetHostName());
+        // this->answer.append("\r\n");
+
         this->date();
 		if (this->code == 201)
 			this->answer_body = "<!DOCTYPE html>\n<html lang=\"fr\">\n<head>\n<meta charset=\"UTF-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n<title>Upload</title>\n<style>\nh1 { text-align: center; margin-top: 10%; }\nh2 { text-align: center; }\n</style>\n</head>\n<body>\n<h1>Success</h1>\n<h2>Ressource has been created</h2>\n</body>\n</html>\n";
@@ -866,7 +871,7 @@ void Answer::SendAnswer(Configuration const &conf)
     // close(this->socket_fd);// la close ailleur ou pas ?? normalement meme si on collapse avant on send quand meme donc non
     // this->socket_fd = -2; //a voir si ca te derrange
     // std::cout  << GREEN << this->answer << RESET << std::endl;
-    // std::cout  << YELLOW << this->answer << RESET << std::endl;
+    std::cout  << YELLOW << this->answer << RESET << std::endl;
     //std::cout  << RED << "Fin de SendAnswer" << RESET << std::endl;
     this->Reset();
 }
