@@ -803,7 +803,7 @@ void Answer::write_for_cgi(Configuration const &conf, int epfd, int nfd, struct 
             close(pipe_in[0]);
             close(pipe_out[1]);
             // est ce qu'on close les sockets et on delete les truc allouer ?? todo
-            exit(100);// on a pas la place de renvoyer 500
+            exit(100);// on a pas la place de renvoyer 500.
         }
     }
     else
